@@ -7,15 +7,15 @@ import './App.css'
 import Slider from './components/Slider'
 import ProductCard from './components/ProductCard'
 import ProductList from './components/ProductList'
-
+import ProductDetail from './pages/ProductDetailPage'
 function App() {
   return (
     <>
     <Headers></Headers>
-    <Slider></Slider>
     <div className="w-full bg-white py-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1660px]">
-        <ProductList/>
+        <ProductDetail></ProductDetail>
+
       </div>
     </div>
     
