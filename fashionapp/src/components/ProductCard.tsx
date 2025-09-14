@@ -8,6 +8,7 @@ interface Product {
     price: number;
     discount?: number;
     sold?: number;
+    isFavorite?: boolean;
 }
 
 interface ProductCardProps {
@@ -15,7 +16,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-    const [liked, setLiked] = useState(false)
+    const [liked, setLiked] = useState(product.isFavorite || false)
     
     return (
         <div className="cursor-pointer relative group flex flex-col items-center border border-gray-200 rounded-lg overflow-visible shadow hover:shadow-lg transition-shadow duration-300 h-full group-hover:z-20">
@@ -24,9 +25,28 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <h3 className="text-lg font-semibold mb-2 line-clamp-2">{product.name}</h3>
                 <div className='mt-auto'>
                     <div className='flex justify-between'>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-bold text-black-600">{product.price.toLocaleString()}</span>
-                            <span className="text-lg font-semibold text-black-600">₫</span>
+                        <div className="flex flex-col">
+                            {product.discount ? (
+                                <div className="flex items-baseline gap-2">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-lg font-bold text-red-500">
+                                            {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()}
+                                        </span>
+                                        <span className="text-lg font-semibold text-red-500">₫</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-sm text-gray-500 line-through">
+                                            {product.price.toLocaleString()}
+                                        </span>
+                                        <span className="text-sm text-gray-500">₫</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-lg font-bold text-black-600">{product.price.toLocaleString()}</span>
+                                    <span className="text-lg font-semibold text-black-600">₫</span>
+                                </div>
+                            )}
                         </div>
                         <div>
                             <span className="text-sm font-semibold text-red-500">Đã bán: </span>

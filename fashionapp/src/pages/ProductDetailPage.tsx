@@ -5,6 +5,24 @@ import ProductSlider from '../components/ProductSlider'
 export default function ProductDetailPage() {
     const [activeTab, setActiveTab] = useState('description')
     const [isFavorite, setIsFavorite] = useState(false)
+    const [quantity, setQuantity] = useState(1)
+    const [chooseSize, setChooseSize] = useState('S');
+    const [color, setColor] = useState('red');
+    const PlusQuantity = () => {
+        
+        setQuantity(quantity + 1)
+    }
+    const MinusQuantity = () => {
+        if(quantity > 1) {
+            setQuantity(quantity - 1)
+        }
+    }
+    const ChangeSize = (size: string) => {
+        setChooseSize(size)
+    }
+    const ChangeColor = (color: string) => {
+        setColor(color)
+    }
     return (
         <>
         <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -47,16 +65,16 @@ export default function ProductDetailPage() {
                     <span className='font-semibold'>Kích cỡ: </span>
                     <div className='flex gap-2'>
                         {["S", "M","L","XL"].map((size) => (
-                            <button className='px-4 py-2 border rounded hover:bg-black hover:text-white transition' key={size}>{size}</button>),)}
+                            <button className={`cursor-pointer transition border w-10 h-10 ${size === chooseSize ? 'border-black ' : 'border-none'}`} onClick={() => ChangeSize(size)} key={size}>{size}</button>),)}
                     </div>
                 </div>
                 {/* Quantity Selector */}
                 <div className='mt-6 flex items-center gap-4'>
                     <span className='font-semibold'>Số lượng: </span>
                     <div className='inline-flex items-center border border-gray-400 rounded mt-2 justify-between'>
-                        <button className='px-3 py-3  rounded-l hover:bg-black hover:text-white transition text-2xl '><Minus/></button>
-                        <input type="number" defaultValue={1} min={1} className='w-16 h-10 text-center text-lg font-semibold border-0 outline-none' style={{WebkitAppearance: 'none', MozAppearance: 'textfield'}}/>
-                        <button className='px-3 py-3  rounded-r hover:bg-black hover:text-white transition '><Plus/></button>
+                        <button className='cursor-pointer px-3 py-3  rounded-l hover:bg-black hover:text-white transition text-2xl' onClick={MinusQuantity}><Minus/></button>
+                        <input type="number" defaultValue={1} min={1} value={quantity}  className='w-16 h-10 text-center text-lg font-semibold border-0 outline-none' style={{WebkitAppearance: 'none', MozAppearance: 'textfield'}}/>
+                        <button className='cursor-pointer px-3 py-3  rounded-r hover:bg-black hover:text-white transition ' onClick={PlusQuantity}><Plus/></button>
                     </div>
                     
                 </div>
@@ -110,8 +128,13 @@ export default function ProductDetailPage() {
         </div>
         
         {/* Related Products Slider */}
-        <div className="mt-10">
+        <div className="mt-20">
             <h2 className="text-xl font-bold mb-4">Gợi ý dành cho bạn</h2>
+            <ProductSlider />
+        </div>
+        {/* Sản phẩm liên quan */}
+        <div className="mt-20">
+            <h2 className="text-xl font-bold mb-4">Sản phẩm liên quan</h2>
             <ProductSlider />
         </div>
         </>

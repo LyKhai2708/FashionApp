@@ -8,13 +8,14 @@ import Slider from './components/Slider'
 import ProductCard from './components/ProductCard'
 import ProductList from './components/ProductList'
 import ProductDetail from './pages/ProductDetailPage'
+import ProductPage from './pages/ProductPage'
 function App() {
   return (
     <>
     <Headers></Headers>
     <div className="w-full bg-white py-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1660px]">
-        <ProductDetail></ProductDetail>
+        <ProductPage></ProductPage>
 
       </div>
     </div>
