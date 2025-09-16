@@ -3,7 +3,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "./ProductCard";
-import aaaa from '../assets/aaaa.jpg';
+import aaaa from '../assets/product1.jpg';
 
 interface Product {
     id: number;

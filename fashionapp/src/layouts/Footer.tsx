@@ -3,8 +3,8 @@ import { Facebook, Instagram, Twitter } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-200 mt-10">
-      <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-3 gap-10">
+    <footer className="bg-gray-900 text-gray-200">
+      <div className="max-w-[1660px] mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-3 gap-10">
         {/* Thông tin shop */}
         <div>
           <h3 className="text-lg font-semibold text-red-500">DELULU</h3>

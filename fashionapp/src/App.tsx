@@ -1,28 +1,13 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import Headers from './layouts/Header'
-import Footer from './layouts/Footer'
+
 import './App.css'
-import Slider from './components/Slider'
-import ProductCard from './components/ProductCard'
-import ProductList from './components/ProductList'
-import ProductDetail from './pages/ProductDetailPage'
-import ProductPage from './pages/ProductPage'
-import Home from './pages/Home'
-import Cart from './pages/Cart'
+import { BrowserRouter, Routes } from 'react-router-dom'
+import { generateRoutes } from './routes'
 function App() {
   return (
     <>
-    <Headers></Headers>
-        <div className="w-full bg-white py-6">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1660px]">
-              <Cart/>
-            </div>
-        </div>
-    <Footer></Footer>
-
-    
+    <BrowserRouter>
+      <Routes>{generateRoutes()}</Routes>
+    </BrowserRouter>
     </>
   )
 }

@@ -1,10 +1,24 @@
 import { Menu , ShoppingCart , User, Search, CameraIcon } from "lucide-react"
+import { useMemo, useState } from "react"
+import CartDrawer from "../components/CartDrawer"
+import type { CartItem } from "../components/CartDrawer"
+import product1 from "../assets/product1.jpg"
+import product2 from "../assets/product2.jpg"
+import product3 from "../assets/product3.jpg"
+import { Link } from "react-router-dom"
 
 export default function Header() {
-    const cartCount = 0
+    const [openCart, setOpenCart] = useState(false)
+    const [cartItems] = useState<CartItem[]>([
+      { id: 1, name: "Áo thun basic cotton", image: product1, price: 199000, discount: 10, quantity: 2, size: "M", color: "Trắng" },
+      { id: 2, name: "Quần jeans slim fit", image: product2, price: 399000, quantity: 1, size: "32", color: "Xanh đậm" },
+      { id: 3, name: "Áo khoác bomber", image: product3, price: 699000, discount: 15, quantity: 1, size: "L", color: "Đen" }
+    ])
+    const cartCount = useMemo(() => cartItems.reduce((n, it) => n + it.quantity, 0), [cartItems])
+    // Read-only drawer: no handlers used here
     return (
         <header className="w-full bg-white shadow sticky top-0 z-50">
-      <div className="flex items-center justify-between px-4 py-3 md:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1660px] flex items-center justify-between py-3">
         
         {/* Menu (mobile) */}
         <button className="md:hidden">
@@ -31,18 +45,19 @@ export default function Header() {
           </div>
           {/* Action icons */}
           <div className="flex items-center space-x-4">
-            <div className="relative">
+            <div className="relative" onClick={() => setOpenCart(true)}>
               <ShoppingCart className="w-6 h-6 cursor-pointer text-gray-700 hover:text-blue-600" />
               <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-xs leading-5 text-center select-none">
                 {cartCount}
               </span>
             </div>
-            <User className="w-6 h-6 cursor-pointer text-gray-700 hover:text-blue-600" />
+            <Link to={"/login"}><User className="w-6 h-6 cursor-pointer text-gray-700 hover:text-blue-600" /></Link>
           </div>
         </div>
         {/* Search */}
         
       </div>
+      <CartDrawer open={openCart} onClose={() => setOpenCart(false)} items={cartItems} />
     </header>
     )
 }

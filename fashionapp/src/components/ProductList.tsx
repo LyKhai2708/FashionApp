@@ -85,7 +85,7 @@ export default function ProductList({ products, limit, pagination = false, pageS
 
     return (
         <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {(!pagination ? itemsToRender : data.slice(0, pageSize)).map((product) => (
                     <ProductCard  key={product.id} product={product} />
                 ))}

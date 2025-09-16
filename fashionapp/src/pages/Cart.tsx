@@ -3,6 +3,7 @@ import product1 from "../assets/product1.jpg";
 import product2 from "../assets/product2.jpg";
 import product3 from "../assets/product3.jpg";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
+import ProductSlider from "../components/ProductSlider";
 
 export default function Cart() {
     interface CartItem {
@@ -75,13 +76,13 @@ export default function Cart() {
 
     return (
         <div
-        className="min-h-screen flex flex-col ">
+        className="min-h-screen flex flex-col">
             {/* Breadcrumb */}
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
                 <a href="/">Trang chủ</a>
                 <span>/</span>
                 <span className="text-gray-500">Giỏ hàng</span>
-            </div>
+            </div> */}
             {/* Cart Content */}
             <div className="mt-10 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column: Cart Items or Empty State */}
@@ -98,12 +99,12 @@ export default function Cart() {
                     ) : (
                     <>
                     <div className="flex items-center gap-2 mb-4">
-                        <h2 className="font-semibold text-xl">GIỎ HÀNG CỦA BẠN</h2>
+                        <h2 className="font-semibold text-2xl">GIỎ HÀNG CỦA BẠN</h2>
                         <span>(Đang có <span className="font-bold">{cartItems.length}</span> sản phẩm)</span>
                     </div>
                     <div className="mt-4">
                         <div className="border-b grid grid-cols-4 gap-4 p-4 text-gray-500 font-semibold">
-                            <span className="col-span-2">Sản phẩm</span>
+                            <span className="col-span-2">Thông tin sản phẩm</span>
                             <span>Số lượng</span>
                             <span>Tổng cộng</span>
                         </div>
@@ -167,9 +168,13 @@ export default function Cart() {
                             <span className="text-base font-bold text-red-500">{formatCurrency(grandTotal)}₫</span>
                         </div>
                     </div>
-                    <button className="w-full mt-6 bg-black text-white py-3 rounded-md hover:bg-gray-800 transition cursor-pointer">TIẾN HÀNH THANH TOÁN</button>
+                    <button className="w-full mt-6 bg-black text-white py-3 rounded-md hover:bg-white hover:text-black hover:border-black border transition cursor-pointer">TIẾN HÀNH THANH TOÁN</button>
                     <a href="/" className="block text-center mt-3 text-gray-600 hover:underline">Tiếp tục mua sắm</a>
                 </div>
+            </div>
+            <div className="mt-10">
+                <h2 className="font-semibold text-2xl">GỢI Ý DÀNH CHO BẠN</h2>
+                <ProductSlider></ProductSlider>
             </div>
         </div>
     )
