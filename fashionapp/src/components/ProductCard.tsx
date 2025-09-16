@@ -19,12 +19,16 @@ export default function ProductCard({ product }: ProductCardProps) {
     const [liked, setLiked] = useState(product.isFavorite || false)
     
     return (
-        <div className="cursor-pointer relative group flex flex-col items-center border border-gray-200 rounded-lg overflow-visible shadow hover:shadow-lg transition-shadow duration-300 h-full group-hover:z-20">
+        <div className="cursor-pointer relative group flex flex-col border border-gray-200 rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow duration-300 h-full group-hover:z-20">
             <img src={product.image} alt="Product Image" className="w-full aspect-[3/4] object-cover" />
-            <div className="p-4 flex flex-col flex-grow w-full">
-                <h3 className="text-lg font-semibold mb-2 line-clamp-2">{product.name}</h3>
+            <div className="p-4 flex flex-col flex-grow w-full min-w-0">
+                <h3
+                className="text-lg font-semibold mb-2 line-clamp-2 overflow-hidden text-ellipsis break-words min-h-[48px]"
+                >
+                {product.name}
+                </h3>
                 <div className='mt-auto'>
-                    <div className='flex justify-between'>
+                    <div className='flex items-center flex-wrap justify-between'>
                         <div className="flex flex-col">
                             {product.discount ? (
                                 <div className="flex items-baseline gap-2">
@@ -48,9 +52,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                                 </div>
                             )}
                         </div>
-                        <div>
-                            <span className="text-sm font-semibold text-red-500">Đã bán: </span>
-                            <span className="text-sm font-semibold text-red-500">{product.sold || 0}</span>
+                        <div className="whitespace-nowrap text-sm font-bold text-red-500">
+                            Đã bán: {product.sold || 0}
                         </div>
                     </div>
                     <div className="flex gap-2 mb-2 mt-2">

@@ -220,7 +220,7 @@ export default function ProductPage() {
                     </div>
                     
                 </div>
-                <ProductList></ProductList>
+                <ProductList pagination pageSize={12}></ProductList>
             </div>
             
         </div>

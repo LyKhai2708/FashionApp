@@ -42,13 +42,13 @@ const ProductSlider = () => {
         resistanceRatio={0.85}
         watchSlidesProgress={true}
         breakpoints={{
-          640: { slidesPerView: 3 }, // Tablet nhỏ
-          768: { slidesPerView: 4 }, // Tablet lớn
-          1024: { slidesPerView: 5 }, // Desktop
+          640: { slidesPerView: 2 }, // Tablet nhỏ
+          768: { slidesPerView: 3 }, // Tablet lớn
+          1024: { slidesPerView: 4 }, // Desktop
         }}
       >
         {products.map((product) => (
-          <SwiperSlide key={product.id}>
+          <SwiperSlide key={product.id} className="flex-shrink-0">
             <ProductCard product={product} />
           </SwiperSlide>
         ))}

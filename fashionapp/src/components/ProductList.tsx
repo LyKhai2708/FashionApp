@@ -1,5 +1,6 @@
 import ProductCard from "./ProductCard"
 import aaaa from '../assets/aaaa.jpg';
+
 interface Product {
     id: number;
     image: string;
@@ -9,7 +10,15 @@ interface Product {
     sold?: number;
     isFavorite?: boolean;
 }
-export default function ProductList() {
+
+interface ProductListProps {
+    products?: Product[];
+    limit?: number;
+    pagination?: boolean;
+    pageSize?: number;
+}
+
+export default function ProductList({ products, limit, pagination = false, pageSize = 12 }: ProductListProps) {
     const mockProducts: Product[] = [
         {
             id: 1,
@@ -65,11 +74,29 @@ export default function ProductList() {
             isFavorite: false
         }
     ];
+
+    const data: Product[] = products && products.length > 0 ? products : mockProducts;
+
+    // derive items to render based on mode
+    let itemsToRender: Product[] = data;
+    if (!pagination && typeof limit === 'number') {
+        itemsToRender = data.slice(0, Math.max(0, limit));
+    }
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
-            {mockProducts.map(product => (
-                <ProductCard key={product.id} product={product} />)
+        <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12">
+                {(!pagination ? itemsToRender : data.slice(0, pageSize)).map((product) => (
+                    <ProductCard  key={product.id} product={product} />
+                ))}
+            </div>
+            {pagination && (
+                <div className="flex justify-center mt-8">
+                    <button className="cursor-pointer px-6 py-2 border rounded-md hover:bg-gray-50">
+                        Tải thêm
+                    </button>
+                </div>
             )}
-        </div>
+        </>
     )
 }
