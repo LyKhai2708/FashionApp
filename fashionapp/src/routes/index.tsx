@@ -16,6 +16,8 @@ import Cart from '../pages/Cart';
 import NotFound from '../layouts/404Page';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import Order from '../pages/Order';
+import ProfilePage from '../pages/ProfilePage';
 
 // Public route definitions
 const publicRoutes: RouteType[] = [
@@ -26,6 +28,8 @@ const publicRoutes: RouteType[] = [
   { path: '/cart', component: Cart },
   { path: '/login', component: Login, layout: Fragment},
   { path: '/register', component: Register , layout: Fragment},
+  { path: '/order', component: Order},
+  { path: '/profile', component: ProfilePage},
 ];
 
 export const generateRoutes = () => {

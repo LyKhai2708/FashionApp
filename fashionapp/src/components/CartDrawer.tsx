@@ -1,6 +1,6 @@
 import { Drawer, Button, Divider } from 'antd'
 import { ShoppingCart } from 'lucide-react'
-
+import { Link } from "react-router-dom"
 export interface CartItem {
     id: number
     name: string
@@ -65,9 +65,11 @@ export default function CartDrawer(props: CartDrawerProps) {
                         <span className="text-gray-600">Tổng tạm tính</span>
                         <span className="font-bold">{formatCurrency(subtotal)}₫</span>
                     </div>
-                    <Button  type="primary" size="large" className="!bg-black" block>
-                        Xem giỏ hàng
-                    </Button>
+                    <Link to="/cart">
+                        <Button  type="primary" size="large" className="!bg-black" block>
+                            Xem giỏ hàng
+                        </Button>
+                    </Link>
                 </div>
             )}
         </Drawer>

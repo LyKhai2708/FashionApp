@@ -4,8 +4,10 @@ import product2 from "../assets/product2.jpg";
 import product3 from "../assets/product3.jpg";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import ProductSlider from "../components/ProductSlider";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Cart() {
+    const navigate = useNavigate()
     interface CartItem {
         id: number;
         name: string;
@@ -105,8 +107,8 @@ export default function Cart() {
                     <div className="mt-4">
                         <div className="border-b grid grid-cols-4 gap-4 p-4 text-gray-500 font-semibold">
                             <span className="col-span-2">Thông tin sản phẩm</span>
-                            <span>Số lượng</span>
-                            <span>Tổng cộng</span>
+                            <span className="text-center">Số lượng</span>
+                            <span className="text-center">Tổng cộng</span>
                         </div>
                         <div className="divide-y divide-gray-200l">
                             {cartItems.map(item => (
@@ -116,12 +118,15 @@ export default function Cart() {
                                         <div className="flex flex-col gap-1">
                                             <h2 className="font-bold text-lg">{item.name}</h2>
                                             <span className="text-gray-500 text-sm">{item.size}/{item.color}</span>
-                                            <button className="inline-flex w-fit items-center gap-1 text-red-500 hover:underline text-sm cursor-pointer" onClick={() => removeItem(item.id)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {
+                                                item.discount?
+                                                (<span className="text-gray-500 text-sm"><span className="line-through">{formatCurrency(item.price)}₫</span> <span className="font-bold">{formatCurrency(getUnitPriceAfterDiscount(item))}₫</span></span>)
+                                                :(<span className="text-gray-500 text-sm">{formatCurrency(item.price)}₫</span>)
+                                            }
+                                            
                                         </div>
                                     </div>
-                                    <div className='flex items-center gap-4'>
+                                    <div className='flex flex-col items-center gap-2'>
                                         <div className='inline-flex items-center rounded mt-2 justify-between'>
                                             <button className='cursor-pointer' onClick={() => updateQuantity(item.id, -1)} aria-label="Giảm số lượng">
                                                 <Minus className="text-gray-400 w-4 h-4"/>
@@ -141,8 +146,11 @@ export default function Cart() {
                                                 <Plus className="text-gray-400 w-4 h-4"/>
                                             </button>
                                         </div>
+                                        <button className="inline-flex w-fit items-center gap-1 text-red-500 hover:underline text-sm cursor-pointer" onClick={() => removeItem(item.id)}>
+                                                <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                    <div className="text-md font-bold text-black">{formatCurrency(lineTotal(item))}₫</div>
+                                    <div className="text-md text-center font-bold text-black">{formatCurrency(lineTotal(item))}₫</div>
                                 </div>
                             ))}
                             
@@ -168,8 +176,8 @@ export default function Cart() {
                             <span className="text-base font-bold text-red-500">{formatCurrency(grandTotal)}₫</span>
                         </div>
                     </div>
-                    <button className="w-full mt-6 bg-black text-white py-3 rounded-md hover:bg-white hover:text-black hover:border-black border transition cursor-pointer">TIẾN HÀNH THANH TOÁN</button>
-                    <a href="/" className="block text-center mt-3 text-gray-600 hover:underline">Tiếp tục mua sắm</a>
+                    <button onClick={() => navigate('/order')} className="w-full mt-6 bg-black text-white py-3 rounded-md hover:bg-white hover:text-black hover:border-black border transition cursor-pointer">TIẾN HÀNH THANH TOÁN</button>
+                    <Link to="/" className="block text-center mt-3 text-gray-600 hover:underline">Tiếp tục mua sắm</Link>
                 </div>
             </div>
             <div className="mt-10">
