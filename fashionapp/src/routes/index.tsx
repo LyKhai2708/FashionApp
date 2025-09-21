@@ -18,6 +18,7 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Order from '../pages/Order';
 import ProfilePage from '../pages/ProfilePage';
+import OrderDetail from '../components/OrderDetail';
 
 // Public route definitions
 const publicRoutes: RouteType[] = [
