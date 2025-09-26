@@ -1,0 +1,96 @@
+const knex = require('../database/knex');
+const Paginator = require('./paginator');
+function categoryRepository() {
+    return knex('category');
+}
+function readCategory(payload) {
+    return {
+        category_name: payload.category_name,
+        slug: payload.slug,
+        parent_id: payload.parent_id,
+    }
+}
+
+async function createCategory(payload) {
+    const category = readCategory(payload);
+    const [id] = await categoryRepository().insert(category);
+    return { category_id: id, ...category };
+  }
+  
+  async function getCategoryById(id) {
+    return await categoryRepository().where('category_id', id).first();
+  }
+  
+  async function getCategoryByName(name, excludeId = null) {
+    let query = categoryRepository().where('category_name', name);
+    if (excludeId) {
+      query = query.andWhereNot('category_id', excludeId);
+    }
+    return await query.first();
+  }
+  
+  async function updateCategory(id, payload) {
+    const existingCategory = await getCategoryById(id);
+    if (!existingCategory) return null;
+  
+    const category = readCategory(payload);
+    await categoryRepository().where('category_id', id).update(category);
+    return { ...existingCategory, ...category };
+  }
+  
+  async function deleteCategory(id) {
+    const existingCategory = await getCategoryById(id);
+    if (!existingCategory) return null;
+  
+    await categoryRepository().where('category_id', id).del();
+    return existingCategory;
+  }
+  
+  async function getAllCategories({ page = 1, limit = 10, name, parent_id } = {}) {
+    const paginator = new Paginator(page, limit);
+  
+    let result = await categoryRepository()
+      .where((builder) => {
+        if (name) {
+          builder.whereILike('category_name', `%${name}%`);
+        }
+        if (parent_id !== undefined) {
+          builder.where('parent_id', parent_id);
+        }
+      })
+      .select(
+        knex.raw('count(category_id) OVER() AS recordCount'),
+        'category_id',
+        'category_name',
+        'slug',
+        'parent_id'
+      )
+      .limit(paginator.limit)
+      .offset(paginator.offset);
+  
+    let totalRecords = 0;
+    const categories = result.map((item) => {
+      totalRecords = item.recordCount;
+      delete item.recordCount;
+      return item;
+    });
+  
+    return {
+      metadata: paginator.getMetadata(totalRecords),
+      categories,
+    };
+  }
+  
+  async function deleteAllCategories() {
+    await categoryRepository().del();
+    return true;
+  }
+  module.exports = {
+    createCategory,
+    getCategoryById,
+    getCategoryByName,
+    updateCategory,
+    deleteCategory,
+    getAllCategories,
+    deleteAllCategories,
+  };
