@@ -14,10 +14,8 @@ async function checkBrandName(name) {
     return brandRepository().where('name', name).select('*').first();
 }
 async function createBrand(payload) {
-    console.log("payload", payload);
     const brand = readBrand(payload);
     const [id] = await brandRepository().insert(brand);
-    console.log("brand", { id, ...brand });
     return { id, ...brand };
 }
 

@@ -18,6 +18,44 @@ components:
           type: integer
           enum: [0, 1]
           description: Brand status
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: User name
+        email:
+          type: string
+          description: User email
+        phone:
+          type: string
+          description: User phone
+        role:
+          type: string
+          description: User role
+          enum: [customer, admin]
+        del_flag:
+          type: integer
+          enum: [0, 1]
+          description: User deletion status
+    Size:
+      type: object
+      properties:
+        size_id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Size name
+        created_at:
+          type: string
+          format: date-time
+          description: Size creation time
+          readOnly: true
+    
     PaginationMetadata:
       type: object
       properties:

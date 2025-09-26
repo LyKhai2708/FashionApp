@@ -2,9 +2,7 @@ const ApiError = require('../api-error');
 const sizeService = require('../services/sizes.service');
 const JSend = require('../jsend');
 
-const colorsService = require('../services/colors.service');
-const ApiError = require('../api-error');
-const JSend = require('../jsend');
+
 
 async function createSize(req, res, next) {
   const { name } = req.body;

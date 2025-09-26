@@ -50,6 +50,24 @@ module.exports.setup = (app) => {
      *                       type: array
      *                       items:
      *                         $ref: '#/components/schemas/Brand'
+     *       500:
+     *         description: Server error (An error occurred while fetching brands)
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [error]
+     *                 message:
+     *                   type: string
+     *                   description: A human-readable error message
+     *                   example: "An error occurred while fetching brands"
+     *                 data:
+     *                   type: object
+     *                   nullable: true
      */                    
     router.get('/', brandController.getBrandbyFilter);
     /**
@@ -83,7 +101,26 @@ module.exports.setup = (app) => {
      *                     properties:
      *                       brand:
      *                         $ref: '#/components/schemas/Brand'
-     * 
+     *         400:
+     *           description: Bad request (Validation failed)
+     *           content:
+     *             application/json:
+     *               schema:
+     *                 type: object
+     *                 properties:
+     *                   status:
+     *                     type: string
+     *                     description: The response status
+     *                     enum: [fail]
+     *                   message:
+     *                     type: string
+     *                     description: A human-readable error message
+     *                     example: "Invalid request data"
+     *                   data:
+     *                     type: object
+     *                     nullable: true
+     *         500:
+     *           description: Internal Server Error (An error occurred while creating the brand)
     */
     router.post('/', upload.none(), brandController.createBrand);
     /**
@@ -98,7 +135,23 @@ module.exports.setup = (app) => {
      *       200:
      *         description: All brands deleted
      *         $ref: '#/components/responses/200NoData'
-     */
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [error]
+     *                 message:
+     *                   type: string
+     *                   description: A human-readable error message
+     *                   example: "An error occurred while removing all brands"
+     */      
+
     router.delete('/', brandController.deleteAllBrands);
     router.all('/', methodNotAllowed);
     /**
@@ -163,6 +216,56 @@ module.exports.setup = (app) => {
      *                   properties:
      *                     brand:
      *                       $ref: '#/components/schemas/Brand'
+     *       404:
+     *         description: Brand not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [fail]
+     *                 message:
+     *                   type: string
+     *                   description: A human-readable error message
+     *                   example: "Brand not found"
+     *                 data:
+     *                   type: object
+     *                   nullable: true
+     *       409:
+     *         description: Brand with the same name already exists
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [fail]
+     *                 message:
+     *                   type: string
+     *                   example: "Brand already exists"
+     *                 data:
+     *                   type: object
+     *                   nullable: true
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [error]
+     *                 message:
+     *                   type: string
+     *                   description: A human-readable error message
+     *                   example: "Error updating brand with id 0"
      */
     router.put('/:id', brandController.updateBrand);
     /**
@@ -178,6 +281,36 @@ module.exports.setup = (app) => {
      *     responses:
      *       200:
      *         $ref: '#/components/responses/200NoData'
+     *       404:
+     *         description: Brand not found
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [fail]
+     *                 message:
+     *                   type: string
+     *                   description: A human-readable error message
+     *                   example: "Brand not found"
+     *       500:
+     *         description: Internal Server Error
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   description: The response status
+     *                   enum: [error]
+     *                 message:
+     *                   type: string
+     *                   description: A human-readable error message
+     *                   example: "Error deleting brand with id 0"
      */
     router.delete('/:id', brandController.deleteBrand);
     router.all('/:id', methodNotAllowed);

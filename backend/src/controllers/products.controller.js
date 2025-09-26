@@ -1,10 +1,10 @@
 const JSend = require('../jsend');
 
 function getProduct(req, res) {
-    return res.json(JSend.success({ contact: {} }));
+    return res.json(JSend.success({ product: {} }));
 }
 function updateProduct(req, res) {
-    return res.json(JSend.success({ contact: {} }));
+    return res.json(JSend.success({ product: {} }));
 }
 function deleteProduct(req, res) {
     return res.json(JSend.success());
@@ -26,7 +26,7 @@ function getProductsByFilter(req, res) {
         filters.push(`name=${name}`);
     }
     console.log(filters.join('&'));
-    return res.json(JSend.success({ contact: {} }));
+    return res.json(JSend.success({ products: {} }));
 }
 
 

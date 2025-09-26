@@ -7,7 +7,7 @@ function readCategory(payload) {
     return {
         category_name: payload.category_name,
         slug: payload.slug,
-        parent_id: payload.parent_id,
+        parent_id: payload.parent_id || null,
     }
 }
 

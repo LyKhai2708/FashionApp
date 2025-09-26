@@ -3,6 +3,8 @@ const cors = require('cors');
 const JSend = require('./jsend');
 const productsRouter = require('./routes/products.router');
 const brandsRouter = require('./routes/brand.router');
+const sizesRouter = require('./routes/sizes.router');
+const usersRouter = require('./routes/user.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
@@ -17,6 +19,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/public', express.static('public'));
 productsRouter.setup(app);
 brandsRouter.setup(app);
+sizesRouter.setup(app);
+usersRouter.setup(app);
 
 app.use(resourceNotFound);
 app.use(handleError);
