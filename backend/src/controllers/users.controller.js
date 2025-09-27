@@ -11,7 +11,14 @@ async function getUsers(req, res, next) {
     return next(new ApiError(500, 'Error fetching users'));
   }
 }
-
+async function findUserByEmail(email) {
+  try {
+    const user = await userService.getUserByEmail(email);
+    return user;
+  } catch (err) {
+    return null;
+  }
+}
 // GET /users/:id
 async function getUser(req, res, next) {
   try {
@@ -46,6 +53,7 @@ async function deleteUser(req, res, next) {
 }
 
 module.exports = {
+  findUserByEmail,
   getUsers,
   getUser,
   updateUser,
