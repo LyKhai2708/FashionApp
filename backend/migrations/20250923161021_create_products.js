@@ -12,7 +12,9 @@ exports.up = function(knex) {
     table.integer('category_id').unsigned().references('category_id').inTable('categories').onDelete('SET NULL');
     table.boolean('del_flag').defaultTo(0);
     table.string('slug', 200);
-
+    table.decimal('base_price', 10, 2).notNullable();
+    table.string('thumbnail',255);
+    table.integer('sold').defaultTo(0);
     // Indexes
     table.index('category_id', 'idx_product_category');
     table.index('brand_id', 'fk_product_brand_idx');

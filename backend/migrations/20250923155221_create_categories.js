@@ -15,6 +15,8 @@ exports.up = function (knex) {
       .inTable("categories")
       .onDelete("CASCADE")
       .index("fk_parent_category_idx");
+    table.boolean("active").defaultTo(1);
+    
   });
 };
 

@@ -1,14 +1,20 @@
 const knex = require('../database/knex');
 const Paginator = require('./paginator');
+const slugify = require('./slugify');
 function categoryRepository() {
     return knex('category');
 }
 function readCategory(payload) {
-    return {
+    const category = {
         category_name: payload.category_name,
-        slug: payload.slug,
         parent_id: payload.parent_id || null,
     }
+    if (payload.slug && payload.slug.trim() !== "") {
+      category.slug = slugify(payload.slug);
+    } else if (payload.category_name) {
+      category.slug = slugify(payload.category_name);
+    }
+    return category;
 }
 
 async function createCategory(payload) {
@@ -42,7 +48,7 @@ async function createCategory(payload) {
     const existingCategory = await getCategoryById(id);
     if (!existingCategory) return null;
   
-    await categoryRepository().where('category_id', id).del();
+    await categoryRepository().where('category_id', id).update({active: 0});
     return existingCategory;
   }
   
@@ -64,7 +70,7 @@ async function createCategory(payload) {
         'category_name',
         'slug',
         'parent_id'
-      )
+      ).where('active', 1)
       .limit(paginator.limit)
       .offset(paginator.offset);
   
@@ -82,7 +88,7 @@ async function createCategory(payload) {
   }
   
   async function deleteAllCategories() {
-    await categoryRepository().del();
+    await categoryRepository().update({active: 0});
     return true;
   }
   module.exports = {

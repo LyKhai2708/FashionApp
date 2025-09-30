@@ -40,7 +40,7 @@ async function getManyBrands(query) {
     .offset(paginator.offset);
 
     let totalRecords = 0;
-    results = result.map((item) => {
+    const results = result.map((item) => {
         totalRecords = item.recordCount;
         delete item.recordCount;
         return item;

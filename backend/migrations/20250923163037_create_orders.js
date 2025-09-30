@@ -12,6 +12,7 @@ exports.up = function(knex) {
       .defaultTo('pending');
 
     table.decimal('total_amount', 12, 2).nullable();
+    table.text('notes').nullable();
 
     table.text('shipping_address').nullable();
 

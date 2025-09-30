@@ -9,14 +9,15 @@ exports.up = function(knex) {
     table.integer('quantity').notNullable();
 
     table.decimal('price', 10, 2).notNullable();
-
+    table.decimal('discount_amount', 10, 2).defaultTo(0);
+    table.decimal('sub_total', 10, 2).notNullable();
     table.integer('product_variant_id').unsigned().notNullable()
       .references('product_variants_id').inTable('product_variants')
-      .onDelete('RESTRICT'); // không cho xóa variant nếu còn đơn hàng
+      .onDelete('RESTRICT');
 
     table.integer('order_id').unsigned().notNullable()
       .references('order_id').inTable('orders')
-      .onDelete('CASCADE'); // xóa đơn hàng -> xóa chi tiết đơn
+      .onDelete('CASCADE'); 
   });
 };
 

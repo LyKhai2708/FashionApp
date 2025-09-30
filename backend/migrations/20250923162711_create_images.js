@@ -6,8 +6,8 @@ exports.up = function(knex) {
   return knex.schema.createTable('images', function(table) {
     table.increments('image_id').primary();
 
-    table.integer('product_variants_id').unsigned().nullable()
-      .references('product_variants_id').inTable('product_variants')
+    table.integer('product_color_id').unsigned().nullable()
+      .references('product_color_id').inTable('product_color')
       .onDelete('CASCADE');
 
     table.string('image_url', 255).notNullable();

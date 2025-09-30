@@ -19,7 +19,7 @@ exports.up = function(knex) {
       .onDelete('SET NULL');
 
     table.integer('stock_quantity').defaultTo(0);
-    table.decimal('price', 10, 2).notNullable();
+    table.integer('active').defaultTo(1);
 
     table.unique(['product_id', 'size_id', 'color_id']);
   });
