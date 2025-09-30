@@ -21,7 +21,7 @@ module.exports.setup = (app) => {
   router.get('/:id', authMiddleware, ordersController.getOrderById);
   
   // cập nhật trạng thái đơn hàng (chỉ admin)
-  router.patch('/:id/status', authMiddleware, authorizeRoles['admin'], ordersController.updateOrderStatus);
+  router.patch('/:id/status', authMiddleware, authorizeRoles(['admin']), ordersController.updateOrderStatus);
   
   // Hủy đơn hàng
   router.delete('/:id', authMiddleware, ordersController.cancelOrder);

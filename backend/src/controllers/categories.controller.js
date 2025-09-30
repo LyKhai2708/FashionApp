@@ -1,5 +1,5 @@
 const ApiError = require('../api-error')
-const categoryService = require('../services/category.service');
+const categoryService = require('../services/categories.service');
 const JSend = require('../jsend');
 
 async function createCategory(req, res, next) {

@@ -41,3 +41,9 @@ async function addFavorite(req, res, next) {
         return next(new ApiError(500, "Error adding favorite"));
     }
 }
+
+module.exports = {
+    getFavorites,
+    deleteFavorite,
+    addFavorite
+};
