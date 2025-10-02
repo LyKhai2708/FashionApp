@@ -2,12 +2,12 @@ const knex = require('../database/knex');
 const Paginator = require('./paginator');
 
 function cartRepository() {
-    return knex('carts');
+    return knex('cart');
 }
 
 async function getCart(userId) {
-    const items = await knex('carts as c')
-        .join('product_variants as pv', 'c.product_variant_id', 'pv.product_variants_id')
+    const items = await knex('cart as c')
+        .join('product_variants as pv', 'c.variant_id', 'pv.product_variants_id')
         .join('products as p', 'pv.product_id', 'p.product_id')
         .join('colors as col', 'pv.color_id', 'col.color_id')
         .join('sizes as s', 'pv.size_id', 's.size_id')
@@ -157,7 +157,7 @@ async function updateCartItem(userId, cartId, quantity) {
     }
 
     // Kiểm tra cart item có thuộc về user không
-    const cartItem = await knex('carts as c')
+    const cartItem = await knex('cart as c')
         .join('product_variants as pv', 'c.product_variant_id', 'pv.product_variants_id')
         .join('products as p', 'pv.product_id', 'p.product_id')
         .where('c.cart_id', cartId)

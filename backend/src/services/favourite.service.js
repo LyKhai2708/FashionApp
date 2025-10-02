@@ -5,9 +5,9 @@ function favoriteRepository() {
     return knex('favorites');
 }
 
-async function getFavorites({ page = 1, limit = 10, user_id } = {}) {
+async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
     const paginator = new Paginator(page, limit);
-    
+    console.log(user_id, page, limit);
     // Lấy promotion active cho mỗi product
     const promotionSubquery = knex.raw(
         `(SELECT pp.product_id, p.discount_percent
@@ -21,7 +21,7 @@ async function getFavorites({ page = 1, limit = 10, user_id } = {}) {
     // Query chính để lấy favorites
     let result = knex('favorites as f')
         .leftJoin('products as p', 'f.product_id', 'p.product_id')
-        .leftJoin('brands as b', 'p.brand_id', 'b.id')
+        .leftJoin('brand as b', 'p.brand_id', 'b.id')
         .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id')
         .leftJoin('categories as c', 'p.category_id', 'c.category_id')
         .where('f.user_id', user_id)
@@ -38,7 +38,7 @@ async function getFavorites({ page = 1, limit = 10, user_id } = {}) {
             'p.sold',
             'p.slug',
             'b.name as brand_name',
-            'c.name as category_name',
+            'c.category_name',
             'active_promotions.discount_percent',
             // Tính giá sau giảm
             knex.raw(`

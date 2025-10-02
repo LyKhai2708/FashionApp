@@ -55,7 +55,796 @@ components:
           format: date-time
           description: Size creation time
           readOnly: true
-    
+    Category:
+      type: object
+      properties:
+        category_id:
+          type: integer
+          readOnly: true
+        category_name:
+          type: string
+          description: Category name
+        slug:
+          type: string
+          description: Category slug
+          readOnly: true
+        parent_id:
+          type: integer
+          nullable: true
+          description: Parent category ID for hierarchical structure
+        active:
+          type: integer
+          enum: [0, 1]
+          description: Category status
+          default: 1
+    Color:
+      type: object
+      properties:
+        color_id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Color name
+        hex_code:
+          type: string
+          description: Hex color code
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          example: "#FF0000"
+    Favourite:
+      type: object
+      properties:
+        favorite_id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          description: User ID
+        product_id:
+          type: integer
+          description: Product ID
+        created_at:
+          type: string
+          format: date-time
+          description: When favorite was added
+          readOnly: true
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              cart_id:
+                type: integer
+                description: Cart item ID
+              quantity:
+                type: integer
+                description: Quantity of the item
+              added_at:
+                type: string
+                format: date-time
+                description: When item was added to cart
+              variant:
+                type: object
+                properties:
+                  variant_id:
+                    type: integer
+                  stock_quantity:
+                    type: integer
+                  color:
+                    type: object
+                    properties:
+                      color_id:
+                        type: integer
+                      name:
+                        type: string
+                      hex_code:
+                        type: string
+                  size:
+                    type: object
+                    properties:
+                      size_id:
+                        type: integer
+                      name:
+                        type: string
+              product:
+                type: object
+                properties:
+                  product_id:
+                    type: integer
+                  name:
+                    type: string
+                  base_price:
+                    type: number
+                    format: float
+                  thumbnail:
+                    type: string
+                  image_url:
+                    type: string
+                  discount_percent:
+                    type: number
+                    format: float
+                  unit_price:
+                    type: number
+                    format: float
+              subtotal:
+                type: number
+                format: float
+        summary:
+          type: object
+          properties:
+            total_items:
+              type: integer
+              description: Number of different products in cart
+            total_quantity:
+              type: integer
+              description: Total quantity of all items
+            total_amount:
+              type: number
+              format: float
+              description: Total cart value
+    Order:
+      type: object
+      properties:
+        order_id:
+          type: integer
+          readOnly: true
+          description: Order ID
+        user_id:
+          type: integer
+          description: User ID who placed the order
+        order_status:
+          type: string
+          enum: [pending, processing, shipped, delivered, cancelled]
+          description: Order status
+        sub_total:
+          type: number
+          format: float
+          description: Subtotal amount (before shipping)
+        shipping_fee:
+          type: number
+          format: float
+          description: Shipping fee
+          default: 0
+        total_amount:
+          type: number
+          format: float
+          description: Total order amount (sub_total + shipping_fee)
+        payment_method:
+          type: string
+          enum: [cash_on_delivery, bank_transfer]
+          description: Payment method
+          default: cash_on_delivery
+        payment_status:
+          type: string
+          enum: [unpaid, paid, refund]
+          description: Payment status
+          default: unpaid
+        notes:
+          type: string
+          nullable: true
+          description: Order notes
+        shipping_address:
+          type: string
+          description: Shipping address
+        order_date:
+          type: string
+          format: date-time
+          description: Order creation date
+          readOnly: true
+        customer_name:
+          type: string
+          description: Customer full name
+          readOnly: true
+        customer_email:
+          type: string
+          description: Customer email
+          readOnly: true
+        customer_phone:
+          type: string
+          description: Customer phone
+          readOnly: true
+        items:
+          type: array
+          description: Order items (only in detailed view)
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    OrderItem:
+      type: object
+      properties:
+        order_detail_id:
+          type: integer
+          readOnly: true
+          description: Order detail ID
+        order_id:
+          type: integer
+          description: Order ID
+        product_variant_id:
+          type: integer
+          description: Product variant ID
+        quantity:
+          type: integer
+          description: Quantity ordered
+        price:
+          type: number
+          format: float
+          description: Unit price at time of order
+        discount_amount:
+          type: number
+          format: float
+          description: Discount amount
+        sub_total:
+          type: number
+          format: float
+          description: Subtotal for this item
+        product_name:
+          type: string
+          description: Product name
+          readOnly: true
+        size_name:
+          type: string
+          description: Size name
+          readOnly: true
+        color_name:
+          type: string
+          description: Color name
+          readOnly: true
+        color_code:
+          type: string
+          description: Color hex code
+          readOnly: true
+        image_url:
+          type: string
+          description: Product image URL
+          readOnly: true
+    CreateOrderRequest:
+      type: object
+      required:
+        - items
+        - shipping_address
+      properties:
+        items:
+          type: array
+          description: List of products to order
+          items:
+            type: object
+            required:
+              - product_variant_id
+              - quantity
+              - price
+            properties:
+              product_variant_id:
+                type: integer
+                description: Product variant ID
+              quantity:
+                type: integer
+                minimum: 1
+                description: Quantity to order
+              price:
+                type: number
+                format: float
+                description: Unit price
+        shipping_fee:
+          type: number
+          format: float
+          minimum: 0
+          default: 0
+          description: Shipping fee
+        payment_method:
+          type: string
+          enum: [cash_on_delivery, bank_transfer]
+          default: cash_on_delivery
+          description: Payment method
+        notes:
+          type: string
+          description: Order notes
+        shipping_address:
+          type: string
+          description: Shipping address
+    UpdateOrderStatusRequest:
+      type: object
+      required:
+        - order_status
+      properties:
+        order_status:
+          type: string
+          enum: [pending, processing, shipped, delivered, cancelled]
+          description: New order status
+    UpdatePaymentStatusRequest:
+      type: object
+      required:
+        - payment_status
+      properties:
+        payment_status:
+          type: string
+          enum: [unpaid, paid, refund]
+          description: New payment status
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: Review ID
+        user_id:
+          type: integer
+          description: User ID who wrote the review
+        product_id:
+          type: integer
+          description: Product ID being reviewed
+        order_id:
+          type: integer
+          description: Order ID for purchase verification
+        is_verified_purchase:
+          type: boolean
+          description: Whether this is a verified purchase
+          readOnly: true
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Rating from 1 to 5 stars
+        comment:
+          type: string
+          nullable: true
+          description: Review comment
+        created_at:
+          type: string
+          format: date-time
+          description: Review creation date
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update time
+          readOnly: true
+        customer_name:
+          type: string
+          description: Customer full name
+          readOnly: true
+        customer_email:
+          type: string
+          description: Customer email
+          readOnly: true
+        customer_phone:
+          type: string
+          description: Customer phone
+          readOnly: true
+    CreateReviewRequest:
+      type: object
+      required:
+        - order_id
+        - rating
+      properties:
+        order_id:
+          type: integer
+          description: Order ID to verify purchase
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Rating from 1 to 5 stars
+        comment:
+          type: string
+          description: Review comment
+    UpdateReviewRequest:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Updated rating from 1 to 5 stars
+        comment:
+          type: string
+          description: Updated review comment
+    Product:
+      type: object
+      properties:
+        product_id:
+          type: integer
+          readOnly: true
+          description: Product ID
+        name:
+          type: string
+          description: Product name
+        description:
+          type: string
+          description: Product description
+        base_price:
+          type: number
+          format: float
+          description: Base price of the product
+        thumbnail:
+          type: string
+          nullable: true
+          description: Product thumbnail image URL
+        category_id:
+          type: integer
+          description: Category ID
+        brand_id:
+          type: integer
+          description: Brand ID
+        created_at:
+          type: string
+          format: date-time
+          description: Product creation date
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update time
+          readOnly: true
+        del_flag:
+          type: integer
+          enum: [0, 1]
+          description: Deletion status (0=active, 1=deleted)
+          readOnly: true
+        brand_name:
+          type: string
+          description: Brand name
+          readOnly: true
+        category_name:
+          type: string
+          description: Category name
+          readOnly: true
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            variants:
+              type: array
+              description: Product variants
+              readOnly: true
+              items:
+                $ref: '#/components/schemas/ProductVariant'
+            images:
+              type: array
+              description: Product images
+              readOnly: true
+              items:
+                $ref: '#/components/schemas/ProductImage'
+    ProductVariant:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+          readOnly: true
+          description: Variant ID
+        product_id:
+          type: integer
+          description: Product ID
+        size_id:
+          type: integer
+          description: Size ID
+        color_id:
+          type: integer
+          description: Color ID
+        price:
+          type: number
+          format: float
+          description: Variant price
+        stock_quantity:
+          type: integer
+          description: Stock quantity
+        created_at:
+          type: string
+          format: date-time
+          description: Variant creation date
+          readOnly: true
+        del_flag:
+          type: integer
+          enum: [0, 1]
+          description: Deletion status
+          readOnly: true
+        size_name:
+          type: string
+          description: Size name
+          readOnly: true
+        color_name:
+          type: string
+          description: Color name
+          readOnly: true
+        color_code:
+          type: string
+          description: Color hex code
+          readOnly: true
+    ProductImage:
+      type: object
+      properties:
+        image_id:
+          type: integer
+          readOnly: true
+          description: Image ID
+        product_id:
+          type: integer
+          description: Product ID
+        variant_id:
+          type: integer
+          nullable: true
+          description: Variant ID (if image is specific to variant)
+        image_url:
+          type: string
+          description: Image URL
+        alt_text:
+          type: string
+          nullable: true
+          description: Alternative text for image
+        created_at:
+          type: string
+          format: date-time
+          description: Image upload date
+          readOnly: true
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - description
+        - base_price
+        - category_id
+        - brand_id
+      properties:
+        name:
+          type: string
+          description: Product name
+          example: "iPhone 15 Pro"
+        description:
+          type: string
+          description: Product description
+          example: "Latest iPhone model with advanced features"
+        base_price:
+          type: number
+          format: float
+          description: Base price of the product
+          example: 25000000
+        category_id:
+          type: integer
+          description: Category ID
+          example: 1
+        brand_id:
+          type: integer
+          description: Brand ID
+          example: 1
+        variants:
+          type: array
+          description: Product variants
+          items:
+            type: object
+            required:
+              - size_id
+              - color_id
+              - price
+              - stock_quantity
+            properties:
+              size_id:
+                type: integer
+                description: Size ID
+              color_id:
+                type: integer
+                description: Color ID
+              price:
+                type: number
+                format: float
+                description: Variant price
+              stock_quantity:
+                type: integer
+                minimum: 0
+                description: Stock quantity
+              imageCount:
+                type: integer
+                minimum: 0
+                description: Number of images for this variant
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Product name
+        description:
+          type: string
+          description: Product description
+        base_price:
+          type: number
+          format: float
+          description: Base price
+        category_id:
+          type: integer
+          description: Category ID
+        brand_id:
+          type: integer
+          description: Brand ID
+    CreateVariantRequest:
+      type: object
+      required:
+        - product_id
+        - size_id
+        - color_id
+        - stock_quantity
+      properties:
+        product_id:
+          type: integer
+          description: Product ID
+          example: 1
+        size_id:
+          type: integer
+          description: Size ID
+          example: 2
+        color_id:
+          type: integer
+          description: Color ID
+          example: 3
+        stock_quantity:
+          type: integer
+          minimum: 0
+          description: Stock quantity
+          example: 100
+        active:
+          type: integer
+          enum: [0, 1]
+          default: 1
+          description: Active status (0=inactive, 1=active)
+    UpdateVariantRequest:
+      type: object
+      properties:
+        size_id:
+          type: integer
+          description: Size ID
+        color_id:
+          type: integer
+          description: Color ID
+        stock_quantity:
+          type: integer
+          minimum: 0
+          description: Stock quantity
+        active:
+          type: integer
+          enum: [0, 1]
+          description: Active status (0=inactive, 1=active)
+    Promotion:
+      type: object
+      properties:
+        promo_id:
+          type: integer
+          readOnly: true
+          description: Promotion ID
+        promo_name:
+          type: string
+          description: Promotion name
+        description:
+          type: string
+          nullable: true
+          description: Promotion description
+        discount_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Discount percentage
+        start_date:
+          type: string
+          format: date
+          description: Promotion start date
+        end_date:
+          type: string
+          format: date
+          description: Promotion end date
+        active:
+          type: boolean
+          description: Promotion active status
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          readOnly: true
+    CreatePromotionRequest:
+      type: object
+      required:
+        - name
+        - discount_percent
+        - start_date
+        - end_date
+      properties:
+        name:
+          type: string
+          description: Promotion name
+          example: "Summer Sale 2024"
+        description:
+          type: string
+          description: Promotion description
+          example: "Big summer discount on all items"
+        discount_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Discount percentage
+          example: 25
+        start_date:
+          type: string
+          format: date
+          description: Promotion start date
+          example: "2024-06-01"
+        end_date:
+          type: string
+          format: date
+          description: Promotion end date
+          example: "2024-08-31"
+        active:
+          type: boolean
+          default: true
+          description: Promotion active status
+    Image:
+      type: object
+      properties:
+        image_id:
+          type: integer
+          readOnly: true
+          description: Image ID
+          example: 123
+        product_color_id:
+          type: integer
+          description: Product color ID
+          example: 5
+        image_url:
+          type: string
+          description: Image URL path
+          example: "/public/uploads/1696234567890_product.jpg"
+    OrderListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+        data:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Order'
+            pagination:
+              $ref: '#/components/schemas/OrderPagination'
+    OrderDetailResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+        data:
+          type: object
+          properties:
+            order:
+              $ref: '#/components/schemas/Order'
+    OrderPagination:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of orders
+        total_pages:
+          type: integer
+          description: Total number of pages
+        current_page:
+          type: integer
+          description: Current page number
+        per_page:
+          type: integer
+          description: Number of orders per page
+        has_next_page:
+          type: boolean
+          description: Whether there is a next page
+        has_previous_page:
+          type: boolean
+          description: Whether there is a previous page
     PaginationMetadata:
       type: object
       properties:
@@ -96,10 +885,82 @@ components:
                 nullable: true
                 default: null
                 description: Response data
+    Unauthorized:
+      description: Unauthorized - No valid token provided
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [fail]
+              message:
+                type: string
+                example: "Unauthorized"
+    Forbidden:
+      description: Forbidden - Invalid token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [fail]
+              message:
+                type: string
+                example: "Invalid token"
+    ServerError:
+      description: Server error 
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                description: The response status
+                enum: [error]
+              message:
+                type: string
+                description: A human-readable error message
+                example: "An error occurred with server"
+              data:
+                type: object
+                nullable: true
   parameters:
     brandIdParam:
       name: id
       description: Brand id
+      in: path
+      required: true
+      schema:
+        type: integer
+    categoryIdParam:
+      name: category_id
+      description: Category id
+      in: path
+      required: true
+      schema:
+        type: integer
+    colorIdParam:
+      name: id
+      description: Color id
+      in: path
+      required: true
+      schema:
+        type: integer
+    userIdParam:
+      name: id
+      description: User id
+      in: path
+      required: true
+      schema:
+        type: integer
+    productIdParam:
+      name: id
+      description: Product id
       in: path
       required: true
       schema:
@@ -123,4 +984,50 @@ components:
         type: integer
         default: 1
         minimum: 1
-      
+    orderIdParam:
+      name: id
+      description: Order ID
+      in: path
+      required: true
+      schema:
+        type: integer
+    orderStatusParam:
+      name: order_status
+      description: Filter orders by order status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [pending, processing, shipped, delivered, cancelled]
+    paymentStatusParam:
+      name: payment_status
+      description: Filter orders by payment status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [unpaid, paid, refund]
+    paymentMethodParam:
+      name: payment_method
+      description: Filter orders by payment method
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [cash_on_delivery, bank_transfer]
+    startDateParam:
+      name: start_date
+      description: Filter orders from this date (YYYY-MM-DD)
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+    endDateParam:
+      name: end_date
+      description: Filter orders until this date (YYYY-MM-DD)
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date

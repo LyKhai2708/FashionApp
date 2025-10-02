@@ -7,7 +7,7 @@ function promotionRepository() {
 function readPromotion(payload) {
     const promotion = {
         promo_id: payload.promo_id,
-        promo_name: payload.promo_name,
+        name: payload.name,
         discount_percent: payload.discount_percent,
         start_date: payload.start_date,
         end_date: payload.end_date,
@@ -28,7 +28,7 @@ async function getManyPromotion(payload){
     const paginator = new Paginator(page, limit);
     let result = promotionRepository().where((builder) => {
         if(promo_name){
-            builder.whereILike('promo_name', `%${promo_name}%`);
+            builder.whereILike('name', `%${promo_name}%`);
         }
         if(active !== undefined){
             builder.where('active', active);
@@ -39,15 +39,15 @@ async function getManyPromotion(payload){
         if(end_date){
             builder.where('end_date', '<=', end_date);
         }
-    }).select(knex.raw(
-        'count(promo_id) OVER() AS recordCount',
+    }).select(
+        knex.raw('count(promo_id) OVER() AS recordCount'),
         'promo_id',
-        'promo_name',
+        'name',
         'discount_percent',
         'start_date',
         'end_date',
         'active'
-    )).limit(paginator.limit).offset(paginator.offset);
+    ).limit(paginator.limit).offset(paginator.offset);
     
     let totalRecords = 0;
     result = (await result).map((result) => {
@@ -116,7 +116,7 @@ async function getManyProductInPromotion(payload){
     let result = knex('promotion_products as pp')
         .join('promotions as p', 'pp.promo_id', 'p.promo_id')
         .join('products as prod', 'pp.product_id', 'prod.product_id')
-        .leftJoin('brands as b', 'prod.brand_id', 'b.id')
+        .leftJoin('brand as b', 'prod.brand_id', 'b.id')
         .leftJoin('categories as c', 'prod.category_id', 'c.category_id')
         .where('pp.promo_id', promo_id)
         .where('prod.del_flag', 0)
@@ -130,7 +130,7 @@ async function getManyProductInPromotion(payload){
             'prod.sold',
             'prod.slug',
             'b.name as brand_name',
-            'c.name as category_name',
+            'c.category_name',
             // Promotion info
             'p.promo_id',
             'p.name as promo_name',
@@ -138,9 +138,7 @@ async function getManyProductInPromotion(payload){
             'p.start_date',
             'p.end_date',
             'p.active',
-            knex.raw(`
-                ROUND(prod.base_price * (1 - p.discount_percent / 100), 2) as discounted_price
-            `)
+            knex.raw('ROUND(prod.base_price * (1 - p.discount_percent / 100), 2) as discounted_price')
         )
         .orderBy('prod.name')
         .limit(paginator.limit)

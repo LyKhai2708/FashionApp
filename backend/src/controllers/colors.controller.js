@@ -72,7 +72,7 @@ async function getColor(req, res, next) {
 }
 
 async function updateColor(req, res, next) {
-  const {color_id} = req.params;
+  const {id: color_id} = req.params;
   const {name} = req.body;
 
   if (Object.keys(req.body).length === 0) {
@@ -100,7 +100,7 @@ async function updateColor(req, res, next) {
 }
 
 async function deleteColor(req, res, next) {
-  const { color_id } = req.params;
+  const { id: color_id } = req.params;
 
   try {
     const deletedColor = await colorsService.deleteColor(color_id);

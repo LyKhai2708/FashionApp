@@ -12,7 +12,7 @@ class OrdersController {
       }
 
       // Gán user_id từ thông tin xác thực
-      orderData.user_id = req.user.user_id;
+      orderData.user_id = req.user.id;
 
       const order = await orderService.createOrder(orderData, items);
       
@@ -36,7 +36,7 @@ class OrdersController {
       // Nếu không phải admin, chỉ lấy đơn hàng của user hiện tại
       const filters = { ...req.query };
       if (req.user.role !== 'admin') {
-        filters.user_id = req.user.user_id;
+        filters.user_id = req.user.id;
       }
 
       const result = await orderService.getOrders(
@@ -62,7 +62,7 @@ class OrdersController {
       }
 
       // Kiểm tra quyền truy cập
-      if (req.user.role !== 'admin' && order.user_id !== req.user.user_id) {
+      if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
         return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
       }
 
@@ -80,13 +80,13 @@ class OrdersController {
       }
 
       const { id } = req.params;
-      const { status } = req.body;
+      const { order_status } = req.body;
 
-      if (!status) {
-        throw new ApiError(400, 'Trạng thái không được để trống');
+      if (!order_status) {
+        throw new ApiError(400, 'Trạng thái đơn hàng không được để trống');
       }
 
-      const updated = await orderService.updateOrderStatus(id, status);
+      const updated = await orderService.updateOrderStatus(id, order_status);
       
       if (!updated) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
@@ -96,6 +96,32 @@ class OrdersController {
     } catch (error) {
       console.error('Error updating order status:', error);
       return next(new ApiError(500, error.message || 'Lỗi khi cập nhật trạng thái đơn hàng'));
+    }
+  }
+
+  async updatePaymentStatus(req, res, next) {
+    try {
+      if (req.user.role !== 'admin') {
+        return next(new ApiError(403, 'Chỉ admin mới có quyền thực hiện thao tác này'));
+      }
+
+      const { id } = req.params;
+      const { payment_status } = req.body;
+
+      if (!payment_status) {
+        throw new ApiError(400, 'Trạng thái thanh toán không được để trống');
+      }
+
+      const updated = await orderService.updatePaymentStatus(id, payment_status);
+      
+      if (!updated) {
+        return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
+      }
+
+      return res.json(JSend.success({ message: 'Cập nhật trạng thái thanh toán thành công' }));
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      return next(new ApiError(500, error.message || 'Lỗi khi cập nhật trạng thái thanh toán'));
     }
   }
 
@@ -111,12 +137,12 @@ class OrdersController {
       }
 
       // Kiểm tra quyền hủy đơn hàng
-      if (req.user.role !== 'admin' && order.user_id !== req.user.user_id) {
+      if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
         return next(new ApiError(403, 'Bạn không có quyền hủy đơn hàng này'));
       }
 
       // Chỉ cho phép hủy đơn hàng ở trạng thái pending
-      if (order.status !== 'pending') {
+      if (order.order_status !== 'pending') {
         return next(new ApiError(400, 'Chỉ có thể hủy đơn hàng đang ở trạng thái chờ xử lý'));
       }
 

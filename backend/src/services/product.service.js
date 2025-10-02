@@ -114,7 +114,7 @@ async function getProductById(id) {
     );
 
     const product = await knex('products as p')
-        .leftJoin('brands as b', 'p.brand_id', 'b.id')
+        .leftJoin('brand as b', 'p.brand_id', 'b.id')
         .leftJoin('categories as c', 'p.category_id', 'c.category_id')
         .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id')
         .where('p.product_id', id)
@@ -122,7 +122,7 @@ async function getProductById(id) {
         .select(
             'p.*',
             'b.name as brand_name',
-            'c.name as category_name',
+            'c.category_name',
             'active_promotions.discount_percent',
             'active_promotions.promo_name',
             'active_promotions.promo_id',
@@ -242,71 +242,76 @@ async function updateProduct(id, payload) {
 
   
 async function getManyProducts(query) {
-    const { name, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10 } = query;
+    const { search, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10, sort } = query;
 
     const paginator = new Paginator(page, limit);
 
-    // Subquery cho promotions
-    const promotionSubquery = knex.raw(
-        `(SELECT pp.product_id, p.discount_percent
-        FROM promotion_products pp
-        JOIN promotions p ON pp.promo_id = p.promo_id
-        WHERE p.active = TRUE
-        AND p.start_date <= CURDATE()
-        AND p.end_date >= CURDATE()) AS active_promotions`
-    );
+    // Helper function để build where conditions
+    function applyFilters(builder) {
+        if (search) builder.where('p.name', 'like', `%${search}%`);
+        if (brand_id) builder.where('p.brand_id', brand_id);
+        if (category_id) builder.where('p.category_id', category_id);
+        if (category_slug) builder.where('cat.slug', category_slug);
+        if (del_flag !== undefined) {
+            builder.where('p.del_flag', del_flag == '1' || del_flag == 'true' ? 1 : 0);
+        } else {
+            builder.where('p.del_flag', 0);
+        }
+        if (min_price) {
+            builder.whereRaw(`
+                CASE 
+                    WHEN active_promotions.discount_percent IS NOT NULL 
+                    THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2)
+                    ELSE p.base_price 
+                END >= ?
+            `, [min_price]);
+        }
+        if (max_price) {
+            builder.whereRaw(`
+                CASE 
+                    WHEN active_promotions.discount_percent IS NOT NULL 
+                    THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2)
+                    ELSE p.base_price 
+                END <= ?
+            `, [max_price]);
+        }
+        if (color_id) builder.where('pv.color_id', color_id);
+        if (size_id) builder.where('pv.size_id', size_id);
+    }
 
-    const isVariantJoin = min_price || max_price || color_id || size_id;
-    const isCategoryJoin = category_slug;
-    
-    let baseQuery = knex('products as p')
-        .leftJoin('brands as b', 'p.brand_id', 'b.id')
-        .leftJoin('categories as c', 'p.category_id', 'c.category_id')
-        .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id');
+    // Helper function để build base query
+    function buildBaseQuery() {
+        const promotionSubquery = knex.raw(
+            `(SELECT pp.product_id, p.discount_percent
+            FROM promotion_products pp
+            JOIN promotions p ON pp.promo_id = p.promo_id
+            WHERE p.active = TRUE
+            AND p.start_date <= CURDATE()
+            AND p.end_date >= CURDATE()) AS active_promotions`
+        );
+
+        let query = knex('products as p')
+            .leftJoin('brand as b', 'p.brand_id', 'b.id')
+            .leftJoin('categories as c', 'p.category_id', 'c.category_id')
+            .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id');
+            
+        // Join variants nếu cần filter theo variant
+        if (color_id || size_id) {
+            query = query.join('product_variants as pv', 'p.product_id', 'pv.product_id');
+        }
         
-    if(isVariantJoin){
-        baseQuery = baseQuery
-            .join('product_variants as pv', 'p.product_id', 'pv.product_id');
-    }
-    if (isCategoryJoin) {
-        baseQuery = baseQuery
-            .join('categories as cat', 'p.category_id', 'cat.category_id');
+        // Join category slug nếu cần
+        if (category_slug) {
+            query = query.join('categories as cat', 'p.category_id', 'cat.category_id');
+        }
+
+        return query;
     }
 
-    let result = await baseQuery
-        .where((builder) => {
-            if (name) {
-                builder.where('p.name', 'like', `%${name}%`);
-            }
-            if (brand_id) {
-                builder.where('p.brand_id', brand_id);
-            }
-            if (category_id) {
-                builder.where('p.category_id', category_id);
-            }
-            if (category_slug) {
-                builder.where('cat.slug', category_slug);
-            }
-            if (del_flag !== undefined) {
-                builder.where('p.del_flag', del_flag == '1' || del_flag == 'true' ? 1 : 0);
-            } else {
-                builder.where('p.del_flag', 0); // Mặc định chỉ lấy sản phẩm chưa xóa
-            }
-            if (min_price) {
-                builder.where('p.base_price', '>=', min_price);
-            }
-            if (max_price) {
-                builder.where('p.base_price', '<=', max_price);
-            }
-            if (color_id) {
-                builder.where('pv.color_id', color_id);
-            }
-            if (size_id) {
-                builder.where('pv.size_id', size_id);
-            }
-        })
+    // Main query để lấy products
+    let productsQuery = buildBaseQuery()
+        .where(applyFilters)
         .select(
-            knex.raw('count(DISTINCT p.product_id) OVER() AS recordCount'),
             'p.product_id',
             'p.name',
             'p.description',
@@ -316,9 +321,8 @@ async function getManyProducts(query) {
             'p.brand_id',
             'p.category_id',
             'p.created_at',
-            'p.updated_at',
             'b.name as brand_name',
-            'c.name as category_name',
+            'c.category_name',
             'active_promotions.discount_percent',
             knex.raw(`
                 CASE 
@@ -339,12 +343,27 @@ async function getManyProducts(query) {
         .limit(paginator.limit)
         .offset(paginator.offset);
 
-    let totalRecords = 0;
-    const products = result.map((item) => {
-        totalRecords = item.recordCount;
-        delete item.recordCount;
-        return item;
-    });
+    // Apply sorting
+    switch (sort) {
+        case 'price_asc':
+            productsQuery = productsQuery.orderByRaw(`CASE WHEN active_promotions.discount_percent IS NOT NULL THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2) ELSE p.base_price END ASC`);
+            break;
+        case 'price_desc':
+            productsQuery = productsQuery.orderByRaw(`CASE WHEN active_promotions.discount_percent IS NOT NULL THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2) ELSE p.base_price END DESC`);
+            break;
+        case 'newest':
+        default:
+            productsQuery = productsQuery.orderBy('p.created_at', 'desc');
+    }
+
+    // Count query để lấy total records
+    const [{ total }] = await buildBaseQuery()
+        .where(applyFilters)
+        .countDistinct('p.product_id as total');
+
+    // Execute main query
+    const result = await productsQuery;
+    const products = result;
 
     // Lấy màu sắc và ảnh cho từng sản phẩm
     if (products.length > 0) {
@@ -404,7 +423,7 @@ async function getManyProducts(query) {
     }
 
     return {
-        metadata: paginator.getMetadata(totalRecords),
+        metadata: paginator.getMetadata(total),
         products,
     };
 }

@@ -16,6 +16,7 @@ async function getPromotionsbyFilter(req, res, next) {
     try {
         result = await promotionService.getManyPromotion(req.query);
     } catch (err) {
+        console.log(err);
         return next(new ApiError(500, "Error fetching promotions"));
     }
     return res.json(JSend.success({
@@ -25,11 +26,14 @@ async function getPromotionsbyFilter(req, res, next) {
 }
 
 async function createPromotion(req, res, next) {
-    if (!req.body?.promo_name || typeof req.body.promo_name !== 'string') {
+    if (!req.body?.name || typeof req.body.name !== 'string') {
         return next(new ApiError(400, 'Promotion name should be a non-empty string'));
     }
     if (!req.body?.discount_percent || typeof req.body.discount_percent !== 'number') {
         return next(new ApiError(400, 'Discount percent should be a number'));
+    }
+    if (req.body.discount_percent < 0 || req.body.discount_percent > 100) {
+        return next(new ApiError(400, 'Discount percent should be between 0 and 100'));
     }
     if (!req.body?.start_date || typeof req.body.start_date !== 'string') {
         return next(new ApiError(400, 'Start date should be a string'));
@@ -37,42 +41,73 @@ async function createPromotion(req, res, next) {
     if (!req.body?.end_date || typeof req.body.end_date !== 'string') {
         return next(new ApiError(400, 'End date should be a string'));
     }
+
+    // Date validation
+    const startDate = new Date(req.body.start_date);
+    const endDate = new Date(req.body.end_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+    if (isNaN(startDate.getTime())) {
+        return next(new ApiError(400, 'Start date is not a valid date'));
+    }
+    if (isNaN(endDate.getTime())) {
+        return next(new ApiError(400, 'End date is not a valid date'));
+    }
+    if (startDate < today) {
+        return next(new ApiError(400, 'Start date cannot be in the past'));
+    }
+    if (endDate < today) {
+        return next(new ApiError(400, 'End date cannot be in the past'));
+    }
+    if (startDate >= endDate) {
+        return next(new ApiError(400, 'Start date must be before end date'));
+    }
     
     try {
         const promotion = await promotionService.createPromotion(req.body);
         return res.status(201).json(JSend.success({ promotion }));
     } catch (err) {
+        console.log(err);
         return next(new ApiError(500, "Error creating promotion"));
     }
 }
 
 async function addProductToPromotion(req, res, next) {
     try {
-        const { product_id, promo_id } = req.body;
+        const { product_id, promo_id } = req.params;
         const result = await promotionService.addProductToPromotion(product_id, promo_id);
         return res.json(JSend.success({ result }));
     } catch (err) {
+        console.log(err);
         return next(new ApiError(500, "Error adding product to promotion"));
     }
 }
 
 async function removeProductFromPromotion(req, res, next) {
     try {
-        const { product_id, promo_id } = req.body;
+        const { product_id, promo_id } = req.params;
         const result = await promotionService.removeProductFromPromotion(product_id, promo_id);
         return res.json(JSend.success({ result }));
     } catch (err) {
+        console.log(err);
         return next(new ApiError(500, "Error removing product from promotion"));
     }
 }
 
-
 async function getProductsInPromotion(req, res, next) {
     try {
         const { promo_id } = req.params;
-        const result = await promotionService.getManyProductInPromotion(promo_id);
+        const { page, limit } = req.query;
+        
+        const result = await promotionService.getManyProductInPromotion({
+            promo_id: parseInt(promo_id),
+            page: page ? parseInt(page) : 1,
+            limit: limit ? parseInt(limit) : 10
+        });
         return res.json(JSend.success({ result }));
     } catch (err) {
+        console.log(err);
         return next(new ApiError(500, "Error fetching products in promotion"));
     }
 }
@@ -83,6 +118,7 @@ async function deactivatePromotion(req, res, next) {
         const result = await promotionService.deactivatePromotion(promo_id);
         return res.json(JSend.success({ result }));
     } catch (err) {
+        console.log(err);
         return next(new ApiError(500, "Error deactivating promotion"));
     }
 }

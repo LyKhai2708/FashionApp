@@ -5,10 +5,11 @@ const JSend = require("../jsend");
 // Variants
 async function addVariant(req, res, next) {
   try {
-    const variant = await variantService.addVariant(req.params.id, req.body);
+    const variant = await variantService.addVariant(req.body.product_id, req.body);
     return res.status(201).json(JSend.success({ variant }));
   } catch (err) {
-    return next(new ApiError(500, "Error adding variant"));
+    console.error('Error adding variant:', err);
+    return next(new ApiError(500, err.message || "Error adding variant"));
   }
 }
 

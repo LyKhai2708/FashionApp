@@ -71,6 +71,7 @@ async function getProducts(req, res, next) {
         }
     ));
   } catch (err) {
+    console.log(err);
     return next(new ApiError(500, "Error fetching products"));
   }
 }

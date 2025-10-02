@@ -9,9 +9,13 @@ const usersRouter = require('./routes/user.router');
 const authRouter = require('./routes/auth.router');
 const ordersRouter = require('./routes/order.router');
 const favouriteRouter = require('./routes/favourite.router');
+const imagesRouter = require('./routes/images.router');
 const cartRouter = require('./routes/cart.router');
 const categoriesRouter = require('./routes/categories.router');
 const variantsRouter = require('./routes/variant.router');
+const colorsRouter = require('./routes/color.router');
+const promotionsRouter = require('./routes/promotions.router');
+const reviewsRouter = require('./routes/review.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
@@ -38,8 +42,10 @@ cartRouter.setup(app);
 categoriesRouter.setup(app);
 favouriteRouter.setup(app);
 variantsRouter.setup(app);
-
-
+colorsRouter.setup(app);
+imagesRouter.setup(app);
+promotionsRouter.setup(app);
+reviewsRouter.setup(app);
 app.use(resourceNotFound);
 app.use(handleError);
 

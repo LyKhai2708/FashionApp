@@ -33,7 +33,7 @@ async function addToCart(req, res, next) {
         }));
     } catch (error) {
         console.error('Add to cart error:', error);
-        return next(new ApiError(400, error.message));
+        return next(new ApiError(500, error.message));
     }
 }
 
@@ -54,7 +54,7 @@ async function updateCartItem(req, res, next) {
         }));
     } catch (error) {
         console.error('Update cart item error:', error);
-        return next(new ApiError(400, error.message));
+        return next(new ApiError(500, error.message));
     }
 }
 
@@ -70,7 +70,7 @@ async function removeFromCart(req, res, next) {
         }));
     } catch (error) {
         console.error('Remove from cart error:', error);
-        return next(new ApiError(400, error.message));
+        return next(new ApiError(500, error.message));
     }
 }
 

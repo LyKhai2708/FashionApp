@@ -70,11 +70,14 @@ async function updateCategory(req, res, next) {
     }
   }
   async function getCategory(req, res, next) {
+    const {id} = req.params;
+    console.log(id);
     try {
-      const category = await categoryService.getCategoryById(req.params.id);
+      const category = await categoryService.getCategoryById(id);
       if (!category) return next(new ApiError(404, 'Category not found'));
       return res.json(JSend.success({ category }));
     } catch (err) {
+      console.log(err);
       next(new ApiError(500, 'Error fetching category'));
     }
   }

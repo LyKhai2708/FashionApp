@@ -2,7 +2,7 @@ const knex = require('../database/knex');
 const Paginator = require('./paginator');
 const slugify = require('./slugify');
 function categoryRepository() {
-    return knex('category');
+    return knex('categories');
 }
 function readCategory(payload) {
     const category = {
@@ -24,6 +24,9 @@ async function createCategory(payload) {
   }
   
   async function getCategoryById(id) {
+    console.log('aaaaaa');
+    console.log(id);
+    console.log(await categoryRepository().where('category_id', id).first());
     return await categoryRepository().where('category_id', id).first();
   }
   

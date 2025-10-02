@@ -40,14 +40,14 @@ async function getManyBrands(query) {
     .offset(paginator.offset);
 
     let totalRecords = 0;
-    const results = result.map((item) => {
+    result = result.map((item) => {
         totalRecords = item.recordCount;
         delete item.recordCount;
         return item;
     });
     return {
         metadata: paginator.getMetadata(totalRecords),
-        brands: results,
+        brands: result,
     };
 }
 

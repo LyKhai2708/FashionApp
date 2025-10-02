@@ -9,11 +9,21 @@ const { v4: uuidv4 } = require('uuid');
  */
 async function createOrder(orderData, items) {
   return await knex.transaction(async (trx) => {
+    // Tính toán tổng tiền
+    const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shipping_fee = orderData.shipping_fee || 0;
+    const total_amount = sub_total + shipping_fee;
+
     // Tạo đơn hàng
     const [orderId] = await trx('orders').insert({
       user_id: orderData.user_id,
-      status: 'pending',
-      total_amount: orderData.total_amount,
+      order_status: 'pending',
+      sub_total: sub_total,
+      shipping_fee: shipping_fee,
+      total_amount: total_amount,
+      payment_method: orderData.payment_method || 'cash_on_delivery',
+      payment_status: 'unpaid',
+      notes: orderData.notes,
       shipping_address: orderData.shipping_address
     });
 
@@ -34,7 +44,16 @@ async function createOrder(orderData, items) {
         .decrement('stock', item.quantity);
     }
 
-    return { order_id: orderId, ...orderData };
+    return { 
+      order_id: orderId, 
+      sub_total,
+      shipping_fee,
+      total_amount,
+      payment_method: orderData.payment_method || 'cash_on_delivery',
+      payment_status: 'unpaid',
+      order_status: 'pending',
+      ...orderData 
+    };
   });
 }
 
@@ -62,8 +81,16 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
     query.where('orders.user_id', filters.user_id);
   }
   
-  if (filters.status) {
-    query.where('orders.status', filters.status);
+  if (filters.order_status) {
+    query.where('orders.order_status', filters.order_status);
+  }
+
+  if (filters.payment_status) {
+    query.where('orders.payment_status', filters.payment_status);
+  }
+
+  if (filters.payment_method) {
+    query.where('orders.payment_method', filters.payment_method);
   }
 
   if (filters.start_date && filters.end_date) {
@@ -140,16 +167,36 @@ async function getOrderById(orderId) {
 }
 
 
-async function updateOrderStatus(orderId, status) {
+async function updateOrderStatus(orderId, order_status) {
   const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
   
-  if (!validStatuses.includes(status)) {
-    throw new Error('Trạng thái không hợp lệ');
+  if (!validStatuses.includes(order_status)) {
+    throw new Error('Trạng thái đơn hàng không hợp lệ');
   }
 
   const [updated] = await knex('orders')
     .where('order_id', orderId)
-    .update({ status, updated_at: knex.fn.now() });
+    .update({ order_status });
+
+  return updated > 0;
+}
+
+/**
+ * Cập nhật trạng thái thanh toán
+ * @param {number} orderId - ID đơn hàng
+ * @param {string} payment_status - Trạng thái thanh toán
+ * @returns {Promise<boolean>} Kết quả cập nhật
+ */
+async function updatePaymentStatus(orderId, payment_status) {
+  const validStatuses = ['unpaid', 'paid', 'refund'];
+  
+  if (!validStatuses.includes(payment_status)) {
+    throw new Error('Trạng thái thanh toán không hợp lệ');
+  }
+
+  const [updated] = await knex('orders')
+    .where('order_id', orderId)
+    .update({ payment_status });
 
   return updated > 0;
 }
@@ -163,9 +210,9 @@ async function cancelOrder(orderId) {
   return await knex.transaction(async (trx) => {
     // Cập nhật trạng thái đơn hàng
     const [updated] = await trx('orders')
-    .update({status: 'cancelled'})
+    .update({order_status: 'cancelled'})
     .where('order_id', orderId)
-    .andWhere('status', 'pending');
+    .andWhere('order_status', 'pending');
 
     if (updated === 0) return false;
 
@@ -189,5 +236,6 @@ module.exports = {
   getOrders,
   getOrderById,
   updateOrderStatus,
+  updatePaymentStatus,
   cancelOrder
 };

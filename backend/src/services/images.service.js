@@ -14,9 +14,10 @@ async function getManyImages(query) {
             builder.where('product_color_id', product_color_id);
         }
     }).select(
-        knex.raw('count(id) OVER() AS recordCount'),
-        'id',
-        'image_url',
+        knex.raw('count(image_id) OVER() AS recordCount'),
+        'image_id',
+        'product_color_id',
+        'image_url'
     ).limit(paginator.limit)
     .offset(paginator.offset);
 
@@ -35,6 +36,17 @@ async function getManyImages(query) {
 async function addImage(payload) {
     const { product_color_id, image_url } = payload;
     if (!image_url) throw new Error('image_url is required');
+    if (!product_color_id) throw new Error('product_color_id is required');
+    
+    // Verify product_color exists
+    const productColorExists = await knex('product_colors')
+        .where('product_color_id', product_color_id)
+        .first();
+    
+    if (!productColorExists) {
+        throw new Error('Product color not found');
+    }
+    
     const [image_id] = await imagesRepository().insert({ product_color_id, image_url });
     return { image_id, product_color_id, image_url };
 }
