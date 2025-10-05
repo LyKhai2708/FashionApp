@@ -63,7 +63,8 @@ async function login(req, res, next) {
     if(!result) {
         return next(new ApiError(401, 'Invalid email or password'));
     }
-    const {user, accessToken, refreshToken} = result;
+    const {user, token, refreshToken} = result;
+    console.log(token);
 
     res.cookie('refreshToken', refreshToken, 
         { httpOnly: true,
@@ -75,7 +76,7 @@ async function login(req, res, next) {
       status: "success",
       data: {
         user: { id: user.user_id, email: user.email, role: user.role },
-        accessToken,
+        token,
       },
     });
     } catch (error) {
@@ -85,6 +86,7 @@ async function login(req, res, next) {
 }
 async function refresh(req, res, next) {
     const refreshToken = req.cookies.refreshToken;
+    console.log("refreshToken =  " ,refreshToken);
     if (!refreshToken) return next(new ApiError(401, 'No refresh token'));
   
     try {
@@ -96,10 +98,11 @@ async function refresh(req, res, next) {
       return res.json({
         status: "success",
         data: {
-          accessToken: newAccessToken,
+          token: newAccessToken,
         },
       });
     } catch (err) {
+      console.log(err);
       return next(new ApiError(403, 'Invalid refresh token'));
     }
 }

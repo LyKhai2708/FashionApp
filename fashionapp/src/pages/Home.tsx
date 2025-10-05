@@ -2,7 +2,7 @@ import ProductSlider from "../components/ProductSlider"
 import type { ReactNode, FC } from "react";
 import { Mars,Venus, Shirt, ShoppingBag, Sparkles,  } from "lucide-react";
 import ProductList from "../components/ProductList";
-import Slider from "../components/Slider";
+import HomeLayout from "../layouts/HomeLayout";
 
 interface CategoryItem{
     id: number;
@@ -21,8 +21,7 @@ const categories: CategoryItem[] = [
 
 const Home: FC = () => {
     return(
-        <>
-            <Slider></Slider>
+        <HomeLayout>
             {/* Category Section */}
             <section className="mx-auto max-w-6xl p-4 flex flex-col items-center">
                 <h2 className="font-bold text-2xl">DANH MỤC SẢN PHẨM</h2>
@@ -45,7 +44,7 @@ const Home: FC = () => {
                 <h2 className="text-xl font-bold mb-4">HÀNG MỚI VỀ</h2>
                 <ProductList limit={8}></ProductList>
             </div>
-        </>
+        </HomeLayout>
     )
 }
 

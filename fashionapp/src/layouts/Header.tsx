@@ -7,6 +7,74 @@ import product2 from "../assets/product2.jpg"
 import product3 from "../assets/product3.jpg"
 import { Link } from "react-router-dom"
 import { Drawer, Dropdown} from "antd"
+import type {MenuProps} from "antd"
+import { authService } from "../services/authService"
+import { useAuth } from "../contexts/AuthContext"
+import { useMessage } from "../App"
+import { useNavigate } from "react-router-dom"
+
+const UserDropDown = () => {
+  const {logout} = useAuth()
+  const message = useMessage()
+  const navigate = useNavigate()  
+  
+  const handleLogout = async () => {
+    try{
+      await logout();
+      message.success('Đăng xuất thành công')
+    }catch(error){
+      console.log(error);
+      message.error('Đăng xuất thất bại')
+    }
+  }
+    
+  const menuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      label: (
+        <Link to="/profile" className="flex items-center space-x-2 px-2 py-1">
+          <User className="w-4 h-4" />
+          <span>Profile</span>
+        </Link>
+      ),
+    },
+    {
+      key: 'favorites',
+      label: (
+        <Link to="/favorites" className="flex items-center space-x-2 px-2 py-1">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span>Yêu thích</span>
+        </Link>
+      ),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: (
+        <div onClick={handleLogout} className="flex items-center space-x-2 px-2 py-1 cursor-pointer text-red-600">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Đăng xuất</span>
+        </div>
+      ),
+    },
+  ]
+
+  return (
+    <Dropdown 
+     menu={{items: menuItems}}
+     placement="bottomRight"
+     trigger={['click']}
+     >
+      <User />
+    </Dropdown>
+  )
+}
 export default function Header() {
     const [openCart, setOpenCart] = useState(false)
     const [openMenu, setOpenMenu] = useState(false)
@@ -43,13 +111,13 @@ export default function Header() {
     const cartCount = useMemo(() => cartItems.reduce((n, it) => n + it.quantity, 0), [cartItems])
     return (
         <header className="w-full bg-white shadow sticky top-0 z-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1660px] flex items-center justify-between py-3">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px] flex items-center justify-between py-3">
         
         {/* Menu (mobile) */}
-        <button onClick={() => setOpenMenu(true)} className="md:hidden">
+        <button onClick={() => setOpenMenu(true)} className="lg:hidden">
           <MenuIcon className="w-6 h-6 text-gray-700 cursor-pointer" />
         </button>
-        <Drawer className="md:hidden h-full" title={<span className="text-xl font-bold">Danh mục</span>} placement="left" open={openMenu} onClose={() => setOpenMenu(false)}>
+        <Drawer className="lg:hidden h-full" title={<span className="text-xl font-bold">Danh mục</span>} placement="left" open={openMenu} onClose={() => setOpenMenu(false)}>
           <div className="flex flex-col h-full justify-between">
             <div className="flex flex-col gap-6">
               {navLinks.map((link)=> (
@@ -98,17 +166,17 @@ export default function Header() {
         
 
         {/*nav*/}
-        <nav className="hidden md:flex space-x-8 text-gray-700 font-medium 
-                text-sm lg:text-base xl:text-lg">
+        <nav className="hidden lg:flex flex-wrap items-center space-x-5 text-gray-700 font-medium
+                text-xs">
 
         {/* mega dropdown*/}
           <div className="relative group">
-            <span className="cursor-pointer border-b-2 border-transparent hover:border-black transition-colors">
+            <span className="cursor-pointer inline-block border-b-2 border-transparent hover:border-black transition-colors duration-300">
               SẢN PHẨM
             </span>
 
             {/* Mega Menu */}
-            <div className="absolute left-[-250px] top-full w-[1000px] bg-white shadow-lg rounded p-8 hidden group-hover:block z-50" style={{ width: "1200px" }}>
+            <div className="absolute left-[-250px] top-3 w-[1000px] bg-white shadow-lg rounded p-8 hidden group-hover:block z-50" style={{ width: "1200px" }}>
               <div className="grid grid-cols-5 gap-6">
                 <div className="col-span-1">
                   <img src="/dress1.jpg" alt="Dress" className="rounded-lg object-cover" />
@@ -152,7 +220,7 @@ export default function Header() {
             <Link
               key={link.name}
               to={link.href}
-              className="border-b-2 border-transparent hover:border-b-2 hover:border-black transition-colors"
+              className="inline-block border-b-2 border-transparent hover:border-black transition-colors duration-300"
             >
               {link.name}
             </Link>
@@ -172,7 +240,11 @@ export default function Header() {
                 {cartCount}
               </span>
             </div>
-            <Link to={"/login"}><User className="w-6 h-6 cursor-pointer text-gray-700 hover:text-blue-600" /></Link>
+            {!authService.isAuthenticated() ? (
+              <Link to={"/login"}><User className="w-6 h-6 cursor-pointer text-gray-700 hover:text-blue-600" /></Link>
+            ) : (
+              <UserDropDown />
+            )}
           </div>
         </div>
         {/* Search */}

@@ -52,7 +52,7 @@ export default function Slider() {
         };
     }, [isPaused, sliderData.length]);
     return (
-    <div className="w-full m-auto relative h-[260px] sm:h-[360px] md:h-[480px] lg:h-[600px] xl:h-[700px] group" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+    <div className="w-full relative h-[240px] sm:h-[320px] md:h-[400px] lg:h-[500px] xl:h-[560px] group" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
         <div className="w-full h-full relative bg-center bg-cover duration-200" style={{backgroundImage: `url(${sliderData[currentIndex].image})`}}>
         </div>
         <ChevronLeft size={30} className="hidden absolute left-3 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-1.5 sm:p-2 shadow backdrop-blur focus:outline-none cursor-pointer group-hover:block" onClick={goToPrevious} />

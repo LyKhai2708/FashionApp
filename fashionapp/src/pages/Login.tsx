@@ -1,13 +1,27 @@
 import { Card, Form, Input, Typography, Divider, Row, Col } from 'antd'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
 import { Home } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
+import { useMessage } from '../App'
 
 export default function Login() {
     const [form] = Form.useForm()
+    const { login, isLoading: authLoading } = useAuth()
+    const message = useMessage()
+    const navigate = useNavigate()
 
-    const handleFinish = (values: unknown) => {
-        console.log('Login values:', values)
+    const handleFinish = async (values: { email: string; password: string }) => {
+        console.log("err ", values);
+        try {
+            console.log("err ", values);
+            await login(values)
+            message.success('Đăng nhập thành công!')
+            console.log('Đăng nhập thành công!', values)
+            navigate('/')
+        } catch (error: any) {
+            message.error(error.message || 'Đăng nhập thất bại!')
+        }
     }
 
     return (
@@ -80,9 +94,16 @@ export default function Login() {
 
                                 <button
                                     type="submit"
-                                    className="w-full h-11 rounded-full bg-black text-white font-medium shadow-lg hover:opacity-95 transition"
+                                    disabled={authLoading}
+                                    className="w-full h-11 rounded-full bg-black text-white font-medium shadow-lg hover:opacity-95 transition disabled:opacity-50"
                                 >
-                                    LOGIN
+                                    {authLoading ? (
+                                        <div className="flex items-center justify-center">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                        </div>
+                                    ) : (
+                                        'LOGIN'
+                                    )}
                                 </button>
 
                                 <Divider plain>hoặc</Divider>

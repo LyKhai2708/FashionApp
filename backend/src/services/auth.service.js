@@ -68,7 +68,7 @@ async function login (email,password){
     }
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    return {user, accessToken, refreshToken };
+    return {user, token: accessToken, refreshToken };
 
 }
 module.exports = {login, generateAccessToken, generateRefreshToken, register }

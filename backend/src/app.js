@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const JSend = require('./jsend');
+const cookieParser = require('cookie-parser');
 
 const productsRouter = require('./routes/product.router');
 const brandsRouter = require('./routes/brand.router');
@@ -20,7 +21,14 @@ const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
 
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:3000'], 
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -23,7 +23,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <img src={product.image} alt="Product Image" className="w-full aspect-[3/4] object-cover" />
             <div className="p-4 flex flex-col flex-grow w-full min-w-0">
                 <h3
-                className="text-lg font-semibold mb-2 line-clamp-2 overflow-hidden text-ellipsis break-words min-h-[48px]"
+                className="text-sm mb-2 line-clamp-2 overflow-hidden text-ellipsis break-words min-h-[48px]"
                 >
                 {product.name}
                 </h3>
@@ -33,10 +33,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                             {product.discount ? (
                                 <div className="flex items-baseline gap-2">
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-lg font-bold text-red-500">
+                                        <span className="text-md font-semibold text-red-500">
                                             {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()}
                                         </span>
-                                        <span className="text-lg font-semibold text-red-500">₫</span>
+                                        <span className="text-md font-semibold text-red-500">₫</span>
                                     </div>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-sm text-gray-500 line-through">
@@ -47,8 +47,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                                 </div>
                             ) : (
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-lg font-bold text-black-600">{product.price.toLocaleString()}</span>
-                                    <span className="text-lg font-semibold text-black-600">₫</span>
+                                    <span className="text-md font-semibold text-black-600">{product.price.toLocaleString()}</span>
+                                    <span className="text-md font-semibold text-black-600">₫</span>
                                 </div>
                             )}
                         </div>
