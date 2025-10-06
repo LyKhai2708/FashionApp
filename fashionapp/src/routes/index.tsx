@@ -25,7 +25,7 @@ const publicRoutes: RouteType[] = [
   { path: '/register', component: Register, layout: null },
   { path: '/products', component: ProductPage },
   { path: '/collection/:categorySlug', component: ProductPage },
-  { path: '/products/:id', component: ProductDetailPage },
+  { path: '/products/:slug', component: ProductDetailPage },
 ];
 
 const privateRoutes: RouteType[] = [

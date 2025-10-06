@@ -29,7 +29,11 @@ async function getFavorites(req, res, next) {
 
 async function deleteFavorite(req, res, next) {
     try {
-        const deleted = await favouriteService.deleteFavorite(req.user.id, req.params.product_id);
+        if (!req.params.id) {
+            return next(new ApiError(400, "Favorite ID is required"));
+        }
+        
+        const deleted = await favouriteService.deleteFavoriteById(req.user.id, req.params.id);
         return res.json(JSend.success({ message: "Favorite deleted" }));
     } catch (err) {
         console.log(err);
@@ -39,8 +43,14 @@ async function deleteFavorite(req, res, next) {
 
 async function addFavorite(req, res, next) {
     try {
-        const added = await favouriteService.addFavorite(req.user.id, req.params.product_id);
-        return res.json(JSend.success({ message: "Favorite added" }));
+        const productId = req.body.product_id;
+        
+        if (!productId) {
+            return next(new ApiError(400, "Product ID is required"));
+        }
+        
+        const added = await favouriteService.addFavorite(req.user.id, productId);
+        return res.json(JSend.success({ favorite: added }));
     } catch (err) {
         console.log(err);
         return next(new ApiError(500, "Error adding favorite"));

@@ -29,7 +29,7 @@ async function getSizeByName(name, size_id = null) {
 }
 
 async function getManySizes(query) {
-    const { name, page = 1, limit = 5  } = query;
+    const { name, page = 1, limit = 100  } = query;
     const paginator = new Paginator(page, limit);
     let results = await sizesRepository()
         .where((builder) => {
@@ -37,6 +37,7 @@ async function getManySizes(query) {
                 builder.where('name', 'like', `%${name}%`);
             }
         })
+        .orderBy('name', 'asc')
         .select(
             knex.raw('count(size_id) OVER() AS recordCount'),
             'size_id',

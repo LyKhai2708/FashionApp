@@ -39,7 +39,7 @@ async function getSizesByFilter(req, res, next) {
       firstPage: 1,
       lastPage: 1,
       page: 1,
-      limit: 5,
+      limit: 100,
     }
   }
 

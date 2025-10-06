@@ -8,7 +8,7 @@ import type {
 } from '../types/product';
 
 class ProductService{
-    async getProducts(params: ProductsParams = {}): Promise<{
+    async getProducts(params: ProductsParams = {}, user_id?: number): Promise<{
         products: Product[];
         metadata: ProductsResponse['data']['metadata'];
       }> {
@@ -38,15 +38,29 @@ class ProductService{
                 query.append('max_price', params.max_price.toString());
             }
             if(params.color_id){
-                query.append('color_id', params.color_id.toString());
+                if(Array.isArray(params.color_id)){
+                    query.append('color_id', params.color_id.join(','));
+                } else {
+                    query.append('color_id', params.color_id.toString());
+                }
             }
             if(params.size_id){
-                query.append('size_id', params.size_id.toString());
+                if(Array.isArray(params.size_id)){
+                    // Multiple sizes: size_id=1,2,3
+                    query.append('size_id', params.size_id.join(','));
+                } else {
+                    // Single size
+                    query.append('size_id', params.size_id.toString());
+                }
             }
             if(params.sort){
                 query.append('sort', params.sort);
             }
-            const response = await api.get<ProductsResponse>(`/api/v1/products?${query.toString()}`);
+            if(user_id){
+                query.append('user_id', user_id.toString());
+            }
+            const queryString = query.toString();
+            const response = await api.get<ProductsResponse>(`/api/v1/products?${queryString}`);
             return {
                 products: response.data.data.products,
                 metadata: response.data.data.metadata
@@ -58,9 +72,13 @@ class ProductService{
         
     }
 
-    async getProductById(id: number): Promise<ProductDetail> {
+    async getProductById(id: number, user_id?: number): Promise<ProductDetail> {
         try{
-            const response = await api.get<ProductDetailResponse>(`/api/v1/products/${id}`);
+            const query = new URLSearchParams();
+            if(user_id){
+                query.append('user_id', user_id.toString());
+            }
+            const response = await api.get<ProductDetailResponse>(`/api/v1/products/${id}?${query.toString()}`);
             return response.data.data.product;
         }catch(error: any){
             console.error('Get product by id error:', error);
@@ -78,15 +96,14 @@ class ProductService{
         }
     }
 
-    async getProductByCate(categoryId: number, params: Omit<ProductsParams, 'category_id'> = {}): Promise<{
+    async getProductByCate(categoryId: number, params: Omit<ProductsParams, 'category_id'> = {}, user_id?: number): Promise<{
         products: Product[],
         metadata: ProductsResponse['data']['metadata']
     }> {
-        return this.getProducts(
-        {
-            category_id: categoryId
-            , ...params
-        });
+        return this.getProducts({
+            category_id: categoryId,
+            ...params
+        }, user_id);
     }
 }
 

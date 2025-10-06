@@ -103,121 +103,147 @@ async function createProduct(payload) {
     });
 }
 
-async function getProductById(id) {
-    const promotionSubquery = knex.raw(
-        `(SELECT pp.product_id, p.discount_percent, p.name as promo_name, p.promo_id
-        FROM promotion_products pp
-        JOIN promotions p ON pp.promo_id = p.promo_id
-        WHERE p.active = TRUE
-        AND p.start_date <= CURDATE()
-        AND p.end_date >= CURDATE()) AS active_promotions`
-    );
+async function getProductById(id, user_id = null) {
+    try {
+        const promotionSubquery = knex.raw(
+            `(SELECT pp.product_id, p.discount_percent, p.name as promo_name, p.promo_id
+            FROM promotion_products pp
+            JOIN promotions p ON pp.promo_id = p.promo_id
+            WHERE p.active = TRUE
+            AND p.start_date <= CURDATE()
+            AND p.end_date >= CURDATE()) AS active_promotions`
+        );
 
-    const product = await knex('products as p')
-        .leftJoin('brand as b', 'p.brand_id', 'b.id')
-        .leftJoin('categories as c', 'p.category_id', 'c.category_id')
-        .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id')
-        .where('p.product_id', id)
-        .where('p.del_flag', 0)
-        .select(
-            'p.*',
-            'b.name as brand_name',
-            'c.category_name',
-            'active_promotions.discount_percent',
-            'active_promotions.promo_name',
-            'active_promotions.promo_id',
-            knex.raw(`
-                CASE 
-                    WHEN active_promotions.discount_percent IS NOT NULL 
-                    THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2)
-                    ELSE p.base_price 
-                END as discounted_price
-            `),
-            knex.raw(`
-                CASE 
-                    WHEN active_promotions.discount_percent IS NOT NULL 
-                    THEN true 
-                    ELSE false 
-                END as has_promotion
-            `)
-        )
-        .first();
+        let query = knex('products as p')
+            .leftJoin('brand as b', 'p.brand_id', 'b.id')
+            .leftJoin('categories as c', 'p.category_id', 'c.category_id')
+            .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id')
+            .leftJoin('favorites as f', function() {
+                this.on('p.product_id', '=', 'f.product_id');
+                if (user_id) {
+                    this.andOn('f.user_id', '=', knex.raw('?', [user_id]));
+                } else {
+                    this.andOn(knex.raw('1'), '=', knex.raw('0'));
+                }
+            });
 
-    if (!product) return null;
+        const product = await query
+            .where('p.product_id', id)
+            .where('p.del_flag', 0)
+            .select(
+                'p.*',
+                'b.name as brand_name',
+                'c.category_name',
+                'active_promotions.discount_percent',
+                'active_promotions.promo_name',
+                'active_promotions.promo_id',
+                knex.raw(`
+                    CASE 
+                        WHEN active_promotions.discount_percent IS NOT NULL 
+                        THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2)
+                        ELSE p.base_price 
+                    END as discounted_price
+                `),
+                knex.raw(`
+                    CASE 
+                        WHEN active_promotions.discount_percent IS NOT NULL 
+                        THEN true 
+                        ELSE false 
+                    END as has_promotion
+                `),
+                knex.raw(`
+                    CASE 
+                        WHEN f.favorite_id IS NOT NULL 
+                        THEN true 
+                        ELSE false 
+                    END as is_favorite
+                `),
+                'f.favorite_id'
+            )
+            .first();
 
-    const variants = await knex('product_variants as pv')
-        .join('colors as c', 'pv.color_id', 'c.color_id')
-        .join('sizes as s', 'pv.size_id', 's.size_id')
-        .where('pv.product_id', id)
-        .select(
-            'pv.product_variants_id as variant_id',
-            'pv.product_id',
-            'pv.color_id',
-            'c.name as color_name',
-            'c.hex_code as color_hex',
-            'pv.size_id', 
-            's.name as size_name',
-            'pv.stock_quantity',
-            'pv.active'
-        )
-        .orderBy('c.name')
-        .orderBy('s.name');
-
-    // Lấy tất cả ảnh theo màu cho product này (không phụ thuộc vào product_colors)
-    const colorIds = [...new Set(variants.map(v => v.color_id))];
-    const images = await knex('images as img')
-        .join('product_colors as pc', 'img.product_color_id', 'pc.product_color_id')
-        .where('pc.product_id', id)
-        .whereIn('pc.color_id', colorIds)
-        .select(
-            'pc.color_id',
-            'img.image_url', 
-            'img.is_primary', 
-            'img.display_order'
-        )
-        .orderBy('img.display_order');
-
-    // Gắn ảnh theo color_id thay vì product_color_id
-    const imagesByColor = {};
-    for (const img of images) {
-        if (!imagesByColor[img.color_id]) {
-            imagesByColor[img.color_id] = [];
+        if (!product) {
+            console.log(`Product with id ${id} not found`);
+            return null;
         }
-        imagesByColor[img.color_id].push({
-            image_url: img.image_url,
-            is_primary: img.is_primary,
-            display_order: img.display_order
-        });
+
+        const variants = await knex('product_variants as pv')
+            .join('colors as c', 'pv.color_id', 'c.color_id')
+            .join('sizes as s', 'pv.size_id', 's.size_id')
+            .where('pv.product_id', id)
+            .select(
+                'pv.product_variants_id as variant_id',
+                'pv.product_id',
+                'pv.color_id',
+                'c.name as color_name',
+                'c.hex_code as color_hex',
+                'pv.size_id', 
+                's.name as size_name',
+                'pv.stock_quantity',
+                'pv.active'
+            )
+            .orderBy('c.name')
+            .orderBy('s.name');
+
+        console.log(`Found ${variants.length} variants for product ${id}`);
+
+        const colorIds = variants.length > 0 ? [...new Set(variants.map(v => v.color_id))] : [];
+        const images = colorIds.length > 0 ? await knex('images as img')
+            .join('product_colors as pc', 'img.product_color_id', 'pc.product_color_id')
+            .where('pc.product_id', id)
+            .whereIn('pc.color_id', colorIds)
+            .select(
+                'pc.color_id',
+                'img.image_url', 
+                'img.is_primary', 
+                'img.display_order'
+            )
+            .orderBy('img.display_order') : [];
+
+        const imagesByColor = {};
+        for (const img of images) {
+            if (!imagesByColor[img.color_id]) {
+                imagesByColor[img.color_id] = [];
+            }
+            imagesByColor[img.color_id].push({
+                image_url: img.image_url || '',
+                is_primary: Boolean(img.is_primary),
+                display_order: img.display_order || 0
+            });
+        }
+
+        const formattedVariants = variants.map(variant => ({
+            variant_id: variant.variant_id,
+            color: {
+                color_id: variant.color_id,
+                name: variant.color_name,
+                hex_code: variant.color_hex,
+                images: imagesByColor[variant.color_id] || []
+            },
+            size: {
+                size_id: variant.size_id,
+                name: variant.size_name
+            },
+            stock_quantity: variant.stock_quantity,
+            final_price: parseFloat(product.base_price),
+            active: variant.active
+        }));
+
+        console.log(product);
+        return {
+            ...product,
+            variants: formattedVariants,
+            price_info: {
+                base_price: parseFloat(product.base_price),
+                discounted_price: parseFloat(product.discounted_price),
+                discount_percent: product.discount_percent,
+                has_promotion: product.has_promotion
+            }
+        };
+    } catch (error) {
+        console.error('Error in getProductById:', error);
+        throw error;
     }
-
-    // Format variants với thông tin đầy đủ
-    const formattedVariants = variants.map(variant => ({
-        variant_id: variant.variant_id,
-        color: {
-            color_id: variant.color_id,
-            name: variant.color_name,
-            hex_code: variant.color_hex,
-            images: imagesByColor[variant.color_id] || []
-        },
-        size: {
-            size_id: variant.size_id,
-            name: variant.size_name
-        },
-        stock_quantity: variant.stock_quantity,
-        final_price: parseFloat(product.base_price),
-        active: variant.active
-    }));
-
-    return {
-        ...product,
-        variants: formattedVariants,
-        price_info: {
-            base_price: parseFloat(product.base_price),
-            discounted_price: parseFloat(product.discounted_price),
-            discount_percent: product.discount_percent,
-            has_promotion: product.has_promotion
-        }
-    };
 }
   
 async function updateProduct(id, payload) {
@@ -242,7 +268,7 @@ async function updateProduct(id, payload) {
 
   
 async function getManyProducts(query) {
-    const { search, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10, sort } = query;
+    const { search, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10, sort, user_id } = query;
 
     const paginator = new Paginator(page, limit);
 
@@ -275,8 +301,20 @@ async function getManyProducts(query) {
                 END <= ?
             `, [max_price]);
         }
-        if (color_id) builder.where('pv.color_id', color_id);
-        if (size_id) builder.where('pv.size_id', size_id);
+        if (color_id) {
+            // Support multiple colors: "1,2,3" or single "1"
+            const colorIds = color_id.toString().split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            if (colorIds.length > 0) {
+                builder.whereIn('pv.color_id', colorIds);
+            }
+        }
+        if (size_id) {
+            // Support multiple sizes: "1,2,3" or single "1"
+            const sizeIds = size_id.toString().split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            if (sizeIds.length > 0) {
+                builder.whereIn('pv.size_id', sizeIds);
+            }
+        }
     }
 
     // Helper function để build base query
@@ -294,6 +332,18 @@ async function getManyProducts(query) {
             .leftJoin('brand as b', 'p.brand_id', 'b.id')
             .leftJoin('categories as c', 'p.category_id', 'c.category_id')
             .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id');
+            
+        if (user_id) {
+            query = query.leftJoin('favorites as f', function() {
+                this.on('p.product_id', '=', 'f.product_id')
+                    .andOn('f.user_id', '=', knex.raw('?', [user_id]));
+            });
+        } else {
+            query = query.leftJoin('favorites as f', function() {
+                this.on('p.product_id', '=', 'f.product_id')
+                    .andOn(knex.raw('1'), '=', knex.raw('0'));
+            });
+        }
             
         // Join variants nếu cần filter theo variant
         if (color_id || size_id) {
@@ -337,7 +387,15 @@ async function getManyProducts(query) {
                     THEN true 
                     ELSE false 
                 END as has_promotion
-            `)
+            `),
+            knex.raw(`
+                CASE 
+                    WHEN f.favorite_id IS NOT NULL 
+                    THEN true 
+                    ELSE false 
+                END as is_favorite
+            `),
+            'f.favorite_id'
         )
         .distinct('p.product_id')
         .limit(paginator.limit)

@@ -78,7 +78,9 @@ async function getProducts(req, res, next) {
 
 async function getProductById(req, res, next) {
   try {
-    const product = await productService.getProductById(req.params.id);
+    const user_id = req.query.user_id || null;
+    
+    const product = await productService.getProductById(req.params.id, user_id);
     if (!product) return next(new ApiError(404, "Product not found"));
     return res.json(JSend.success({ product }));
   } catch (err) {

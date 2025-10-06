@@ -4,24 +4,154 @@ import { Navigation } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "./ProductCard";
 import aaaa from '../assets/product1.jpg';
-
-interface Product {
-    id: number;
-    image: string;
-    name: string;
-    price: number;
-    discount?: number;
-    sold?: number;
-}
+import type { Product } from "../types/product";
 
 const ProductSlider = () => {
   const products: Product[] = [
-    { id: 1, name: "Áo Thun Basic", price: 199000, image: aaaa, discount: 20, sold: 150 },
-    { id: 2, name: "Áo Polo Trơn", price: 249000, image: aaaa, discount: 15, sold: 89 },
-    { id: 3, name: "Áo Hoodie Đen", price: 399000, image: aaaa, discount: 10, sold: 234 },
-    { id: 4, name: "Áo Sơ Mi Trắng", price: 299000, image: aaaa, sold: 567 },
-    { id: 5, name: "Quần Jean Slim", price: 499000, image: aaaa, discount: 25, sold: 123 },
-    { id: 6, name: "Áo Khoác Denim", price: 599000, image: aaaa, discount: 30, sold: 78 },
+    {
+      product_id: 1,
+      name: "Áo Thun Basic", 
+      description: "Áo thun basic chất liệu cotton",
+      slug: "ao-thun-basic",
+      base_price: 199000, 
+      thumbnail: aaaa, 
+      brand_id: 1,
+      category_id: 1,
+      created_at: new Date().toISOString(),
+      discount_percent: 20,
+      discounted_price: 159200,
+      has_promotion: true,
+      is_favorite: false,
+      brand_name: "Local Brand",
+      category_name: "Áo thun",
+      colors: [],
+      price_info: {
+        base_price: 199000,
+        discounted_price: 159200,
+        discount_percent: 20,
+        has_promotion: true
+      }
+    },
+    {
+      product_id: 2,
+      name: "Áo Polo Trơn", 
+      description: "Áo polo trơn thanh lịch",
+      slug: "ao-polo-tron",
+      base_price: 249000, 
+      thumbnail: aaaa, 
+      brand_id: 1,
+      category_id: 1,
+      created_at: new Date().toISOString(),
+      discount_percent: 15,
+      discounted_price: 211650,
+      has_promotion: true,
+      is_favorite: false,
+      brand_name: "Local Brand",
+      category_name: "Áo polo",
+      colors: [],
+      price_info: {
+        base_price: 249000,
+        discounted_price: 211650,
+        discount_percent: 15,
+        has_promotion: true
+      }
+    },
+    {
+      product_id: 3,
+      name: "Áo Hoodie Đen", 
+      description: "Áo hoodie màu đen thời trang",
+      slug: "ao-hoodie-den",
+      base_price: 399000, 
+      thumbnail: aaaa, 
+      brand_id: 1,
+      category_id: 1,
+      created_at: new Date().toISOString(),
+      discount_percent: 10,
+      discounted_price: 359100,
+      has_promotion: true,
+      is_favorite: false,
+      brand_name: "Local Brand",
+      category_name: "Áo hoodie",
+      colors: [],
+      price_info: {
+        base_price: 399000,
+        discounted_price: 359100,
+        discount_percent: 10,
+        has_promotion: true
+      }
+    },
+    {
+      product_id: 4,
+      name: "Áo Sơ Mi Trắng", 
+      description: "Áo sơ mi trắng công sở",
+      slug: "ao-so-mi-trang",
+      base_price: 299000, 
+      thumbnail: aaaa, 
+      brand_id: 1,
+      category_id: 1,
+      created_at: new Date().toISOString(),
+      discount_percent: 0,
+      discounted_price: 299000,
+      has_promotion: false,
+      is_favorite: false,
+      brand_name: "Local Brand",
+      category_name: "Áo sơ mi",
+      colors: [],
+      price_info: {
+        base_price: 299000,
+        discounted_price: 299000,
+        discount_percent: 0,
+        has_promotion: false
+      }
+    },
+    {
+      product_id: 5,
+      name: "Quần Jean Slim", 
+      description: "Quần jean slim fit",
+      slug: "quan-jean-slim",
+      base_price: 499000, 
+      thumbnail: aaaa, 
+      brand_id: 1,
+      category_id: 2,
+      created_at: new Date().toISOString(),
+      discount_percent: 25,
+      discounted_price: 374250,
+      has_promotion: true,
+      is_favorite: false,
+      brand_name: "Local Brand",
+      category_name: "Quần jean",
+      colors: [],
+      price_info: {
+        base_price: 499000,
+        discounted_price: 374250,
+        discount_percent: 25,
+        has_promotion: true
+      }
+    },
+    {
+      product_id: 6,
+      name: "Áo Khoác Denim", 
+      description: "Áo khoác denim thời trang",
+      slug: "ao-khoac-denim",
+      base_price: 599000, 
+      thumbnail: aaaa, 
+      brand_id: 1,
+      category_id: 1,
+      created_at: new Date().toISOString(),
+      discount_percent: 30,
+      discounted_price: 419300,
+      has_promotion: true,
+      is_favorite: false,
+      brand_name: "Local Brand",
+      category_name: "Áo khoác",
+      colors: [],
+      price_info: {
+        base_price: 599000,
+        discounted_price: 419300,
+        discount_percent: 30,
+        has_promotion: true
+      }
+    }
   ];
 
   return (
@@ -48,7 +178,7 @@ const ProductSlider = () => {
         }}
       >
         {products.map((product) => (
-          <SwiperSlide key={product.id} className="flex-shrink-0">
+          <SwiperSlide key={product.name} className="flex-shrink-0">
             <ProductCard product={product} />
           </SwiperSlide>
         ))}

@@ -158,116 +158,12 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   enum: [error]
      *                 message:
-     *                   type: string
      *                   example: "Error fetching favorites"
      */
     router.get('/', favouriteController.getFavorites);
-    /**
-     * @swagger
-     * /api/v1/favorites/user/{user_id}/product/{product_id}:
-     *   delete:
-     *     summary: Remove product from favorites
-     *     description: Remove a product from user's favorites list
-     *     tags:
-     *       - favorites
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - name: product_id
-     *         in: path
-     *         description: Product ID
-     *         required: true
-     *         schema:
-     *           type: integer
-     *     responses:
-     *       200:
-     *         description: Favorite removed successfully
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 status:
-     *                   type: string
-     *                   enum: [success]
-     *                 data:
-     *                   type: object
-     *                   properties:
-     *                     message:
-     *                       type: string
-     *                       example: "Favorite deleted"
-     *       401:
-     *         $ref: '#/components/responses/Unauthorized'
-     *       403:
-     *         $ref: '#/components/responses/Forbidden'
-     *       500:
-     *         description: Internal server error
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 status:
-     *                   type: string
-     *                   enum: [error]
-     *                 message:
-     *                   type: string
-     *                   example: "Error deleting favorite"
-     */
-    router.delete('/user/:user_id/product/:product_id', favouriteController.deleteFavorite);
-    /**
-     * @swagger
-     * /api/v1/favorites/user/{user_id}/product/{product_id}:
-     *   post:
-     *     summary: Add product to favorites
-     *     description: Add a product to user's favorites list
-     *     tags:
-     *       - favorites
-     *     security:
-     *       - bearerAuth: []
-     *     parameters:
-     *       - name: product_id
-     *         in: path
-     *         description: Product ID
-     *         required: true
-     *         schema:
-     *           type: integer
-     *     responses:
-     *       200:
-     *         description: Favorite added successfully
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 status:
-     *                   type: string
-     *                   enum: [success]
-     *                 data:
-     *                   type: object
-     *                   properties:
-     *                     message:
-     *                       type: string
-     *                       example: "Favorite added"
-     *       401:
-     *         $ref: '#/components/responses/Unauthorized'
-     *       403:
-     *         $ref: '#/components/responses/Forbidden'
-     *       500:
-     *         description: Internal server error
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 status:
-     *                   type: string
-     *                   enum: [error]
-     *                 message:
-     *                   type: string
-     *                   example: "Error adding favorite"
-     */
-    router.post('/user/:user_id/product/:product_id', favouriteController.addFavorite);
+    router.post('/', favouriteController.addFavorite);
+    router.delete('/:id', favouriteController.deleteFavorite);
+    
     router.all('/', methodNotAllowed);
-    router.all('/user/:user_id/product/:product_id', methodNotAllowed);
+    router.all('/:id', methodNotAllowed);
 }

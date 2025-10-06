@@ -94,6 +94,10 @@ async function createCategory(payload) {
     await categoryRepository().update({active: 0});
     return true;
   }
+
+  async function getCategoryBySlug(slug) {
+    return await categoryRepository().where('slug', slug).first();
+  }
   module.exports = {
     createCategory,
     getCategoryById,

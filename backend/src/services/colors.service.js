@@ -30,7 +30,7 @@ async function getColorByName(name, color_id = null) {
 }
 
 async function getManyColors(query) {
-    const { name, page = 1, limit = 5  } = query;
+    const { name, page = 1, limit = 100  } = query;
     const paginator = new Paginator(page, limit);
     let results = await colorsRepository()
         .where((builder) => {
@@ -38,6 +38,7 @@ async function getManyColors(query) {
                 builder.where('name', 'like', `%${name}%`);
             }
         })
+        .orderBy('name', 'asc')
         .select(
             knex.raw('count(color_id) OVER() AS recordCount'),
             'color_id',

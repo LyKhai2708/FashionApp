@@ -3,25 +3,22 @@ export interface ProductColor {
     name: string;
     hex_code: string;
     images: ProductImage[];
-  }
-  
+}
 
-  export interface ProductImage {
+export interface ProductImage {
     image_url: string;
     is_primary: boolean;
     display_order: number;
-  }
-  
- 
-  export interface PriceInfo {
+}
+
+export interface PriceInfo {
     base_price: number;
     discounted_price: number;
     discount_percent: number;
     has_promotion: boolean;
-  }
-  
+}
 
-  export interface Product {
+export interface Product {
     product_id: number;
     name: string;
     description: string;
@@ -36,30 +33,32 @@ export interface ProductColor {
     discount_percent?: number;
     discounted_price: number;
     has_promotion: boolean;
+    is_favorite: boolean;
+    favorite_id?: number;
     colors: ProductColor[];        
     price_info: PriceInfo;         
-  }
+}
 
-  // Variant cho product detail
+// Variant cho product detail
 export interface ProductVariant {
     variant_id: number;
     color: {
-      color_id: number;
-      name: string;
-      hex_code: string;
-      images: ProductImage[];
+        color_id: number;
+        name: string;
+        hex_code: string;
+        images: ProductImage[];
     };
     size: {
-      size_id: number;
-      name: string;
+        size_id: number;
+        name: string;
     };
     stock_quantity: number;
     final_price: number;
     active: number;
-  }
+}
   
-  // Product detail (single product API)
-  export interface ProductDetail {
+  
+export interface ProductDetail {
     product_id: number;
     name: string;
     description: string;
@@ -74,9 +73,11 @@ export interface ProductVariant {
     discount_percent?: number;
     discounted_price: number;
     has_promotion: boolean;
+    is_favorite: boolean;
+    favorite_id?: number;
     variants: ProductVariant[];
     price_info: PriceInfo;
-  }
+}
   
   // req parám
   export interface ProductsParams {
@@ -87,8 +88,8 @@ export interface ProductVariant {
     brand_id?: number;
     min_price?: number;
     max_price?: number;
-    color_id?: number;
-    size_id?: number;
+    color_id?: number | number[]; // Support single or multiple colors
+    size_id?: number | number[];  // Support single or multiple sizes
     sort?: 'price_asc' | 'price_desc' | 'newest';
   }
   

@@ -129,21 +129,26 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
     };
 }
 
-async function deleteFavorite(user_id, product_id) {
+async function addFavorite(user_id, product_id) {
+    const [favorite_id] = await favoriteRepository().insert({ user_id, product_id });
+    
+    const favorite = await favoriteRepository()
+        .where('favorite_id', favorite_id)
+        .first();
+        
+    return favorite;
+}
+
+async function deleteFavoriteById(user_id, favorite_id) {
     const deleted = await favoriteRepository()
         .where('user_id', user_id)
-        .where('product_id', product_id)
+        .where('favorite_id', favorite_id)
         .del();
     return deleted;
 }
 
-async function addFavorite(user_id, product_id) {
-    const added = await favoriteRepository().insert({ user_id, product_id });
-    return added;
-}
-
 module.exports = {
     getFavorites,
-    deleteFavorite,
+    deleteFavoriteById,
     addFavorite
 };

@@ -1,102 +1,63 @@
 import ProductCard from "./ProductCard"
-import aaaa from '../assets/aaaa.jpg';
-
-interface Product {
-    id: number;
-    image: string;
-    name: string;
-    price: number;
-    discount?: number;
-    sold?: number;
-    isFavorite?: boolean;
-}
+import type { Product } from '../types/product';
 
 interface ProductListProps {
     products?: Product[];
+    loading?: boolean;
     limit?: number;
-    pagination?: boolean;
-    pageSize?: number;
 }
 
-export default function ProductList({ products, limit, pagination = false, pageSize = 12 }: ProductListProps) {
-    const mockProducts: Product[] = [
-        {
-            id: 1,
-            image: aaaa,
-            name: "Giày Thể Thao Biti's Helio Teen Nam Màu Nâu",
-            price: 300000,
-            discount: 20,
-            sold: 150,
-            isFavorite: true
-        },
-        {
-            id: 2,
-            image: aaaa,
-            name: "Giày Thể Thao Nike Air Max 270",
-            price: 2500000,
-            discount: 15,
-            sold: 89,
-            isFavorite: true
-        },
-        {
-            id: 3,
-            image: aaaa,
-            name: "Giày Chạy Bộ Adidas Ultraboost 22",
-            price: 1800000,
-            discount: 10,
-            sold: 234,
-            isFavorite: true
-        },
-        {
-            id: 4,
-            image: aaaa,
-            name: "Giày Sneaker Converse Chuck Taylor",
-            price: 800000,
-            sold: 567,
-            isFavorite: false
-        },
-        {
-            id: 5,
-            image: aaaa,
-            name: "Giày Thể Thao Puma RS-X",
-            price: 1200000,
-            discount: 25,
-            sold: 123,
-            isFavorite: false
-        },
-        {
-            id: 6,
-            image: aaaa,
-            name: "Giày Bóng Đá Adidas Predator",
-            price: 2200000,
-            discount: 30,
-            sold: 78,
-            isFavorite: false
-        }
-    ];
+const ProductSkeleton = () => (
+    <div className="border border-gray-200 rounded-lg overflow-hidden shadow animate-pulse">
+        <div className="w-full aspect-[3/4] bg-gray-200"></div>
+        <div className="p-4">
+            <div className="h-4 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="flex justify-between items-center">
+                <div className="h-5 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            </div>
+            <div className="flex gap-2 mt-2">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+);
 
-    const data: Product[] = products && products.length > 0 ? products : mockProducts;
-
-    // derive items to render based on mode
-    let itemsToRender: Product[] = data;
-    if (!pagination && typeof limit === 'number') {
-        itemsToRender = data.slice(0, Math.max(0, limit));
-    }
-
-    return (
-        <>
+export default function ProductList({ products = [], loading = false, limit }: ProductListProps) {
+    if (loading) {
+        const skeletonCount = limit || 8;
+        return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {(!pagination ? itemsToRender : data.slice(0, pageSize)).map((product) => (
-                    <ProductCard  key={product.id} product={product} />
+                {Array.from({ length: skeletonCount }).map((_, index) => (
+                    <ProductSkeleton key={index} />
                 ))}
             </div>
-            {pagination && (
-                <div className="flex justify-center mt-8">
-                    <button className="cursor-pointer px-6 py-2 border rounded-md hover:bg-gray-50">
-                        Tải thêm
-                    </button>
-                </div>
-            )}
-        </>
-    )
+        );
+    }
+
+    if (!products || products.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <div className="text-6xl mb-4">📦</div>
+                <h3 className="text-lg font-medium mb-2">Không có sản phẩm nào</h3>
+                <p className="text-sm">Hãy thử tìm kiếm với từ khóa khác</p>
+            </div>
+        );
+    }
+
+    // Áp dụng limit nếu có
+    const displayProducts = limit ? products.slice(0, limit) : products;
+
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {displayProducts.map((product, index) => (
+                <ProductCard 
+                    key={`${product.product_id}-${index}`} 
+                    product={product} 
+                />
+            ))}
+        </div>
+    );
 }

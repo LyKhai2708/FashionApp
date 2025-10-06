@@ -6,6 +6,7 @@ import { message, Spin } from 'antd'
 import { useState, createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import ScrollToTop from './components/ScrollToTop';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -39,6 +40,7 @@ function AppContent() {
     <>
       <Spin fullscreen spinning={isLoading} size="large" />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>{generateRoutes(isAuthenticated)}</Routes>
       </BrowserRouter>
     </>

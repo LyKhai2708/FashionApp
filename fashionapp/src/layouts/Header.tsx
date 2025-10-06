@@ -1,5 +1,5 @@
 import { Menu as MenuIcon , ShoppingCart , User, Search, CameraIcon, ChevronDown } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import CartDrawer from "../components/CartDrawer"
 import type { CartItem } from "../components/CartDrawer"
 import product1 from "../assets/product1.jpg"
@@ -12,6 +12,14 @@ import { authService } from "../services/authService"
 import { useAuth } from "../contexts/AuthContext"
 import { useMessage } from "../App"
 import { useNavigate } from "react-router-dom"
+import { categoryService } from "../services/categoryService"
+
+interface Category {
+    category_id: number;
+    category_name: string;
+    slug: string;
+    description?: string;
+}
 
 const UserDropDown = () => {
   const {logout} = useAuth()
@@ -22,6 +30,7 @@ const UserDropDown = () => {
     try{
       await logout();
       message.success('Đăng xuất thành công')
+      navigate('/');
     }catch(error){
       console.log(error);
       message.error('Đăng xuất thất bại')
@@ -79,35 +88,33 @@ export default function Header() {
     const [openCart, setOpenCart] = useState(false)
     const [openMenu, setOpenMenu] = useState(false)
     const [openCategories,setOpenCategories] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [cartItems] = useState<CartItem[]>([
       { id: 1, name: "Áo thun basic cotton", image: product1, price: 199000, discount: 10, quantity: 2, size: "M", color: "Trắng" },
       { id: 2, name: "Quần jeans slim fit", image: product2, price: 399000, quantity: 1, size: "32", color: "Xanh đậm" },
       { id: 3, name: "Áo khoác bomber", image: product3, price: 699000, discount: 15, quantity: 1, size: "L", color: "Đen" }
     ])
+    
     const navLinks = [
-      { name: "SẢN PHẨM", href: "#" },
-      { name: "HÀNG MỚI VỀ", href: "#" },
-      { name: "HÀNG BÁN CHẠY", href: "#" },
-      { name: "SALE", href: "#" },
+      { name: "SẢN PHẨM", href: "/products" },
+      { name: "HÀNG MỚI VỀ", href: "/products?sort=newest" },
+      { name: "HÀNG BÁN CHẠY", href: "/products" },
+      { name: "SALE", href: "/products?promotion=true" },
     ]
-    const categories = [
-      {
-        key: '/collection/ao-thun',
-        label: <Link to="/collection/ao-thun">Áo thun</Link>,
-      },
-      {
-        key: '/collections/ao-khoac',
-        label: <Link to="/collections/ao-khoac">Áo khoác</Link>,
-      },
-      {
-        key: '/collections/vay',
-        label: <Link to="/collections/vay">Váy</Link>,
-      },
-      {
-        key: '/collections/quan',
-        label: <Link to="/collections/quan">Quần</Link>,
-      },
-    ]
+
+    // Fetch categories from API
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const data = await categoryService.getCategories();
+                setCategories(data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        fetchCategories();
+    }, []);
     const cartCount = useMemo(() => cartItems.reduce((n, it) => n + it.quantity, 0), [cartItems])
     return (
         <header className="w-full bg-white shadow sticky top-0 z-50">
@@ -131,9 +138,11 @@ export default function Header() {
                 </div>
                 {openCategories ? (
                   <div className="flex flex-col pl-6 gap-2 transition">
-                    {categories.map(item => (
-                      <div key={item.key} className="py-1 text-lg font-semibold">
-                        {item.label}
+                    {categories.map(category => (
+                      <div key={category.category_id} className="py-1 text-lg font-semibold">
+                        <Link to={`/collection/${category.slug}`}>
+                          {category.category_name}
+                        </Link>
                       </div>
                     ))}
                   </div>
@@ -179,39 +188,51 @@ export default function Header() {
             <div className="absolute left-[-250px] top-3 w-[1000px] bg-white shadow-lg rounded p-8 hidden group-hover:block z-50" style={{ width: "1200px" }}>
               <div className="grid grid-cols-5 gap-6">
                 <div className="col-span-1">
-                  <img src="/dress1.jpg" alt="Dress" className="rounded-lg object-cover" />
+                  <img src="/dress1.jpg" alt="Categories" className="rounded-lg object-cover" />
                 </div>
-                <div className="col-span-3 grid grid-cols-3 gap-6">
-                  <div>
-                    <h3 className="font-bold mb-2">Váy Đầm</h3>
-                    <ul className="space-y-10 text-sm">
-                      <li><Link to="#">Váy Đầm Công Sở</Link></li>
-                      <li><Link to="#">Váy Đầm Form A</Link></li>
-                      <li><Link to="#">Váy Đầm Xòe</Link></li>
-                      <li><Link to="#">Váy Đầm Dự Tiệc</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-bold mb-2">Áo</h3>
-                    <ul className="space-y-10 text-sm">
-                      <li><Link to="#">Áo Sơ Mi</Link></li>
-                      <li><Link to="#">Áo Thun</Link></li>
-                      <li><Link to="#">Áo Khoác</Link></li>
-                      <li><Link to="#">Áo Len</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="font-bold mb-2">Quần</h3>
-                    <ul className="space-y-10 text-sm">
-                      <li><Link to="#">Quần Jean</Link></li>
-                      <li><Link to="#">Quần Short</Link></li>
-                      <li><Link to="#">Quần Tây</Link></li>
-                      <li><Link to="#">Chân Váy</Link></li>
-                    </ul>
+                <div className="col-span-3">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <ul className="space-y-3 text-sm">
+                        <li>
+                          <Link 
+                            to="/products" 
+                            className="text-gray-700 hover:text-black transition-colors"
+                          >
+                            Tất cả sản phẩm
+                          </Link>
+                        </li>
+                        {categories.slice(0, Math.ceil(categories.length / 2)).map(category => (
+                          <li key={category.category_id}>
+                            <Link 
+                              to={`/collection/${category.slug}`}
+                              className="text-gray-700 hover:text-black transition-colors"
+                            >
+                              {category.category_name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="font-bold mb-4 text-lg opacity-0">.</h3>
+                      <ul className="space-y-3 text-sm">
+                        {categories.slice(Math.ceil(categories.length / 2)).map(category => (
+                          <li key={category.category_id}>
+                            <Link 
+                              to={`/collection/${category.slug}`}
+                              className="text-gray-700 hover:text-black transition-colors"
+                            >
+                              {category.category_name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
                 <div className="col-span-1">
-                  <img src="/dress2.jpg" alt="Dress" className="rounded-lg object-cover" />
+                  <img src="/dress2.jpg" alt="Categories" className="rounded-lg object-cover" />
                 </div>
               </div>
             </div>
