@@ -448,6 +448,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
+    router.put('/bulk-add', cartController.mergeLocalCartToCart);
     router.delete('/:cartId', cartController.removeFromCart);
     router.all('/:cartId', methodNotAllowed);
 };

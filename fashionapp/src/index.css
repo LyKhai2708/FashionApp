@@ -7,8 +7,7 @@
 }
 
 @theme {
-  --font-sans: Montserrat, sans-serif;  /* Đặt Montserrat làm font sans-serif mặc định */
-  /* Bạn có thể thêm các weight nếu cần, nhưng Tailwind sẽ tự map với utility như font-bold */
+  --font-sans: Montserrat, sans-serif; 
 }
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {

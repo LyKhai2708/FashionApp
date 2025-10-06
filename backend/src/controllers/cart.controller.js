@@ -96,11 +96,30 @@ async function getCartItemCount(req, res, next) {
     }
 }
 
+async function mergeLocalCartToCart(req, res, next) {
+    try {
+        const userId = req.user.id;
+        const { items } = req.body;
+
+        if (!Array.isArray(items)) {
+            return next(new ApiError(400, 'Dữ liệu không hợp lệ, "items" phải là một mảng.'));
+        }
+
+        await cartService.mergeLocalCartToCart(userId, items);
+        return res.status(200).json(JSend.success({
+            message: 'Giỏ hàng đã được đồng bộ thành công.'
+        }));
+    } catch (error) {
+        console.error('Merge local cart error:', error);
+        return next(new ApiError(500, error.message));
+    }
+}
 module.exports = {
     getCart,
     addToCart,
     updateCartItem,
     removeFromCart,
     clearCart,
-    getCartItemCount
+    getCartItemCount,
+    mergeLocalCartToCart
 };

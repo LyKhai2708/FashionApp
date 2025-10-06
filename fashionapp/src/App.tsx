@@ -7,6 +7,7 @@ import { useState, createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
+import { CartProvider } from './contexts/CartContext';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -56,7 +57,9 @@ function App() {
       {contextHolder}
       <LoadingContext.Provider  value={{ isLoading, setIsLoading }}>
         <AuthProvider>
-          <AppContent />
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
         </AuthProvider>
       </LoadingContext.Provider>
     </MessageContext.Provider>

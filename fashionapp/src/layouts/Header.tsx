@@ -13,7 +13,7 @@ import { useAuth } from "../contexts/AuthContext"
 import { useMessage } from "../App"
 import { useNavigate } from "react-router-dom"
 import { categoryService } from "../services/categoryService"
-
+import { useCart } from '../contexts/CartContext';
 interface Category {
     category_id: number;
     category_name: string;
@@ -102,7 +102,6 @@ export default function Header() {
       { name: "SALE", href: "/products?promotion=true" },
     ]
 
-    // Fetch categories from API
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -115,7 +114,7 @@ export default function Header() {
 
         fetchCategories();
     }, []);
-    const cartCount = useMemo(() => cartItems.reduce((n, it) => n + it.quantity, 0), [cartItems])
+    const { totalItems } = useCart();
     return (
         <header className="w-full bg-white shadow sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px] flex items-center justify-between py-3">
@@ -258,7 +257,7 @@ export default function Header() {
             <div className="relative" onClick={() => setOpenCart(true)}>
               <ShoppingCart className="w-6 h-6 cursor-pointer text-gray-700 hover:text-blue-600" />
               <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-xs leading-5 text-center select-none">
-                {cartCount}
+                {totalItems}
               </span>
             </div>
             {!authService.isAuthenticated() ? (
@@ -271,7 +270,7 @@ export default function Header() {
         {/* Search */}
         
       </div>
-      <CartDrawer open={openCart} onClose={() => setOpenCart(false)} items={cartItems} />
+      <CartDrawer open={openCart} onClose={() => setOpenCart(false)}/>
     </header>
     )
 }

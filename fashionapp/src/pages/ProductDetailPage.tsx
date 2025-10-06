@@ -6,8 +6,11 @@ import { useProductDetail } from '../hooks/useProductDetail';
 import { formatVNDPrice } from '../utils/priceFormatter';
 import Breadcrumb from '../components/Breadcrumb';
 import { extractProductIdFromSlug } from '../utils/slugUtils';
+import { useCart } from '../contexts/CartContext';
 
 export default function ProductDetailPage() {
+    const { addToCart } = useCart();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { slug } = useParams<{ slug: string }>();
     
     const productId = extractProductIdFromSlug(slug || '');
@@ -31,6 +34,40 @@ export default function ProductDetailPage() {
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+
+    const handleAddToCart = async () => {
+        if (!product ||!selectedVariant) {
+            alert('Vui lòng chọn màu sắc và kích cỡ');
+            return;
+        }
+        if (stockQuantity <= 0) {
+            alert('Sản phẩm đã hết hàng');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                product_variants_id: selectedVariant.variant_id,
+                quantity: quantity,
+            };
+    
+     
+            const productDetails = {
+                product_id: product.product_id,
+                product_name: product.name,
+                thumbnail: mainImage, 
+                price: product.price_info.base_price || product.price_info.discounted_price,    
+                variant: selectedVariant,
+            };
+    
+            await addToCart(payload, productDetails);
+        } catch (error) {
+            console.error('Failed to add to cart from detail page:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
     const handleQuantityChange = (delta: number) => {
         const newQuantity = quantity + delta;
         if (newQuantity >= 1 && newQuantity <= stockQuantity) {
@@ -66,6 +103,8 @@ export default function ProductDetailPage() {
 
     const currentImages = selectedColor?.images || [];
     const mainImage = currentImages[selectedImageIndex]?.image_url || product.thumbnail;
+
+    
     return (
         <>
             <Breadcrumb items={breadcrumbs} />
@@ -212,12 +251,13 @@ export default function ProductDetailPage() {
 
                     {/* Action Buttons */}
                     <div className='mt-8 flex flex-col md:flex-row gap-4'>
-                        <button 
+                        <button
+                            onClick={handleAddToCart}
                             className='flex-1 py-3 text-white bg-black font-medium rounded cursor-pointer hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed'
-                            disabled={stockQuantity === 0 || !selectedVariant}
+                            disabled={stockQuantity === 0 || !selectedVariant || isSubmitting}
                         >
-                            {stockQuantity === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
-                        </button> 
+                            {isSubmitting ? 'Đang thêm...' : (stockQuantity === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng')}
+                        </button>
                         <button 
                             className='flex-1 bg-white rounded border font-medium py-3 cursor-pointer hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed'
                             disabled={stockQuantity === 0 || !selectedVariant}

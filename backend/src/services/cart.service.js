@@ -208,11 +208,67 @@ async function getCartItemCount(userId) {
     return { count: parseInt(result.total_quantity) || 0 };
 }
 
+async function mergeLocalCartToCart(userId, items = []) {
+    if (!items || items.length === 0) {
+        return;
+    }
+    
+    
+    return knex.transaction(async (trx) => {
+        const variantIds = items.map(item => item.product_variants_id);
+
+        const existingItems = await trx('cart')
+        .where('user_id', userId)
+        .whereIn('product_variant_id', variantIds);
+
+        const existingItemsMap = new Map(
+            existingItems.map(item => [item.product_variant_id, item])
+        );
+        
+        const itemsToUpdate = [];
+        const itemsToInsert = [];
+
+        for (const item of items) {
+            const existing = existingItemsMap.get(item.product_variants_id);
+            if (existing) {
+
+                itemsToUpdate.push({
+                    cart_id: existing.cart_id,
+                    newQuantity: existing.quantity + item.quantity,
+                });
+            } else {
+
+                itemsToInsert.push({
+                    user_id: userId,
+                    product_variant_id: item.product_variants_id,
+                    quantity: item.quantity,
+                    created_at: new Date(),
+                });
+            }
+        }
+
+        if (itemsToUpdate.length > 0) {
+            await Promise.all(
+                itemsToUpdate.map(item =>
+                    trx('cart')
+                        .where('cart_id', item.cart_id)
+                        .update({ quantity: item.newQuantity })
+                )
+            );
+        }
+
+        if (itemsToInsert.length > 0) {
+            await trx('cart').insert(itemsToInsert);
+        }
+    });
+}
+
 module.exports = {
     getCart,
     addToCart,
     updateCartItem,
     removeFromCart,
     clearCart,
-    getCartItemCount
+    getCartItemCount,
+    mergeLocalCartToCart
 };

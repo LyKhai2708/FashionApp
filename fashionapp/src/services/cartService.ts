@@ -1,6 +1,7 @@
 import { api } from '../utils/axios';
 import type { ProductVariant } from '../types/product';
 
+const LOCAL_STORAGE_CART_KEY = 'fashion_app_guest_cart';
 export interface CartItem {
     cart_item_id: number;
     product_id: number;
@@ -73,6 +74,50 @@ class CartService {
             throw new Error(error.response?.data?.message || 'Không thể xóa sản phẩm khỏi giỏ hàng');
         }
     }
+
+    //guest
+    getLocalCart(): CartItem[] {
+        try {
+            const localCartJson = localStorage.getItem(LOCAL_STORAGE_CART_KEY);
+            return localCartJson ? JSON.parse(localCartJson) : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    saveLocalCart(items: CartItem[]): void{
+        localStorage.setItem(LOCAL_STORAGE_CART_KEY, JSON.stringify(items));
+    }
+
+    clearLocalCart(): void {
+        localStorage.removeItem(LOCAL_STORAGE_CART_KEY);
+    }
+
+    async mergeLocalCartToServer(): Promise<void> {
+        const localItems = this.getLocalCart();
+        if (localItems.length === 0) {
+            return;
+        }
+
+        const payload = {
+            items: localItems.map(item => ({
+                product_variants_id: item.variant.variant_id,
+                quantity: item.quantity,
+            })),
+        };
+
+        try {
+
+            await api.put('/api/v1/cart/bulk-add', payload);
+            this.clearLocalCart();
+            console.log('Local cart merged to server successfully.');
+
+        } catch (error) {
+            console.error('Failed to merge local cart to server:', error);
+            throw new Error('Không thể đồng bộ giỏ hàng của bạn.');
+        }
+    }
+    
 }
 
 const cartService = new CartService();
