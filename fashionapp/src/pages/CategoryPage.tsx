@@ -49,11 +49,10 @@ export default function CategoryPage() {
         loadingMore,
         currentFilters,
         error,
-        refetch
+        fetchProducts
     } = useProductList({
         initialParams: { 
-            limit: 12,
-            ...(category?.category_id && { category_id: category.category_id })
+            limit: 12
         },
         categoryId: category?.category_id,
         autoFetch: false
@@ -61,9 +60,9 @@ export default function CategoryPage() {
 
     useEffect(() => {
         if (category?.category_id) {
-            refetch();
+            fetchProducts({ category_id: category.category_id, limit: 12 }, true);
         }
-    }, [category?.category_id, refetch]);
+    }, [category?.category_id]);
 
     const breadcrumbs = [
         { label: "Trang chủ", href: "/" },

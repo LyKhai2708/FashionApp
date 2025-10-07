@@ -24,7 +24,11 @@ async function createOrder(orderData, items) {
       payment_method: orderData.payment_method || 'cash_on_delivery',
       payment_status: 'unpaid',
       notes: orderData.notes,
-      shipping_address: orderData.shipping_address
+      shipping_province: orderData.shipping_province,
+      shipping_ward: orderData.shipping_ward,
+      shipping_detail_address: orderData.shipping_detail_address,
+      shipping_province_code: orderData.shipping_province_code,
+      shipping_ward_code: orderData.shipping_ward_code,
     });
 
     // Thêm chi tiết đơn hàng
@@ -134,7 +138,7 @@ async function getOrderById(orderId) {
     .leftJoin('users', 'orders.user_id', 'users.user_id')
     .select([
       'orders.*',
-      'users.fullname as customer_name',
+      'users.username as customer_name',
       'users.email as customer_email',
       'users.phone as customer_phone'
     ])

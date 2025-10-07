@@ -52,6 +52,15 @@ async function deleteUser(req, res, next) {
   }
 }
 
+async function getMyInformation(req, res, next){
+  try {
+    const user = await userService.getUserById(req.user.id);
+    if (!user) return next(new ApiError(404, 'User not found'));
+    return res.json(JSend.success({ user }));
+  } catch (err) {
+    return next(new ApiError(500, 'Error fetching user'));
+  }
+} 
 module.exports = {
   findUserByEmail,
   getUsers,

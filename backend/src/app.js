@@ -17,6 +17,7 @@ const variantsRouter = require('./routes/variant.router');
 const colorsRouter = require('./routes/color.router');
 const promotionsRouter = require('./routes/promotions.router');
 const reviewsRouter = require('./routes/review.router');
+const addressRouter = require('./routes/address.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
@@ -54,6 +55,7 @@ colorsRouter.setup(app);
 imagesRouter.setup(app);
 promotionsRouter.setup(app);
 reviewsRouter.setup(app);
+addressRouter.setup(app);
 app.use(resourceNotFound);
 app.use(handleError);
 

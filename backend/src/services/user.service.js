@@ -11,13 +11,14 @@ function readUser(payload) {
         password: payload.password,
         email: payload.email,
         phone: payload.phone,
-        address: payload.address,
         role: payload.role,
     };
 }
 
 async function getUserById(id) {
-    return usersRepository().where('user_id', id).select('*').first();
+    return usersRepository().where('user_id', id)
+    .join('user_addresses', 'users.user_id', 'user_addresses.user_id')
+    .select('*').first();
 }
 
 async function getManyUsers(query){

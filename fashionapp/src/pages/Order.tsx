@@ -1,73 +1,129 @@
-
-import {Form, Input, Select, Radio, Button, Divider, Typography, Card } from "antd";
+import {Form, Input, Select, Radio, Divider, Typography } from "antd";
 import { Package, CreditCard } from "lucide-react";
-import { useMemo, useState } from "react";
-import product1 from "../assets/product1.jpg";
-import product2 from "../assets/product2.jpg";
-import product3 from "../assets/product3.jpg";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../contexts/AuthContext";
+import { message } from "antd";
+import addressService from "../services/addressService";
+
 const {Title} = Typography;
 
 export default function Order() {
-    interface CartItem {
-        id: number;
-        name: string;
-        image: string;
-        price: number;
-        discount?: number;
-        quantity: number;
-        size?: string;
-        color?: string;
-    }
-    
-    const [cartItems, setCartItems] = useState<CartItem[]>([
-        {
-            id: 1,
-            name: "Áo thun basic cotton",
-            image: product1,
-            price: 199000,
-            discount: 10,
-            quantity: 2,
-            size: "M",
-            color: "Trắng"
-        },
-        {
-            id: 2,
-            name: "Quần jeans slim fit",
-            image: product2,
-            price: 399000,
-            quantity: 1,
-            size: "32",
-            color: "Xanh đậm"
-        },
-        {
-            id: 3,
-            name: "Áo khoác bomber",
-            image: product3,
-            price: 699000,
-            discount: 15,
-            quantity: 1,
-            size: "L",
-            color: "Đen"
-        }
-    ]);
-      
-    const formatCurrency = (value: number) => value.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+    const navigate = useNavigate();
+    const { items, totalPrice } = useCart();
+    const { isAuthenticated, user } = useAuth();
     const [form] = Form.useForm();
-    const [shippingMethod, setShippingMethod] = useState<string | null>(null);
-    const [shippingFee, setShippingFee] = useState<number>(0);
+    const [submitting, setSubmitting] = useState(false);
+    const [provinces, setProvinces] = useState<any[]>([]);
+    const [wards, setWards] = useState<any[]>([]);
+    const [loadingAddress, setLoadingAddress] = useState(true);
     
-    const getUnitPriceAfterDiscount = (item: CartItem) => {
-        if (!item.discount) return item.price;
-        return Math.round(item.price * (1 - item.discount / 100));
+    // Load tp
+    useEffect(() => {
+        fetch('https://provinces.open-api.vn/api/v2/?depth=1')
+          .then(res => res.json())
+          .then(data => setProvinces(data));
+    }, []);
+    const formatCurrency = (value: number) => value.toLocaleString("vi-VN");
+    const shippingFee = 0; // Free shipping
+    const total = totalPrice + shippingFee;
+
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            message.warning('Vui lòng đăng nhập để đặt hàng');
+            navigate('/login');
+        }
+        if (items.length === 0) {
+            message.warning('Giỏ hàng trống');
+            navigate('/cart');
+        }
+    }, [isAuthenticated, items, navigate]);
+    // Load default address and populate dropdowns
+    useEffect(() => {
+        const loadDefaultAddress = async () => {
+            if (!isAuthenticated) return;
+            
+            try {
+                setLoadingAddress(true);
+                const address = await addressService.getDefaultAddress();
+                
+                if (address && address.province_code) {
+                    // Set form values
+                    form.setFieldsValue({
+                        province: address.province_code,
+                        ward: address.ward_code,
+                        address: address.detail_address
+                    });
+
+                    // Load wards
+                    const provinceRes = await fetch(
+                        `https://provinces.open-api.vn/api/v2/p/${address.province_code}?depth=2`
+                    );
+                    const provinceData = await provinceRes.json();
+                    setWards(provinceData.wards || []);
+                }
+            } catch (error) {
+                console.error('Load address error:', error);
+            } finally {
+                setLoadingAddress(false);
+            }
+        };
+        
+        loadDefaultAddress();
+    }, [isAuthenticated, form]);
+
+
+    const handleProvinceChange = async (provinceCode: string) => {
+        form.setFieldsValue({ ward: undefined });
+        setWards([]); 
+        
+        if (provinceCode) {
+            try {
+                const res = await fetch(
+                    `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
+                );
+                const data = await res.json();
+                setWards(data.wards || []);
+            } catch (error) {
+                console.error('Error loading wards:', error);
+            }
+        } else {
+            setWards([]);
+        }
     };
-    const lineTotal = (item: CartItem) => getUnitPriceAfterDiscount(item) * item.quantity;
-    const subtotal = useMemo(() => cartItems.reduce((sum, it) => sum + lineTotal(it), 0), [cartItems]);
-    const total = subtotal + shippingFee;
   
-    const handleFinish = (values: any) => {
-        console.log("Or values:", values);
-        // Xử lý đặt hàng ở đây
+    const handleFinish = async (values: any) => {
+        const provinceName = provinces.find(p => p.code == values.province)?.name;
+        const wardName = wards.find(w => w.code == values.ward)?.name;
+        setSubmitting(true);
+        try {
+            
+            console.log("Order data:", {
+                ...values,
+                provinceName,
+                wardName,
+                items: items.map(item => ({
+                    variant_id: item.variant.variant_id,
+                    quantity: item.quantity,
+                    price: item.price
+                })),
+                total_amount: total
+            });
+            
+            message.success('Đặt hàng thành công!');
+
+        } catch (error: any) {
+            message.error(error.message || 'Đặt hàng thất bại');
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    if (items.length === 0) {
+        return null; 
+    }
     return (
         <div
         className="min-h-screen flex flex-col">
@@ -112,38 +168,51 @@ export default function Order() {
                             <Divider></Divider>
                             <Title level={4}>Địa chỉ giao hàng</Title>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Form.Item  label="Tỉnh / Thành" name="province" rules={[{ required: true, message: "Chọn tỉnh / thành" }]} > 
-                                <Select size="large" placeholder="Chọn tỉnh / thành"> 
-                                    <Select.Option value="hcm">Hồ Chí Minh</Select.Option> 
-                                    <Select.Option value="hn">Hà Nội</Select.Option> 
-                                </Select> 
-                            </Form.Item>
-                            <Form.Item
-                                label="Quận / Huyện"
-                                name="district"
-                                rules={[{ required: true, message: "Chọn quận / huyện" }]}>
-                                <Select size="large" placeholder="Chọn quận / huyện">
-                                    <Select.Option value="q1">Quận 1</Select.Option>
-                                    <Select.Option value="q2">Quận 2</Select.Option>
-                                </Select>
-                            </Form.Item>
-                            <Form.Item
-                                label="Phường / Xã"
-                                name="ward"
-                                rules={[{ required: true, message: "Chọn phường / xã" }]}
-                            >
-                                <Select size="large" placeholder="Chọn phường / xã">
-                                    <Select.Option value="p1">Phường 1</Select.Option>
-                                    <Select.Option value="p2">Phường 2</Select.Option>
-                                </Select>
-                            </Form.Item>
-                            <Form.Item
-                                label="Địa chỉ cụ thể"
-                                name="address"
-                                rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
-                            >
-                                <Input size="large" placeholder="Nhập địa chỉ" />
-                            </Form.Item>
+                                <Form.Item  
+                                    label="Tỉnh / Thành" 
+                                    name="province" 
+                                    rules={[{ required: true, message: "Chọn tỉnh / thành" }]}
+                                > 
+                                    <Select 
+                                        size="large" 
+                                        placeholder="Chọn tỉnh / thành"
+                                        onChange={handleProvinceChange}
+                                        loading={provinces.length === 0}
+                                    > 
+                                        {provinces.map(province => (
+                                            <Select.Option key={province.code} value={province.code}>
+                                                {province.name}
+                                            </Select.Option>
+                                        ))}
+                                    </Select> 
+                                </Form.Item>
+                                
+                                <Form.Item
+                                    label="Phường / Xã"
+                                    name="ward"
+                                    rules={[{ required: true, message: "Chọn phường / xã" }]}
+                                >
+                                    <Select 
+                                        size="large" 
+                                        placeholder="Chọn phường / xã"
+                                        disabled={wards.length === 0}
+                                    >
+                                        {wards.map(ward => (
+                                            <Select.Option key={ward.code} value={ward.code}>
+                                                {ward.name}
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                                
+                                <Form.Item
+                                    label="Địa chỉ cụ thể"
+                                    name="address"
+                                    rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
+                                    className="md:col-span-2"
+                                >
+                                    <Input size="large" placeholder="Nhập địa chỉ cụ thể" />
+                                </Form.Item>
                             </div>
                             <Divider />
                             {/* Phương thức vận chuyển */}
@@ -190,38 +259,47 @@ export default function Order() {
                     <div className="sticky top-20">
                         <span className="text-xl font-semibold">Thông tin thanh toán</span>
                         <div className="mt-4 border border-gray-200 p-4 rounded-md shadow-lg">
-                            {cartItems.map((item) => (
-                            <div key={item.id} className="flex gap-3 items-center mb-4">
+                            {items.map((item) => (
+                            <div key={item.cart_item_id} className="flex gap-3 items-center mb-4">
                                 <div className="relative">
-                                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                                    <img src={item.thumbnail} alt={item.product_name} className="w-16 h-16 object-cover rounded" />
                                     <span className="absolute -top-2 -right-2 bg-gray-800 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                         {item.quantity}
                                     </span>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-sm font-medium">{item.name}</div>
+                                    <div className="text-sm font-medium">{item.product_name}</div>
                                     <div className="text-xs text-gray-500">
-                                        {item.color} / {item.size}
+                                        {item.variant.size.name} {item.variant.color ? `/ ${item.variant.color.name}` : ''}
                                     </div>
                                 </div>
-                                <div className="text-sm font-medium">{formatCurrency(getUnitPriceAfterDiscount(item))}</div>
+                                <div className="text-sm font-medium">{formatCurrency(item.price)}₫</div>
                             </div>
                             ))}
 
                             <Divider />
                             <div className="flex justify-between text-sm mb-2">
                                 <span>Tạm tính</span>
-                                <span>{formatCurrency(subtotal)}</span>
+                                <span>{formatCurrency(totalPrice)}₫</span>
                             </div>
                             <div className="flex justify-between text-sm mb-2">
                                 <span>Phí vận chuyển</span>
-                                <span>{shippingFee > 0 ? formatCurrency(shippingFee) : "Miễn phí"}</span>
+                                <span>{shippingFee > 0 ? `${formatCurrency(shippingFee)}₫` : "Miễn phí"}</span>
                             </div>
                             <Divider />
-                            <div className="flex justify-between font-semibold text-lg">
+                            <div className="flex justify-between font-semibold text-lg mb-4">
                                 <span>Tổng cộng</span>
-                                <span>{formatCurrency(total)}</span>
+                                <span className="text-red-500">{formatCurrency(total)}₫</span>
                             </div>
+                            
+                            <button
+                                type="submit"
+                                onClick={() => form.submit()}
+                                disabled={submitting}
+                                className="cursor-pointer w-full bg-black text-white py-3 rounded-md hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                            >
+                                {submitting ? 'Đang xử lý...' : 'ĐẶT HÀNG'}
+                            </button>
                         </div>
                     </div>
                 </div>

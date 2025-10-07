@@ -12,7 +12,6 @@ export const AUTH_ACTIONS = {
     SET_LOADING: 'SET_LOADING',
   } as const;
   
-  // Export individual actions for convenience
   export const {
     LOGIN_START,
     LOGIN_SUCCESS,

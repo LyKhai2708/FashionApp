@@ -94,10 +94,19 @@ export default function ProductDetailPage() {
         );
     }
 
+    const categorySlug = product.category_name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') 
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+
     const breadcrumbs = [
         { label: "Trang chủ", href: "/" },
         { label: "Sản phẩm", href: "/products" },
-        { label: product.category_name, href: `/products?category=${product.category_id}` },
         { label: product.name }
     ];
 

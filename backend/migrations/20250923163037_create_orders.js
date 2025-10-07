@@ -18,7 +18,10 @@ exports.up = function(knex) {
     table.enu('payment_status', ['unpaid', 'paid', 'refund'])
       .defaultTo('unpaid');
     table.text('notes').nullable();
-    table.text('shipping_address').nullable();
+    table.varchar('shipping_province', 100)
+    table.varchar('shipping_ward', 100)
+    table.text('shipping_detail_address', 100)
+    table.text('shipping_full_address')
     table.integer('user_id').unsigned().nullable()
       .references('user_id').inTable('users')
       .onDelete('CASCADE');
