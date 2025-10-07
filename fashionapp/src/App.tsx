@@ -2,7 +2,7 @@
 import './App.css'
 import { BrowserRouter, Routes } from 'react-router-dom'
 import { generateRoutes } from './routes'
-import { message, Spin } from 'antd'
+import { message, notification, Spin } from 'antd'
 import { useState, createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -33,6 +33,15 @@ export const useMessage = () => {
   return context;
 };
 
+const NotificationContext = createContext<ReturnType<typeof notification.useNotification>[0] | undefined>(undefined);
+export const useNotification = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotification must be used within a NotificationProvider');
+  }
+  return context;
+};
+
 function AppContent() {
   const { isAuthenticated } = useAuth();
   const { isLoading } = useLoading();
@@ -50,18 +59,22 @@ function AppContent() {
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const [antMessage, contextHolder] = message.useMessage();
+  const [antMessage, messageContextHolder] = message.useMessage();
+  const [antNotification, notificationContextHolder] = notification.useNotification();
   
   return (
     <MessageContext.Provider value={antMessage}>
-      {contextHolder}
-      <LoadingContext.Provider  value={{ isLoading, setIsLoading }}>
-        <AuthProvider>
-          <CartProvider>
-            <AppContent />
-          </CartProvider>
-        </AuthProvider>
-      </LoadingContext.Provider>
+      <NotificationContext.Provider value={antNotification}>
+        {messageContextHolder}
+        {notificationContextHolder}
+        <LoadingContext.Provider  value={{ isLoading, setIsLoading }}>
+          <AuthProvider>
+            <CartProvider>
+              <AppContent />
+            </CartProvider>
+          </AuthProvider>
+        </LoadingContext.Provider>
+      </NotificationContext.Provider>
     </MessageContext.Provider>
   )
 }

@@ -2,13 +2,14 @@ import { api } from '../utils/axios';
 import type { ProductVariant } from '../types/product';
 
 const LOCAL_STORAGE_CART_KEY = 'fashion_app_guest_cart';
+
 export interface CartItem {
     cart_item_id: number;
     product_id: number;
     product_name: string;
     thumbnail: string;
     quantity: number;
-    price: number; //final price
+    price: number;
     variant: ProductVariant;
 }
 
@@ -16,8 +17,6 @@ export interface AddToCartPayload {
     product_variants_id: number;
     quantity: number;
 }
-
-
 
 interface CartResponse {
     status: 'success';
@@ -35,12 +34,33 @@ interface AddToCartResponse {
     };
 }
 
-
 class CartService {
     async getCart(): Promise<CartResponse['data']> {
         try {
-            const response = await api.get<CartResponse>('/api/v1/cart');
-            return response.data.data;
+            const response = await api.get<any>('/api/v1/cart');
+            const backendData = response.data.data.cart;
+            
+            // Transform backend response to match frontend interface
+            const cart = backendData.items.map((item: any) => ({
+                cart_item_id: item.cart_id,
+                product_id: item.product.product_id,
+                product_name: item.product.name,
+                thumbnail: item.product.image_url || item.product.thumbnail,
+                quantity: item.quantity,
+                price: item.product.unit_price,
+                variant: {
+                    variant_id: item.variant.variant_id,
+                    stock_quantity: item.variant.stock_quantity,
+                    color: item.variant.color,
+                    size: item.variant.size,
+                }
+            }));
+            
+            return {
+                cart,
+                total_items: backendData.summary.total_items,
+                total_price: backendData.summary.total_amount,
+            };
         } catch (error: any) {
             console.error('Get cart error:', error);
             throw new Error(error.response?.data?.message || 'Không thể tải giỏ hàng');
@@ -107,17 +127,14 @@ class CartService {
         };
 
         try {
-
             await api.put('/api/v1/cart/bulk-add', payload);
             this.clearLocalCart();
             console.log('Local cart merged to server successfully.');
-
         } catch (error) {
             console.error('Failed to merge local cart to server:', error);
             throw new Error('Không thể đồng bộ giỏ hàng của bạn.');
         }
     }
-    
 }
 
 const cartService = new CartService();

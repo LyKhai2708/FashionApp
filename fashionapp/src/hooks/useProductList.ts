@@ -197,7 +197,9 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
 
     useEffect(() => {
         if (autoFetch) {
-            fetchProducts(currentFilters, true);
+            const filters = getFiltersFromURL();
+            setCurrentFilters(filters);
+            fetchProducts(filters, true);
         }
     }, [categoryId, autoFetch]);
 
@@ -246,8 +248,7 @@ export const useProductsByCategory = (categoryId: number) => {
 export const useAllProducts = (categorySlug?: string) => {
     return useProductList({
         initialParams: { 
-            limit: 12,
-            ...(categorySlug && { category_slug: categorySlug })
+            limit: 12
         },
         autoFetch: true
     });

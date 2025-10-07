@@ -16,9 +16,9 @@ async function getCart(req, res, next) {
 async function addToCart(req, res, next) {
     try {
         const userId = req.user.id;
-        const { product_variant_id, quantity } = req.body;
+        const { product_variants_id, quantity } = req.body;
 
-        if (!product_variant_id) {
+        if (!product_variants_id) {
             return next(new ApiError(400, 'product_variant_id là bắt buộc'));
         }
 
@@ -26,7 +26,7 @@ async function addToCart(req, res, next) {
             return next(new ApiError(400, 'Số lượng phải là số nguyên dương'));
         }
 
-        const cart = await cartService.addToCart(userId, { product_variant_id, quantity });
+        const cart = await cartService.addToCart(userId, { product_variants_id, quantity });
         return res.json(JSend.success({ 
             cart,
             message: 'Đã thêm sản phẩm vào giỏ hàng'

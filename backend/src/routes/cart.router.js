@@ -8,6 +8,7 @@ module.exports.setup = (app) => {
     app.use('/api/v1/cart', router);
     
     router.use(authMiddleware);
+    
     /**
      * @swagger
      * /api/v1/cart:
@@ -320,6 +321,41 @@ module.exports.setup = (app) => {
     
     /**
      * @swagger
+     * /api/v1/cart/bulk-add:
+     *   put:
+     *     summary: Merge local cart to server
+     *     description: Merge guest cart items to authenticated user's cart
+     *     tags:
+     *       - cart
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - items
+     *             properties:
+     *               items:
+     *                 type: array
+     *                 items:
+     *                   type: object
+     *                   properties:
+     *                     product_variants_id:
+     *                       type: integer
+     *                     quantity:
+     *                       type: integer
+     *     responses:
+     *       200:
+     *         description: Cart merged successfully
+     */
+    router.put('/bulk-add', cartController.mergeLocalCartToCart);
+    router.all('/bulk-add', methodNotAllowed);
+    
+    /**
+     * @swagger
      * /api/v1/cart/{cartId}:
      *   put:
      *     summary: Update cart item quantity
@@ -448,7 +484,6 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.put('/bulk-add', cartController.mergeLocalCartToCart);
     router.delete('/:cartId', cartController.removeFromCart);
     router.all('/:cartId', methodNotAllowed);
 };

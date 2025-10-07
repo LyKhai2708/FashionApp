@@ -1,90 +1,31 @@
-import { useMemo, useState } from "react"
-import product1 from "../assets/product1.jpg";
-import product2 from "../assets/product2.jpg";
-import product3 from "../assets/product3.jpg";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import ProductSlider from "../components/ProductSlider";
 import { Link, useNavigate } from "react-router-dom";
-
+import type { CartItem } from "../services/cartService";
+import { useCart } from "../contexts/CartContext";
 export default function Cart() {
     const navigate = useNavigate()
-    interface CartItem {
-        id: number;
-        name: string;
-        image: string;
-        price: number;
-        discount?: number;
-        quantity: number;
-        size?: string;
-        color?: string;
-    }
-
-    const [cartItems, setCartItems] = useState<CartItem[]>([
-        {
-            id: 1,
-            name: "Áo thun basic cotton",
-            image: product1,
-            price: 199000,
-            discount: 10,
-            quantity: 2,
-            size: "M",
-            color: "Trắng"
-        },
-        {
-            id: 2,
-            name: "Quần jeans slim fit",
-            image: product2,
-            price: 399000,
-            quantity: 1,
-            size: "32",
-            color: "Xanh đậm"
-        },
-        {
-            id: 3,
-            name: "Áo khoác bomber",
-            image: product3,
-            price: 699000,
-            discount: 15,
-            quantity: 1,
-            size: "L",
-            color: "Đen"
-        }
-    ]);
+    const { 
+        items, 
+        totalPrice, 
+        loading, 
+        removeItem, 
+        updateItemQuantity,
+    } = useCart()
 
     const formatCurrency = (value: number) => value.toLocaleString("vi-VN");
 
-    const getUnitPriceAfterDiscount = (item: CartItem) => {
-        if (!item.discount) return item.price;
-        return Math.round(item.price * (1 - item.discount / 100));
-    };
-
-    const lineTotal = (item: CartItem) => getUnitPriceAfterDiscount(item) * item.quantity;
-
-    const subtotal = useMemo(() => cartItems.reduce((sum, it) => sum + lineTotal(it), 0), [cartItems]);
+    
     const shipping = 0;
-    const grandTotal = subtotal + shipping;
+    const grandTotal = totalPrice + shipping;
 
-    const updateQuantity = (id: number, delta: number) => {
-        setCartItems(prev => prev.map(it => it.id === id ? { ...it, quantity: Math.max(1, it.quantity + delta) } : it));
-    };
+    
 
-    const setQuantity = (id: number, quantity: number) => {
-        const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
-        setCartItems(prev => prev.map(it => it.id === id ? { ...it, quantity: safeQuantity } : it));
-    };
-
-    const removeItem = (id: number) => setCartItems(prev => prev.filter(it => it.id !== id));
-    const isEmpty = cartItems.length === 0;
+    const isEmpty = items.length === 0;
 
     return (
         <div
         className="min-h-screen flex flex-col">
-            {/* Breadcrumb */}
-            {/* <div className="flex gap-2">
-                <a href="/">Trang chủ</a>
-                <span>/</span>
-                <span className="text-gray-500">Giỏ hàng</span>
-            </div> */}
             {/* Cart Content */}
             <div className="mt-10 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column: Cart Items or Empty State */}
@@ -102,7 +43,7 @@ export default function Cart() {
                     <>
                     <div className="flex items-center gap-2 mb-4">
                         <h2 className="font-semibold text-2xl">GIỎ HÀNG CỦA BẠN</h2>
-                        <span>(Đang có <span className="font-bold">{cartItems.length}</span> sản phẩm)</span>
+                        <span>(Đang có <span className="font-bold">{items.length}</span> sản phẩm)</span>
                     </div>
                     <div className="mt-4">
                         <div className="border-b grid grid-cols-4 gap-4 p-4 text-gray-500 font-semibold">
@@ -111,24 +52,22 @@ export default function Cart() {
                             <span className="text-center">Tổng cộng</span>
                         </div>
                         <div className="divide-y divide-gray-200l">
-                            {cartItems.map(item => (
-                                <div className="grid grid-cols-4 gap-4 p-4 items-center" key={item.id}>
+                            {items.map(item => (
+                                <div className="grid grid-cols-4 gap-4 p-4 items-center" key={item.cart_item_id}>
                                     <div className="col-span-2 flex items-center gap-5">
-                                        <img src={item.image} alt={item.name} className="w-20 h-20 rounded object-cover"  />
+                                        <img src={item.thumbnail} alt={item.product_name} className="w-20 h-20 rounded object-cover"  />
                                         <div className="flex flex-col gap-1">
-                                            <h2 className="font-bold text-lg">{item.name}</h2>
-                                            <span className="text-gray-500 text-sm">{item.size}/{item.color}</span>
-                                            {
-                                                item.discount?
-                                                (<span className="text-gray-500 text-sm"><span className="line-through">{formatCurrency(item.price)}₫</span> <span className="font-bold">{formatCurrency(getUnitPriceAfterDiscount(item))}₫</span></span>)
-                                                :(<span className="text-gray-500 text-sm">{formatCurrency(item.price)}₫</span>)
-                                            }
+                                            <h2 className="font-bold text-lg">{item.product_name}</h2>
+                                            <span className="text-gray-500 text-sm">{item.variant.size.name} {item.variant.color ? `/ ${item.variant.color.name}` : ''}</span>
+
+                                            <span className="text-gray-500 text-sm">{formatCurrency(item.price)}₫</span>
+                                    
                                             
                                         </div>
                                     </div>
                                     <div className='flex flex-col items-center gap-2'>
                                         <div className='inline-flex items-center rounded mt-2 justify-between'>
-                                            <button className='cursor-pointer' onClick={() => updateQuantity(item.id, -1)} aria-label="Giảm số lượng">
+                                            <button className='cursor-pointer' onClick={() => updateItemQuantity(item.cart_item_id, item.quantity - 1)} aria-label="Giảm số lượng">
                                                 <Minus className="text-gray-400 w-4 h-4"/>
                                             </button>
                                             <input
@@ -137,20 +76,22 @@ export default function Cart() {
                                                 value={item.quantity}
                                                 onChange={(e) => {
                                                     const value = e.target.value === '' ? 1 : parseInt(e.target.value, 10);
-                                                    setQuantity(item.id, isNaN(value) ? 1 : value);
+                                                    if (!isNaN(value) && value > 0) {
+                                                        updateItemQuantity(item.cart_item_id, value);
+                                                    }
                                                 }}
                                                 className='w-16 h-10 text-center text-lg font-semibold border-0 outline-none'
                                                 style={{WebkitAppearance: 'none', MozAppearance: 'textfield'}}
                                             />
-                                            <button className='cursor-pointer' onClick={() => updateQuantity(item.id, 1)} aria-label="Tăng số lượng">
+                                            <button className='cursor-pointer' onClick={() => updateItemQuantity(item.cart_item_id, item.quantity + 1)} aria-label="Tăng số lượng">
                                                 <Plus className="text-gray-400 w-4 h-4"/>
                                             </button>
                                         </div>
-                                        <button className="inline-flex w-fit items-center gap-1 text-red-500 hover:underline text-sm cursor-pointer" onClick={() => removeItem(item.id)}>
+                                        <button className="inline-flex w-fit items-center gap-1 text-red-500 hover:underline text-sm cursor-pointer" onClick={() => removeItem(item.cart_item_id)}>
                                                 <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <div className="text-md text-center font-bold text-black">{formatCurrency(lineTotal(item))}₫</div>
+                                    <div className="text-md text-center font-bold text-black">{formatCurrency(item.price * item.quantity)}₫</div>
                                 </div>
                             ))}
                             
@@ -165,7 +106,7 @@ export default function Cart() {
                     <div className="space-y-3 text-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Tạm tính</span>
-                            <span className="font-medium">{formatCurrency(subtotal)}₫</span>
+                            <span className="font-medium">{formatCurrency(totalPrice)}₫</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Phí vận chuyển</span>

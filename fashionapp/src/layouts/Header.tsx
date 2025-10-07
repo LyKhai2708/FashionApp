@@ -1,7 +1,7 @@
 import { Menu as MenuIcon , ShoppingCart , User, Search, CameraIcon, ChevronDown } from "lucide-react"
 import { useMemo, useState, useEffect } from "react"
 import CartDrawer from "../components/CartDrawer"
-import type { CartItem } from "../components/CartDrawer"
+import type { CartItem } from "../services/cartService"
 import product1 from "../assets/product1.jpg"
 import product2 from "../assets/product2.jpg"
 import product3 from "../assets/product3.jpg"

@@ -185,7 +185,6 @@ async function getProductById(id, user_id = null) {
             .orderBy('c.name')
             .orderBy('s.name');
 
-        console.log(`Found ${variants.length} variants for product ${id}`);
 
         const colorIds = variants.length > 0 ? [...new Set(variants.map(v => v.color_id))] : [];
         const images = colorIds.length > 0 ? await knex('images as img')
@@ -229,7 +228,6 @@ async function getProductById(id, user_id = null) {
             active: variant.active
         }));
 
-        console.log(product);
         return {
             ...product,
             variants: formattedVariants,

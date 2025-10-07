@@ -41,7 +41,6 @@ apiClient.interceptors.request.use(
         if(token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
         return config;
     },
     (error: any) => {
@@ -51,7 +50,6 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
     (response: AxiosResponse) => {
-        console.log(`API Response: ${response.status} ${response.config.url}`)
         return response;
     },
     async (error) => {
@@ -90,7 +88,7 @@ apiClient.interceptors.response.use(
                 return apiClient(originalRequest);
 
             }catch(refreshError){
-                // Refresh token failed -> dang xuat
+
                 processQueue(refreshError, null);
                 
                 clearAuthStorage();

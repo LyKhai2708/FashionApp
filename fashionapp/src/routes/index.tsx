@@ -12,6 +12,7 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ProductPage from '../pages/ProductPage';
+import CategoryPage from '../pages/CategoryPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import Cart from '../pages/Cart';
 import Order from '../pages/Order';
@@ -24,12 +25,12 @@ const publicRoutes: RouteType[] = [
   { path: '/login', component: Login, layout: null },
   { path: '/register', component: Register, layout: null },
   { path: '/products', component: ProductPage },
-  { path: '/collection/:categorySlug', component: ProductPage },
+  { path: '/collection/:categorySlug', component: CategoryPage },
   { path: '/products/:slug', component: ProductDetailPage },
+  { path: '/cart', component: Cart },
 ];
 
 const privateRoutes: RouteType[] = [
-  { path: '/cart', component: Cart },
   { path: '/order', component: Order },
   { path: '/profile', component: ProfilePage },
 ];

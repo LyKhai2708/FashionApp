@@ -57,7 +57,7 @@ export default function ProductDetailPage() {
                 product_id: product.product_id,
                 product_name: product.name,
                 thumbnail: mainImage, 
-                price: product.price_info.base_price || product.price_info.discounted_price,    
+                price: product.price_info.has_promotion ? product.price_info.discounted_price : product.price_info.base_price,    
                 variant: selectedVariant,
             };
     

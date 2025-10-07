@@ -1,20 +1,32 @@
-import React from "react";
-import { useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import ProductListLayout from "../components/ProductListLayout";
-import { useAllProducts } from "../hooks/useProductList";
+import { useProductList } from "../hooks/useProductList";
 import type { ProductsParams } from "../types/product";
-import CategoryService, { type Category }  from "../services/categoryService";
-import { useEffect } from "react";
+import { useMemo } from "react";
+
 export default function ProductPage() {
-    const [category, setCategory] = React.useState<{
-        category_id: number;
-        category_name: string;
-        slug: string;
-        parent_id: number | null;
-        active: number;
-        children: Category[];
-    } | null>(null);
-    const { categorySlug } = useParams<{ categorySlug?: string }>();
+    const [searchParams] = useSearchParams();
+    
+    // Get filters from URL query params
+    const initialFilters = useMemo(() => {
+        const filters: ProductsParams = { limit: 12 };
+        
+        if (searchParams.get('promotion_id')) {
+            filters.promotion_id = Number(searchParams.get('promotion_id'));
+        }
+        if (searchParams.get('brand_id')) {
+            filters.brand_id = Number(searchParams.get('brand_id'));
+        }
+        if (searchParams.get('on_sale')) {
+            filters.on_sale = searchParams.get('on_sale') === 'true';
+        }
+        if (searchParams.get('search')) {
+            filters.search = searchParams.get('search')!;
+        }
+        
+        return filters;
+    }, [searchParams]);
+
     const {
         products,
         loading,
@@ -26,53 +38,35 @@ export default function ProductPage() {
         loadingMore,
         currentFilters,
         error
-    } = useAllProducts(categorySlug);
+    } = useProductList({
+        initialParams: initialFilters,
+        autoFetch: true
+    });
 
-    useEffect(() => {
-    const fetchCategory = async () => {
-        if (categorySlug) {
-            const result = await CategoryService.getCategoryBySlug(categorySlug);
-            if (result) {
-                setCategory({
-                    category_id: result.category_id,
-                    category_name: result.category_name,
-                    slug: result.slug,
-                    parent_id: result.parent_id ?? null,
-                    active: result.active,
-                    children: result.children ?? [],
-                });
-            } else {
-                setCategory(null);
-            }
-        } else {
-            setCategory(null);
-        }
-    };
-    fetchCategory();
-    }, [categorySlug]);
+    // Dynamic page title based on filters
     const getPageTitle = () => {
-        if (categorySlug) {
-            return category ? category.category_name : "Sản phẩm";
+        if (searchParams.get('search')) {
+            return `Kết quả tìm kiếm: "${searchParams.get('search')}"`;
+        }
+        if (searchParams.get('on_sale')) {
+            return "SẢN PHẨM ĐANG GIẢM GIÁ";
+        }
+        if (searchParams.get('promotion_id')) {
+            return "SẢN PHẨM KHUYẾN MÃI";
         }
         return "TẤT CẢ SẢN PHẨM";
     };
 
-    const breadcrumbs = categorySlug ? [
-        { label: "Trang chủ", href: "/" },
-        { label: "Sản phẩm", href: "/products" },
-        { label: getPageTitle(), href: `/collection/${categorySlug}` }
-    ] : [
+    const breadcrumbs = [
         { label: "Trang chủ", href: "/" },
         { label: "Sản phẩm", href: "/products" }
     ];
 
     const handleFilterChange = (filters: ProductsParams) => {
-        console.log('🔧 Applying filters:', filters);
         setFilters(filters);
     };
 
     const handleSortChange = (sort: string) => {
-        console.log('📊 Applying sort:', sort);
         setSort(sort);
     };
 

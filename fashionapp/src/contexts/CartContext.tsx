@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import cartService from '../services/cartService';
 import type { CartItem, AddToCartPayload } from '../services/cartService';
 import { useAuth } from './AuthContext';
-import { useMessage } from '../App';
+import { useMessage, useNotification } from '../App';
 
 interface CartState {
     items: CartItem[];
@@ -34,6 +34,7 @@ export const useCart = () => {
 export const CartProvider = ({children}: {children: ReactNode}) =>{
     const {isAuthenticated} = useAuth();
     const message = useMessage();
+    const notification = useNotification();
     const [cartState, setCartState] = useState<CartState>({
         items: [],
         totalItems: 0,
@@ -41,36 +42,69 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         loading: false,
         error: null,
     });
+    const [hasMerged, setHasMerged] = useState(false);
 
-    const fetchCart = async () => {
+    const fetchCart = async (skipMerge = false) => {
         if (isAuthenticated) {
             try {
                 setCartState(prev => ({ ...prev, loading: true }));
-                await cartService.mergeLocalCartToServer();
+                
+                // Only merge once when user logs in
+                if (!skipMerge && !hasMerged) {
+                    await cartService.mergeLocalCartToServer();
+                    setHasMerged(true);
+                }
+                
                 const { cart, total_items, total_price } = await cartService.getCart();
                 setCartState({ items: cart, totalItems: total_items, totalPrice: total_price, loading: false, error: null });
             } catch (error: any) {
                 setCartState(prev => ({ ...prev, loading: false, error: error.message }));
             }
         }else{
+            setHasMerged(false)
             const localItems = cartService.getLocalCart();
-            const totalItems = localItems.reduce((sum, item) => sum + item.quantity, 0);
             const totalPrice = localItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            setCartState({ items: localItems, totalItems, totalPrice, loading: false, error: null });
+            setCartState({ items: localItems, totalItems: localItems.length, totalPrice, loading: false, error: null });
         }
         
     };
 
     useEffect(() => {
-        fetchCart();
+
+            fetchCart();
+        
     }, [isAuthenticated]);
+
+    const showAddToCartNotification = (productDetails: Omit<CartItem, 'cart_item_id' | 'quantity'>, quantity: number) => {
+        notification.success({
+            message: 'Đã thêm vào giỏ hàng',
+            description: (
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <img 
+                        src={productDetails.thumbnail} 
+                        alt={productDetails.product_name}
+                        style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
+                    />
+                    <div>
+                        <div style={{ fontWeight: 600, marginBottom: '4px' }}>{productDetails.product_name}</div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                            {productDetails.variant.size.name} {productDetails.variant.color ? `/ ${productDetails.variant.color.name}` : ''}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>Số lượng: {quantity}</div>
+                    </div>
+                </div>
+            ),
+            placement: 'bottomRight',
+            duration: 3,
+        });
+    };
 
     const addToCart = async (payload: AddToCartPayload, productDetails: Omit<CartItem, 'cart_item_id' | 'quantity'>) => {
         if(isAuthenticated){
             try{
                 await cartService.addToCart(payload);
-                message.success('Thêm sản phẩm vào giỏ hàng thành công');
-                await fetchCart();
+                showAddToCartNotification(productDetails, payload.quantity);
+                await fetchCart(true); // Skip merge when adding to cart
             }catch(err: any) {
                 message.error(err.message || 'Thêm sản phẩm vào giỏ hàng thất bại');
                 throw err;
@@ -84,7 +118,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             }else{
                 const newItem: CartItem = {
                     ...productDetails,
-                    cart_item_id: 0,
+                    cart_item_id: payload.product_variants_id,
                     quantity: payload.quantity,
                 }
                 localItems.push(newItem);
@@ -92,7 +126,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             cartService.saveLocalCart(localItems);
             
             await fetchCart();
-            message.success('Thêm sản phẩm vào giỏ hàng thành công');
+            showAddToCartNotification(productDetails, payload.quantity);
             
         }
         
@@ -106,7 +140,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         if (isAuthenticated) {
             try {
                 await cartService.updateItemQuantity(itemId, quantity);
-                await fetchCart(); 
+                await fetchCart(true); // Skip merge
             } catch (error: any) {
                 message.error(error.message || 'Cập nhật thất bại');
                 throw error;
@@ -129,7 +163,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             try {
                 await cartService.removeItem(itemId);
                 message.success('Đã xóa sản phẩm khỏi giỏ hàng');
-                await fetchCart();
+                await fetchCart(true);
             } catch (error: any) {
                 message.error(error.message || 'Xóa thất bại');
                 throw error;

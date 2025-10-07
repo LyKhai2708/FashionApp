@@ -86,6 +86,8 @@ export interface ProductDetail {
     search?: string;
     category_id?: number;
     brand_id?: number;
+    promotion_id?: number;
+    on_sale?: boolean;
     min_price?: number;
     max_price?: number;
     color_id?: number | number[]; // Support single or multiple colors

@@ -105,22 +105,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
             if (authService.getCurrentUser()) {
               try {
                 await refreshToken();
-                console.log('Token refreshed');
               } catch (error: any) {
-                console.error('Auto refresh failed:', error);
               }
             } else {
-              console.log('No user found, clearing interval');
               if (intervalId) clearInterval(intervalId);
             }
           }, 240000);
-          console.log('Auto refresh interval started');
         } else {
-          console.log('User not authenticated, clearing interval');
           if (intervalId) clearInterval(intervalId);
         }
         return () => {
-          console.log('🧹 Clearing auto refresh interval');
           if (intervalId) clearInterval(intervalId);
         };
       }, [state.isAuthenticated]);
@@ -134,7 +128,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
             type: LOGIN_SUCCESS, 
             payload: { user, token } 
           });
-          console.log('User restored from storage');
         }
     }, []);
 

@@ -103,12 +103,12 @@ async function getCart(userId) {
 }
 
 async function addToCart(userId, cartData) {
-    const { product_variant_id, quantity = 1 } = cartData;
+    const { product_variants_id, quantity = 1 } = cartData;
 
     // Kiểm tra variant có tồn tại và còn hàng không
     const variant = await knex('product_variants as pv')
         .join('products as p', 'pv.product_id', 'p.product_id')
-        .where('pv.product_variants_id', product_variant_id)
+        .where('pv.product_variants_id', product_variants_id)
         .where('pv.active', 1)
         .where('p.del_flag', 0)
         .select('pv.stock_quantity', 'p.name as product_name')
@@ -125,7 +125,7 @@ async function addToCart(userId, cartData) {
     // Kiểm tra đã có trong giỏ chưa
     const existingItem = await cartRepository()
         .where('user_id', userId)
-        .where('product_variant_id', product_variant_id)
+        .where('variant_id', product_variants_id)
         .first();
 
     if (existingItem) {
@@ -143,7 +143,7 @@ async function addToCart(userId, cartData) {
         // Thêm mới vào giỏ
         await cartRepository().insert({
             user_id: userId,
-            product_variant_id,
+            variant_id: product_variants_id,
             quantity
         });
     }
@@ -158,7 +158,7 @@ async function updateCartItem(userId, cartId, quantity) {
 
     // Kiểm tra cart item có thuộc về user không
     const cartItem = await knex('cart as c')
-        .join('product_variants as pv', 'c.product_variant_id', 'pv.product_variants_id')
+        .join('product_variants as pv', 'c.variant_id', 'pv.product_variants_id')
         .join('products as p', 'pv.product_id', 'p.product_id')
         .where('c.cart_id', cartId)
         .where('c.user_id', userId)
@@ -219,10 +219,10 @@ async function mergeLocalCartToCart(userId, items = []) {
 
         const existingItems = await trx('cart')
         .where('user_id', userId)
-        .whereIn('product_variant_id', variantIds);
+        .whereIn('variant_id', variantIds);
 
         const existingItemsMap = new Map(
-            existingItems.map(item => [item.product_variant_id, item])
+            existingItems.map(item => [item.variant_id, item])
         );
         
         const itemsToUpdate = [];
@@ -240,9 +240,8 @@ async function mergeLocalCartToCart(userId, items = []) {
 
                 itemsToInsert.push({
                     user_id: userId,
-                    product_variant_id: item.product_variants_id,
+                    variant_id: item.product_variants_id,
                     quantity: item.quantity,
-                    created_at: new Date(),
                 });
             }
         }
