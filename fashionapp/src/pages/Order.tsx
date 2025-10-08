@@ -6,12 +6,14 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { message } from "antd";
 import addressService from "../services/addressService";
+import orderService from "../services/orderService";
+import type { CreateOrderPayload } from "../services/orderService";
 
 const {Title} = Typography;
 
 export default function Order() {
     const navigate = useNavigate();
-    const { items, totalPrice } = useCart();
+    const { items, totalPrice, loading: cartLoading, clearCart } = useCart();
     const { isAuthenticated, user } = useAuth();
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
@@ -26,7 +28,7 @@ export default function Order() {
           .then(data => setProvinces(data));
     }, []);
     const formatCurrency = (value: number) => value.toLocaleString("vi-VN");
-    const shippingFee = 0; // Free shipping
+    const shippingFee = 0;
     const total = totalPrice + shippingFee;
 
 
@@ -34,12 +36,14 @@ export default function Order() {
         if (!isAuthenticated) {
             message.warning('Vui lòng đăng nhập để đặt hàng');
             navigate('/login');
+            return;
         }
-        if (items.length === 0) {
+        
+        if (!cartLoading && items.length === 0) {
             message.warning('Giỏ hàng trống');
             navigate('/cart');
         }
-    }, [isAuthenticated, items, navigate]);
+    }, [isAuthenticated, items, cartLoading, navigate]);
     // Load default address and populate dropdowns
     useEffect(() => {
         const loadDefaultAddress = async () => {
@@ -97,23 +101,33 @@ export default function Order() {
     const handleFinish = async (values: any) => {
         const provinceName = provinces.find(p => p.code == values.province)?.name;
         const wardName = wards.find(w => w.code == values.ward)?.name;
+        
+        if (!provinceName || !wardName) {
+            message.error('Vui lòng chọn đầy đủ địa chỉ');
+            return;
+        }
+        
         setSubmitting(true);
         try {
-            
-            console.log("Order data:", {
-                ...values,
-                provinceName,
-                wardName,
+            const orderPayload: CreateOrderPayload = {
+                payment_method: values.payment,
+                shipping_province: provinceName,
+                shipping_province_code: values.province,
+                shipping_ward: wardName,
+                shipping_ward_code: values.ward,
+                shipping_detail_address: values.address,
                 items: items.map(item => ({
-                    variant_id: item.variant.variant_id,
+                    product_variant_id: item.variant.variant_id,
                     quantity: item.quantity,
                     price: item.price
-                })),
-                total_amount: total
-            });
-            
+                }))
+            };
+
+            const order = await orderService.createOrder(orderPayload);
             message.success('Đặt hàng thành công!');
 
+            await clearCart();
+            navigate(`/order/success/${order.order_id}`);
         } catch (error: any) {
             message.error(error.message || 'Đặt hàng thất bại');
         } finally {
@@ -121,9 +135,21 @@ export default function Order() {
         }
     };
 
+    if (cartLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Đang tải giỏ hàng...</p>
+                </div>
+            </div>
+        );
+    }
+
     if (items.length === 0) {
         return null; 
     }
+
     return (
         <div
         className="min-h-screen flex flex-col">
@@ -238,7 +264,7 @@ export default function Order() {
 
                                     <Radio value="cod">
                                         <div className="flex items-center gap-2">
-                                            <Package className="w-8 h-8" />
+                                            <img className="w-8 h-8" src="/COD.jpg"/>
                                             <span className="text-lg">Thanh toán khi giao hàng (COD)</span>
                                         </div>
                                     </Radio>

@@ -18,6 +18,7 @@ interface CartContextType extends CartState {
     addToCart: (payload: AddToCartPayload, productDetails: Omit<CartItem, 'cart_item_id' | 'quantity'>) => Promise<void>;
     updateItemQuantity: (itemId: number, quantity: number) => Promise<void>;
     removeItem: (itemId: number) => Promise<void>;
+    clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -39,7 +40,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         items: [],
         totalItems: 0,
         totalPrice: 0,
-        loading: false,
+        loading: true, // Set true để tránh redirect sớm khi page load
         error: null,
     });
     const [hasMerged, setHasMerged] = useState(false);
@@ -177,15 +178,25 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             message.success('Đã xóa sản phẩm khỏi giỏ hàng');
         }
     };
-
+    const clearCart = async () => {
+        try {
+          await cartService.clearCart();
+          setCartState({ items: [], totalItems: 0, totalPrice: 0, loading: false, error: null });
+          message.success('Đã xóa giỏ hàng');
+        } catch (error: any) {
+          message.error(error.message || 'Không thể xóa giỏ hàng');
+        }
+    };
     const value = {
         ...cartState,
         fetchCart,
         addToCart,
         updateItemQuantity,
         removeItem,
+        clearCart
     };
 
+    
     return <CartContext.Provider value={value}>
         {children}
     </CartContext.Provider>;

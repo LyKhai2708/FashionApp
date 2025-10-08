@@ -16,9 +16,11 @@ function readUser(payload) {
 }
 
 async function getUserById(id) {
-    return usersRepository().where('user_id', id)
+    return usersRepository()
+    .where('users.user_id', id)
     .join('user_addresses', 'users.user_id', 'user_addresses.user_id')
-    .select('*').first();
+    .select('*')
+    .first();
 }
 
 async function getManyUsers(query){

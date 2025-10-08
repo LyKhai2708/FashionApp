@@ -16,6 +16,7 @@ import CategoryPage from '../pages/CategoryPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import Cart from '../pages/Cart';
 import Order from '../pages/Order';
+import OrderSuccess from '../pages/OrderSuccess';
 import ProfilePage from '../pages/ProfilePage';
 import NotFound from '../layouts/404Page';
 
@@ -32,6 +33,7 @@ const publicRoutes: RouteType[] = [
 
 const privateRoutes: RouteType[] = [
   { path: '/order', component: Order },
+  { path: '/order/success/:orderId', component: OrderSuccess },
   { path: '/profile', component: ProfilePage },
 ];
 

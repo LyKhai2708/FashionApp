@@ -13,7 +13,7 @@ function generateAccessToken(user) {
         id: user.user_id, 
         role: user.role 
     }, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "15m", // Tăng từ 5m lên 15m cho UX tốt hơn
+        expiresIn: "15m",
     });
 }
 

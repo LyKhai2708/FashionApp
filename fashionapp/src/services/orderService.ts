@@ -1,40 +1,42 @@
 import api from '../utils/axios';
 
 export interface OrderItem {
-    variant_id: number;
+    product_variant_id: number;
     quantity: number;
     price: number;
 }
 
 export interface CreateOrderPayload {
-    fullName: string;
-    email: string;
-    phone: string;
-    province: string;
-    province_code: number;
-    ward: string;
-    ward_code: number;
-    address: string;
-    payment: string;
+    payment_method: string;
+    shipping_province: string;
+    shipping_province_code: number;
+    shipping_ward: string;
+    shipping_ward_code: number;
+    shipping_detail_address: string;
+    notes?: string;
     items: OrderItem[];
-    total_amount: number;
 }
 
 export interface Order {
     order_id: number;
     user_id: number;
+    order_status: string;
+    sub_total: number;
+    shipping_fee: number;
     total_amount: number;
-    status: string;
-    shipping_address: string;
     payment_method: string;
+    payment_status: string;
+    notes?: string;
+    shipping_province: string;
+    shipping_province_code: number;
+    shipping_ward: string;
+    shipping_ward_code: number;
+    shipping_detail_address: string;
     created_at: string;
     updated_at: string;
 }
 
 class OrderService {
-    /**
-     * Tạo đơn hàng mới
-     */
     async createOrder(payload: CreateOrderPayload): Promise<Order> {
         try {
             console.log('Creating order with payload:', payload);
@@ -47,9 +49,6 @@ class OrderService {
         }
     }
 
-    /**
-     * Lấy danh sách đơn hàng của user
-     */
     async getUserOrders(): Promise<Order[]> {
         try {
             const response = await api.get<any>('/api/v1/orders');
@@ -60,9 +59,7 @@ class OrderService {
         }
     }
 
-    /**
-     * Lấy chi tiết đơn hàng
-     */
+
     async getOrderById(orderId: number): Promise<Order> {
         try {
             const response = await api.get<any>(`/api/v1/orders/${orderId}`);

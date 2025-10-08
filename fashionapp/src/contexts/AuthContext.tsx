@@ -100,17 +100,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         let intervalId: NodeJS.Timeout | undefined;
     
         if (state.isAuthenticated) {
-
+          
           intervalId = setInterval(async () => {
             if (authService.getCurrentUser()) {
               try {
                 await refreshToken();
               } catch (error: any) {
+                console.log(' Auto-refresh failed:', error.message);
               }
             } else {
               if (intervalId) clearInterval(intervalId);
             }
-          }, 240000);
+          }, 600000);
         } else {
           if (intervalId) clearInterval(intervalId);
         }

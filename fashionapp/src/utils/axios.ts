@@ -56,7 +56,10 @@ apiClient.interceptors.response.use(
         const originalRequest = error.config;
         
         if(error.response.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/login')) {
+            console.log('🔄 AXIOS - 401 Error, attempting refresh...');
+            
             if(isRefreshing) {
+                console.log('🔄 AXIOS - Already refreshing, adding to queue...');
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 }).then((token) => {
@@ -70,6 +73,7 @@ apiClient.interceptors.response.use(
             isRefreshing = true;
             
             try {
+                console.log('🔄 AXIOS - Calling refresh endpoint...');
                 const response = await axios.post(
                     `${API_URL}/api/v1/auth/refresh`,
                     {},
@@ -77,6 +81,8 @@ apiClient.interceptors.response.use(
                 )
 
                 const {token} = response.data.data;
+                console.log('✅ AXIOS - Refresh successful, new token received');
+                
                 //luu token moi
                 accessTokenStorage.save(token);
                 
@@ -87,12 +93,14 @@ apiClient.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${token}`;
                 return apiClient(originalRequest);
 
-            }catch(refreshError){
-
+            }catch(refreshError: any){
+                console.log('❌ AXIOS - Refresh failed:', refreshError.response?.status, refreshError.message);
+                
                 processQueue(refreshError, null);
                 
                 clearAuthStorage();
                 
+                console.log('❌ AXIOS - Redirecting to login...');
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }finally{

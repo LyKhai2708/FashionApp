@@ -35,6 +35,7 @@ async function createOrder(orderData, items) {
     const orderItems = items.map(item => ({
       order_id: orderId,
       product_variant_id: item.product_variant_id,
+      sub_total: item.price * item.quantity,
       quantity: item.quantity,
       price: item.price
     }));
@@ -45,7 +46,7 @@ async function createOrder(orderData, items) {
     for (const item of items) {
       await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
-        .decrement('stock', item.quantity);
+        .decrement('stock_quantity', item.quantity);
     }
 
     return { 
@@ -158,7 +159,7 @@ async function getOrderById(orderId) {
       'products.name as product_name',
       'sizes.name as size_name',
       'colors.name as color_name',
-      'colors.code as color_code',
+      'colors.hex_code as color_code',
       'orderdetails.discount_amount',
       'orderdetails.sub_total',
       'orderdetails.quantity',

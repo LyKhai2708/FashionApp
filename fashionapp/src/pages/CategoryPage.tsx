@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import ProductListLayout from "../components/ProductListLayout";
 import { useProductList } from "../hooks/useProductList";
+import { useUrlFilters } from "../hooks/useUrlFilters";
 import type { ProductsParams } from "../types/product";
 import CategoryService, { type Category } from "../services/categoryService";
 
 export default function CategoryPage() {
+    const { getFiltersFromUrl, saveFiltersToUrl, clearUrlFilters } = useUrlFilters();
+    
     const [category, setCategory] = useState<{
         category_id: number;
         category_name: string;
@@ -17,27 +20,43 @@ export default function CategoryPage() {
     
     const { categorySlug } = useParams<{ categorySlug: string }>();
 
+    // Fetch category từ slug
     useEffect(() => {
         const fetchCategory = async () => {
             if (categorySlug) {
-                const result = await CategoryService.getCategoryBySlug(categorySlug);
-                if (result) {
-                    setCategory({
-                        category_id: result.category_id,
-                        category_name: result.category_name,
-                        slug: result.slug,
-                        parent_id: result.parent_id ?? null,
-                        active: result.active,
-                        children: result.children ?? [],
-                    });
-                } else {
-                    setCategory(null);
+                try {
+                    const result = await CategoryService.getCategoryBySlug(categorySlug);
+                    if (result) {
+                        console.log('✅ Category loaded:', result);
+                        setCategory({
+                            category_id: result.category_id,
+                            category_name: result.category_name,
+                            slug: result.slug,
+                            parent_id: result.parent_id ?? null,
+                            active: result.active,
+                            children: result.children ?? [],
+                        });
+                    } else {
+                        setCategory(null);
+                    }
+                } catch (error) {
+                    console.error('Error loading category:', error);
                 }
             }
         };
         fetchCategory();
     }, [categorySlug]);
 
+    // Đọc filters từ URL TRƯỚC KHI khởi tạo hook
+    const initialFilters = useMemo(() => {
+        const urlFilters = getFiltersFromUrl();
+        return {
+            limit: 12,
+            ...urlFilters // Merge URL filters vào initial params
+        };
+    }, [getFiltersFromUrl]);
+
+    // Use product list hook
     const {
         products,
         loading,
@@ -48,33 +67,35 @@ export default function CategoryPage() {
         hasMore,
         loadingMore,
         currentFilters,
-        error,
-        fetchProducts
+        error
     } = useProductList({
-        initialParams: { 
-            limit: 12
-        },
+        initialParams: initialFilters,
         categoryId: category?.category_id,
-        autoFetch: false
+        autoFetch: true
     });
 
-    useEffect(() => {
-        if (category?.category_id) {
-            fetchProducts({ category_id: category.category_id, limit: 12 }, true);
-        }
-    }, [category?.category_id]);
-
     const breadcrumbs = [
-        { label: "Trang chủ", href: "/" },
         { label: "Sản phẩm", href: "/products" },
         { label: category?.category_name || "Danh mục", href: `/collection/${categorySlug}` }
     ];
 
     const handleFilterChange = (filters: ProductsParams) => {
+        
+        if (Object.keys(filters).length === 0) {
+            clearUrlFilters();
+        } else {
+            // Lưu vào URL
+            saveFiltersToUrl(filters);
+        }
+        
         setFilters(filters);
     };
 
     const handleSortChange = (sort: string) => {
+        
+        const newFilters = { ...currentFilters, sort: sort as ProductsParams['sort'] };
+        saveFiltersToUrl(newFilters);
+        
         setSort(sort);
     };
 
@@ -101,7 +122,7 @@ export default function CategoryPage() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải...</p>
+                    <p className="mt-4 text-gray-600">Đang tải danh mục...</p>
                 </div>
             </div>
         );

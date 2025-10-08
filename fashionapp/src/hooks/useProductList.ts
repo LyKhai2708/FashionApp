@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { productService } from '../services/productService';
 import { useAuth } from '../contexts/AuthContext';
 import type { Product, ProductsParams } from '../types/product';
@@ -13,83 +12,28 @@ interface UseProductListOptions {
 interface UseProductListReturn {
     products: Product[];
     totalCount: number;
-
     loading: boolean;
     loadingMore: boolean;
-
     hasMore: boolean;
     currentPage: number;
-
     error: string | null;
-
     fetchProducts: (params?: ProductsParams, reset?: boolean) => Promise<void>;
     loadMore: () => Promise<void>;
     refetch: () => Promise<void>;
     setFilters: (filters: ProductsParams) => void;
     setSort: (sort: string) => void;
-
     currentFilters: ProductsParams;
 }
 
 export const useProductList = (options: UseProductListOptions = {}): UseProductListReturn => {
     const { initialParams = {}, categoryId, autoFetch = true } = options;
     const { user } = useAuth();
-    const [searchParams, setSearchParams] = useSearchParams();
     
+    // Refs để tránh stale closures
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const hasInitialFetch = useRef(false);
     
-    const getFiltersFromURL = useCallback((): ProductsParams => {
-        const filters: ProductsParams = {
-            page: 1,
-            limit: 12,
-            ...initialParams,
-            ...(categoryId && { category_id: categoryId })
-        };
-        
-        if (searchParams.get('color_id')) {
-            const colorIds = searchParams.get('color_id')!.split(',').map(Number);
-            filters.color_id = colorIds.length === 1 ? colorIds[0] : colorIds;
-        }
-        if (searchParams.get('size_id')) {
-            const sizeIds = searchParams.get('size_id')!.split(',').map(Number);
-            filters.size_id = sizeIds.length === 1 ? sizeIds[0] : sizeIds;
-        }
-        if (searchParams.get('min_price')) {
-            filters.min_price = Number(searchParams.get('min_price'));
-        }
-        if (searchParams.get('max_price')) {
-            filters.max_price = Number(searchParams.get('max_price'));
-        }
-        if (searchParams.get('sort')) {
-            filters.sort = searchParams.get('sort') as ProductsParams['sort'];
-        }
-        
-        return filters;
-    }, [searchParams, initialParams, categoryId]);
-    
-    const updateURL = useCallback((filters: ProductsParams) => {
-        const newParams = new URLSearchParams();
-        
-        if (filters.color_id) {
-            const colorIds = Array.isArray(filters.color_id) ? filters.color_id : [filters.color_id];
-            newParams.set('color_id', colorIds.join(','));
-        }
-        if (filters.size_id) {
-            const sizeIds = Array.isArray(filters.size_id) ? filters.size_id : [filters.size_id];
-            newParams.set('size_id', sizeIds.join(','));
-        }
-        if (filters.min_price) {
-            newParams.set('min_price', filters.min_price.toString());
-        }
-        if (filters.max_price) {
-            newParams.set('max_price', filters.max_price.toString());
-        }
-        if (filters.sort && filters.sort !== 'newest') {
-            newParams.set('sort', filters.sort);
-        }
-        
-        setSearchParams(newParams, { replace: true });
-    }, [setSearchParams]);
-    
+    // State
     const [products, setProducts] = useState<Product[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -98,15 +42,35 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     
-    const [currentFilters, setCurrentFilters] = useState<ProductsParams>(() => {
-        return getFiltersFromURL();
+    const [currentFilters, setCurrentFilters] = useState<ProductsParams>({
+        page: 1,
+        limit: 12,
+        ...initialParams,
+        ...(categoryId !== undefined && { category_id: categoryId })
     });
+
+
+    useEffect(() => {
+        return () => {
+
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
+
 
     const fetchProducts = useCallback(async (
         params: ProductsParams = {},
         reset: boolean = false
     ) => {
         try {
+            // Cancel previous request
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            abortControllerRef.current = new AbortController();
+
             const isFirstPage = reset || params.page === 1;
             
             if (isFirstPage) {
@@ -118,7 +82,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
 
             const finalParams = {
                 ...params,
-                page: reset ? 1 : (params.page || params.page || 1)
+                page: reset ? 1 : (params.page || 1)
             };
 
             const response = await productService.getProducts(
@@ -134,56 +98,89 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             } else {
                 setProducts(prev => {
                     const existingIds = new Set(prev.map(p => p.product_id));
-                    const newUniqueProducts = newProducts.filter(p => !existingIds.has(p.product_id));
-                    return [...prev, ...newUniqueProducts];
+                    const uniqueNew = newProducts.filter(p => !existingIds.has(p.product_id));
+                    return [...prev, ...uniqueNew];
                 });
             }
 
             setTotalCount(metadata.totalRecords);
             setCurrentPage(metadata.page);
-            
             setHasMore(metadata.page < metadata.lastPage);
 
+            setLoading(false);
+            setLoadingMore(false);
 
         } catch (err: any) {
+            if (err.name === 'AbortError' || err.name === 'CanceledError') {
+                return;
+            }
+            
             setError(err.message || 'Không thể tải danh sách sản phẩm');
             
             if (reset) {
                 setProducts([]);
                 setTotalCount(0);
             }
-        } finally {
+            
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [currentFilters, user?.id]);
+    }, [user?.id]);
 
     const loadMore = useCallback(async () => {
-        if (!hasMore || loadingMore || loading) return;
+        if (!hasMore || loadingMore || loading) {
+            console.log('Cannot load more');
+            return;
+        }
         
-        const nextPage = currentPage + 1;
-        await fetchProducts({ ...currentFilters, page: nextPage }, false);
+        await fetchProducts({ ...currentFilters, page: currentPage + 1 }, false);
     }, [hasMore, loadingMore, loading, currentPage, currentFilters, fetchProducts]);
 
     const refetch = useCallback(async () => {
+
         await fetchProducts(currentFilters, true);
     }, [fetchProducts, currentFilters]);
 
     const setFilters = useCallback((filters: ProductsParams) => {
-        const baseFilters = {
-            page: 1,
-            limit: currentFilters.limit || 12,
-            ...(categoryId && { category_id: categoryId })
-        };
+        const isClearing = Object.keys(filters).length === 0;
 
-        const newFilters = { ...baseFilters, ...filters };
+        let newFilters: ProductsParams;
+
+        if (isClearing) {
+
+            newFilters = {
+                page: 1,
+                limit: currentFilters.limit || 12,
+                ...(categoryId !== undefined && { category_id: categoryId })
+            };
+
+        } else {
+            // Merge new filters
+            newFilters = {
+                page: 1,
+                limit: currentFilters.limit || 12,
+                ...(categoryId !== undefined && { category_id: categoryId }),
+                ...filters
+            };
+            
+            // Remove undefined/null values
+            Object.keys(newFilters).forEach(key => {
+                const value = newFilters[key as keyof ProductsParams];
+                if (value === undefined || value === null || value === '') {
+                    delete newFilters[key as keyof ProductsParams];
+                }
+            });
+            
+
+        }
         
         setCurrentFilters(newFilters);
-        updateURL(newFilters);
+        setHasMore(true);
         fetchProducts(newFilters, true);
-    }, [currentFilters, fetchProducts, categoryId, updateURL]);
+    }, [categoryId, currentFilters.limit, fetchProducts]);
 
     const setSort = useCallback((sort: string) => {
+        
         const newFilters = {
             ...currentFilters,
             sort: sort as ProductsParams['sort'],
@@ -191,34 +188,42 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
         };
         
         setCurrentFilters(newFilters);
-        updateURL(newFilters);
+        setHasMore(true);
         fetchProducts(newFilters, true);
-    }, [currentFilters, fetchProducts, updateURL]);
+    }, [currentFilters, fetchProducts]);
 
     useEffect(() => {
-        if (autoFetch) {
-            const filters = getFiltersFromURL();
-            setCurrentFilters(filters);
-            fetchProducts(filters, true);
+        if (autoFetch && !hasInitialFetch.current) {
+            hasInitialFetch.current = true;
+            
+            const initialFilters = {
+                page: 1,
+                limit: 12,
+                ...initialParams,
+                ...(categoryId !== undefined && { category_id: categoryId })
+            };
+            
+            console.log('🎯 Initial fetch with:', initialFilters);
+            setCurrentFilters(initialFilters);
+            fetchProducts(initialFilters, true);
         }
-    }, [categoryId, autoFetch]);
+    }, [autoFetch, categoryId, initialParams, fetchProducts]);
 
-    
-    useEffect(() => {
-        if (categoryId !== undefined) {
-            setCurrentFilters(prev => ({
-                ...prev,
-                category_id: categoryId,
-                page: 1
-            }));
-        }
-    }, [categoryId]);
 
     useEffect(() => {
-        if (autoFetch) {
-            fetchProducts(currentFilters, true);
+        if (hasInitialFetch.current && categoryId !== undefined && categoryId !== currentFilters.category_id) {
+            
+            const newFilters = {
+                page: 1,
+                limit: currentFilters.limit || 12,
+                category_id: categoryId
+            };
+            
+            setCurrentFilters(newFilters);
+            setHasMore(true);
+            fetchProducts(newFilters, true);
         }
-    }, [user?.id]);
+    }, [categoryId]); // CHỈ depend categoryId
 
     return {
         products,
@@ -237,6 +242,8 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
     };
 };
 
+
+
 export const useProductsByCategory = (categoryId: number) => {
     return useProductList({
         initialParams: { category_id: categoryId },
@@ -245,11 +252,9 @@ export const useProductsByCategory = (categoryId: number) => {
     });
 };
 
-export const useAllProducts = (categorySlug?: string) => {
+export const useAllProducts = () => {
     return useProductList({
-        initialParams: { 
-            limit: 12
-        },
+        initialParams: { limit: 12 },
         autoFetch: true
     });
 };

@@ -95,6 +95,14 @@ class CartService {
         }
     }
 
+    async clearCart(): Promise<void> {
+        try {
+          await api.delete('/api/v1/cart/');
+        } catch (error: any) {
+          console.error('Clear cart error:', error);
+          throw new Error(error.response?.data?.message || 'Không thể xóa giỏ hàng');
+        }
+      }
     //guest
     getLocalCart(): CartItem[] {
         try {

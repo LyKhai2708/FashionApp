@@ -53,7 +53,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     };
 
     const handleCardClick = () => {
-        // Create SEO-friendly slug with ID: "product-name-123"
         const slug = `${product.slug}-${product.product_id}`;
         navigate(`/products/${slug}`);
     };
@@ -97,8 +96,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
                     </div>
                     {product.colors && product.colors.length > 0 ? (
-                        <div className="flex gap-2 mb-2 mt-2">
-                            {product.colors.slice(0, 4).map((color) => (
+                        <div className="flex gap-2 mb-2 mt-2 flex-wrap">
+                            {product.colors.map((color) => (
                                 <div 
                                     key={color?.color_id || Math.random()} 
                                     className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
