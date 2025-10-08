@@ -49,7 +49,6 @@ export default function Cart() {
         setDeletingItems(prev => new Set(prev).add(itemId));
         try {
             await removeItem(itemId);
-            // Clear after successful delete
             setDeletingItems(prev => {
                 const next = new Set(prev);
                 next.delete(itemId);

@@ -7,6 +7,9 @@ export interface OrderItem {
 }
 
 export interface CreateOrderPayload {
+    receiver_name: string;        
+    receiver_phone: string;       
+    receiver_email: string;
     payment_method: string;
     shipping_province: string;
     shipping_province_code: number;
@@ -15,6 +18,15 @@ export interface CreateOrderPayload {
     shipping_detail_address: string;
     notes?: string;
     items: OrderItem[];
+}
+
+export interface OrderItemDetail {
+    product_name: string;
+    size_name: string;
+    color_name: string;
+    quantity: number;
+    price: number;
+    image_url: string;
 }
 
 export interface Order {
@@ -32,8 +44,11 @@ export interface Order {
     shipping_ward: string;
     shipping_ward_code: number;
     shipping_detail_address: string;
-    created_at: string;
-    updated_at: string;
+    receiver_name: string;        
+    receiver_phone: string;       
+    receiver_email: string;
+    order_date: string;
+    items?: OrderItemDetail[];
 }
 
 class OrderService {
@@ -51,7 +66,8 @@ class OrderService {
 
     async getUserOrders(): Promise<Order[]> {
         try {
-            const response = await api.get<any>('/api/v1/orders');
+            const response = await api.get<any>('/api/v1/orders/me');
+            console.log(response);
             return response.data.data.orders;
         } catch (error: any) {
             console.error('Get orders error:', error);
@@ -63,6 +79,7 @@ class OrderService {
     async getOrderById(orderId: number): Promise<Order> {
         try {
             const response = await api.get<any>(`/api/v1/orders/${orderId}`);
+            console.log(response);
             return response.data.data.order;
         } catch (error: any) {
             console.error('Get order error:', error);

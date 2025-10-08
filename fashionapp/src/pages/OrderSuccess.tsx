@@ -64,14 +64,12 @@ export default function OrderSuccess() {
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4">
             <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-8">
-                {/* Success Icon */}
                 <div className="flex justify-center mb-6">
                     <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-12 h-12 text-white" />
                     </div>
                 </div>
 
-                {/* Thank You Message */}
                 <h1 className="text-3xl font-bold text-center mb-4">
                     Thank you for your purchase
                 </h1>
@@ -82,11 +80,9 @@ export default function OrderSuccess() {
                     Your order number is <span className="font-semibold">#{order.order_id}</span>
                 </p>
 
-                {/* Order Summary */}
                 <div className="border-t pt-6">
                     <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
 
-                    {/* Order Items */}
                     <div className="space-y-4 mb-6">
                         {order.items && order.items.length > 0 ? (
                             order.items.map((item, index) => (

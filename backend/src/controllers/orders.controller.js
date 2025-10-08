@@ -23,6 +23,36 @@ class OrdersController {
     }
   }
 
+  async getMyOrders(req, res, next) {
+    console.log('testtt');
+    try {
+      const { 
+        user_id,
+        order_status, 
+        payment_status, 
+        payment_method,
+        start_date,
+        end_date,
+        page = 1, 
+        limit = 10 
+      } = req.query;
+
+      const filters = { ...req.query };
+      filters.user_id = req.user.id;
+
+      const result = await orderService.getOrders(
+        filters,
+        parseInt(page, 10),
+        parseInt(limit, 10)
+      );
+
+      return res.json(JSend.success({ orders: result.data, pagination: result.pagination }));
+    } catch (error) {
+      console.error('Error getting orders:', error);
+      return next(new ApiError(500, 'Lỗi khi lấy danh sách đơn hàng'));
+    }
+  }
+
   async getOrders(req, res, next) {
     try {
       const { 
@@ -33,11 +63,6 @@ class OrdersController {
         limit = 10 
       } = req.query;
 
-      // Nếu không phải admin, chỉ lấy đơn hàng của user hiện tại
-      const filters = { ...req.query };
-      if (req.user.role !== 'admin') {
-        filters.user_id = req.user.id;
-      }
 
       const result = await orderService.getOrders(
         filters,

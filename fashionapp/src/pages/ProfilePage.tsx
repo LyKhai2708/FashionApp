@@ -1,48 +1,111 @@
-import { Card, Form, Input, Button, DatePicker, Radio, Avatar, Typography } from "antd";
+import { Card, Form, Input, Button, DatePicker, Radio, Avatar, Typography, message, Spin } from "antd";
 import { UserOutlined, LockOutlined, ShoppingCartOutlined, LogoutOutlined} from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import OrdersList from "../components/OrderList";
 import type {Order} from "../components/OrderList";
-import OrderDetail from "../components/OrderDetail";    
+import OrderDetail from "../components/OrderDetail";
+import orderService from "../services/orderService";
+import { useAuth } from "../contexts/AuthContext";    
 export default function ProfilePage() {
   const [form] = Form.useForm();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("account");
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [orderDetail, setOrderDetail] = useState<any>(null);
+  
   const handleFinish = (values: any) => {
     console.log("Updated profile:", values);
   };
+  
   const logout = () => {
     console.log("Logout");
   }
+  
+  // Load orders list
   useEffect(() => {
-    // Thay bằng call API thực tế
-    setOrders([
-      { id: "N0608213Apr24074235", date: "2024-04-13", itemsCount: 0, total: 700000, status: "Đã hủy" },
-      { id: "N0608218Apr24014512", date: "2024-04-18", itemsCount: 2, total: 39990000, status: "Chờ duyệt" }
-    ]);
-  }, []);
+    const loadOrders = async () => {
+      if (activeTab !== 'orders') return;
+      
+      try {
+        setLoading(true);
+        const data = await orderService.getUserOrders();
+        
+        const mapped = data.map((order: any) => ({
+          id: order.order_id.toString(),
+          date: order.order_date ? new Date(order.order_date).toLocaleDateString('vi-VN') : 'N/A',
+          itemsCount: 0,
+          total: order.total_amount,
+          status: order.order_status === 'pending' ? 'Chờ duyệt' : 
+                  order.order_status === 'processing' ? 'Đang xử lý' :
+                  order.order_status === 'shipped' ? 'Đang giao' :
+                  order.order_status === 'delivered' ? 'Đã giao' :
+                  order.order_status === 'cancelled' ? 'Đã hủy' : 
+                  order.order_status
+        }));
+        
+        setOrders(mapped);
+      } catch (error: any) {
+        message.error('Không thể tải danh sách đơn hàng');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadOrders();
+  }, [activeTab]);
 
-  // mock detail fetch (nên gọi API theo id khi cần)
-  const selectedOrder = selectedOrderId ? {
-    id: selectedOrderId,
-    date: "2024-04-18",
-    itemsCount: 2,
-    total: 39990000,
-    status: "Chờ duyệt",
-    payment: "Thanh toán khi nhận hàng",
-    receiver: {
-      name: "Kháiii",
-      phone: "08966706866",
-      address: "113/8e, Xã Yên Lưới, Huyện Hòa Hạ, Phú Thọ",
-      email: "khai@gmail.com"
-    },
-    items: [
-      { name: "Laptop Gaming Asus TUF F15 FX506HF HN078W", price: 20000000, qty: 1, img: "/asus.jpg" },
-      { name: "Laptop Dell Inspiron 15 N3530", price: 19990000, qty: 1, img: "/dell.jpg" }
-    ]
-  } as any : null;
+  // Load order detail
+  useEffect(() => {
+    const loadOrderDetail = async () => {
+      if (!selectedOrderId) {
+        setOrderDetail(null);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const data = await orderService.getOrderById(parseInt(selectedOrderId));
+        
+        setOrderDetail({
+          id: data.order_id.toString(),
+          date: data.order_date ? new Date(data.order_date).toLocaleDateString('vi-VN') : 'N/A',
+          itemsCount: data.items?.length || 0,
+          total: data.total_amount,
+          status: data.order_status === 'pending' ? 'Chờ duyệt' : 
+                  data.order_status === 'processing' ? 'Đang xử lý' :
+                  data.order_status === 'shipped' ? 'Đang giao' :
+                  data.order_status === 'delivered' ? 'Đã giao' :
+                  data.order_status === 'cancelled' ? 'Đã hủy' : 
+                  data.order_status,
+          payment: data.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 
+                   data.payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
+                   data.payment_method,
+          receiver: {
+            name: data.receiver_name || user?.username || '',
+            phone: data.receiver_phone || user?.phone || '',
+            address: `${data.shipping_detail_address}, ${data.shipping_ward}, ${data.shipping_province}`,
+            email: data.receiver_email || user?.email || ''
+          },
+          items: data.items?.map(item => ({
+            name: item.product_name,
+            price: item.price,
+            qty: item.quantity,
+            img: item.image_url
+          })) || []
+        });
+      } catch (error: any) {
+        message.error('Không thể tải chi tiết đơn hàng');
+        setSelectedOrderId(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadOrderDetail();
+  }, [selectedOrderId, user]);
   const menuItems = [
     { key: "account", label: "Thông tin tài khoản", icon: <UserOutlined /> },
     { key: "orders", label: "Đơn hàng của tôi", icon: <ShoppingCartOutlined /> },
@@ -162,13 +225,16 @@ export default function ProfilePage() {
 
           {activeTab === "orders" && (
             <>
-            {/* nếu chưa chọn order -> hiển thị list */}
-            {!selectedOrderId ? (
-              <OrdersList orders={orders} onView={(id) => setSelectedOrderId(id)} />
-            ) : (
-              <OrderDetail order={selectedOrder} onBack={() => setSelectedOrderId(null)} />
-            )}
-          </>
+              {loading ? (
+                <div className="flex justify-center items-center py-20">
+                  <Spin size="large" />
+                </div>
+              ) : !selectedOrderId ? (
+                <OrdersList orders={orders} onView={(id) => setSelectedOrderId(id)} />
+              ) : (
+                <OrderDetail order={orderDetail} onBack={() => setSelectedOrderId(null)} />
+              )}
+            </>
           )}
           {activeTab === "password" && (
             <ChangePasswordForm />

@@ -24,6 +24,9 @@ async function createOrder(orderData, items) {
       payment_method: orderData.payment_method || 'cash_on_delivery',
       payment_status: 'unpaid',
       notes: orderData.notes,
+      receiver_name: orderData.receiver_name,
+      receiver_phone: orderData.receiver_phone,
+      receiver_email: orderData.receiver_email,
       shipping_province: orderData.shipping_province,
       shipping_ward: orderData.shipping_ward,
       shipping_detail_address: orderData.shipping_detail_address,
@@ -70,13 +73,14 @@ async function createOrder(orderData, items) {
  * @returns {Promise<Object>} Danh sách đơn hàng và thông tin phân trang
  */
 async function getOrders(filters = {}, page = 1, limit = 10) {
+  console.log('aaaa');
   const offset = (page - 1) * limit;
   
   const query = knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
     .select([
       'orders.*',
-      'users.fullname as customer_name',
+      'users.username as customer_name',
       'users.email as customer_email'
     ])
     .orderBy('orders.order_date', 'desc');

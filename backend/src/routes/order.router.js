@@ -15,6 +15,7 @@ module.exports.setup = (app) => {
   
   app.use('/api/v1/orders', authMiddleware, router);
 
+  router.get('/me', ordersController.getMyOrders);
   /**
    * @swagger
    * /api/v1/orders:

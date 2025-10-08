@@ -110,6 +110,9 @@ export default function Order() {
         setSubmitting(true);
         try {
             const orderPayload: CreateOrderPayload = {
+                receiver_name: values.fullName,        
+                receiver_phone: values.phone,       
+                receiver_email: values.email,
                 payment_method: values.payment,
                 shipping_province: provinceName,
                 shipping_province_code: values.province,

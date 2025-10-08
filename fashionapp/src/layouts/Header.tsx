@@ -89,11 +89,6 @@ export default function Header() {
     const [openMenu, setOpenMenu] = useState(false)
     const [openCategories,setOpenCategories] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [cartItems] = useState<CartItem[]>([
-      { id: 1, name: "Áo thun basic cotton", image: product1, price: 199000, discount: 10, quantity: 2, size: "M", color: "Trắng" },
-      { id: 2, name: "Quần jeans slim fit", image: product2, price: 399000, quantity: 1, size: "32", color: "Xanh đậm" },
-      { id: 3, name: "Áo khoác bomber", image: product3, price: 699000, discount: 15, quantity: 1, size: "L", color: "Đen" }
-    ])
     
     const navLinks = [
       { name: "SẢN PHẨM", href: "/products" },
