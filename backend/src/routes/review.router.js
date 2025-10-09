@@ -12,10 +12,10 @@ const { methodNotAllowed } = require('../controllers/errors.controller');
  */
 
 module.exports.setup = (app) => {
-  // Nested routes for product reviews
+
   app.use('/api/v1/products/:productId/reviews', authMiddleware, router);
   
-  // Direct routes for review management
+
   const reviewRouter = express.Router();
   app.use('/api/v1/reviews', authMiddleware, reviewRouter);
 

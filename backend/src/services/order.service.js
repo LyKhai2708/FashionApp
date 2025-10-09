@@ -246,7 +246,7 @@ async function cancelOrder(orderId) {
 
     if (updated === 0) return false;
 
-    //cập nhật stock
+  
     const orderItems = await trx('orderdetails')
       .where('order_id', orderId)
       .select('product_variant_id', 'quantity');
@@ -261,6 +261,25 @@ async function cancelOrder(orderId) {
   });
 }
 
+async function getEligibleOrdersForReview(userId, productId) {
+  const orders = await knex('orders')
+    .select('orders.order_id', 'orders.created_at as order_date')
+    .join('orderdetails', 'orders.order_id', 'orderdetails.order_id')
+    .join('product_variants', 'orderdetails.product_variant_id', 'product_variants.product_variants_id')
+    .leftJoin('product_reviews', function() {
+      this.on('product_reviews.order_id', '=', 'orders.order_id')
+          .andOn('product_reviews.product_id', '=', 'product_variants.product_id')
+          .andOn('product_reviews.user_id', '=', 'orders.user_id');
+    })
+    .where('orders.user_id', userId)
+    .andWhere('product_variants.product_id', productId)
+    .andWhere('orders.status', 'delivered')
+    .whereNull('product_reviews.id') // Chỉ lấy orders chưa được review
+    .groupBy('orders.order_id')
+    .orderBy('orders.created_at', 'desc');
+
+  return orders;
+}
 module.exports = {
   createOrder,
   getOrders,

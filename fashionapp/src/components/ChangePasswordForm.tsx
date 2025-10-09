@@ -31,7 +31,6 @@ export default function ChangePasswordForm() {
         onFinish={handleFinish}
         requiredMark={false}
       >
-        {/* Mật khẩu cũ */}
         <Form.Item
           label="Mật khẩu cũ"
           name="currentPassword"
@@ -44,7 +43,6 @@ export default function ChangePasswordForm() {
           />
         </Form.Item>
 
-        {/* Mật khẩu mới */}
         <Form.Item
           label="Mật khẩu mới"
           name="newPassword"
@@ -59,8 +57,7 @@ export default function ChangePasswordForm() {
             prefix={<LockOutlined />}
           />
         </Form.Item>
-
-        {/* Xác nhận mật khẩu */}
+        
         <Form.Item
           label="Xác nhận mật khẩu"
           name="confirmPassword"

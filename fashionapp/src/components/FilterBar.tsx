@@ -53,7 +53,7 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
         convertToSelectedFilters(currentFilters)
     );
 
-    // State cho colors và sizes từ API
+
     const [colors, setColors] = useState<Color[]>([]);
     const [sizes, setSizes] = useState<Size[]>([]);
     const [loadingColors, setLoadingColors] = useState(false);
@@ -136,7 +136,6 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                 : selectedFilters.size_ids;
         }
 
-        // Apply price range
         if (selectedFilters.priceRange) {
             filters.min_price = selectedFilters.priceRange.min;
             filters.max_price = selectedFilters.priceRange.max;

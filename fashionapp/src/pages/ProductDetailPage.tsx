@@ -7,6 +7,7 @@ import { formatVNDPrice } from '../utils/priceFormatter';
 import Breadcrumb from '../components/Breadcrumb';
 import { extractProductIdFromSlug } from '../utils/slugUtils';
 import { useCart } from '../contexts/CartContext';
+import ReviewSection from '../components/review/ReviewSection';
 
 export default function ProductDetailPage() {
     const { addToCart } = useCart();
@@ -94,15 +95,15 @@ export default function ProductDetailPage() {
         );
     }
 
-    const categorySlug = product.category_name
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') 
-        .replace(/đ/g, 'd')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim();
+    // const categorySlug = product.category_name
+    //     .toLowerCase()
+    //     .normalize('NFD')
+    //     .replace(/[\u0300-\u036f]/g, '') 
+    //     .replace(/đ/g, 'd')
+    //     .replace(/[^a-z0-9\s-]/g, '')
+    //     .replace(/\s+/g, '-')
+    //     .replace(/-+/g, '-')
+    //     .trim();
 
     const breadcrumbs = [
         { label: "Trang chủ", href: "/" },
@@ -334,7 +335,7 @@ export default function ProductDetailPage() {
                     </div>          
                 </div>
             </div>
-            
+            <ReviewSection productId={productId} /> 
             {/* Related Products Slider */}
             <div className="mt-20">
                 <h2 className="text-xl font-bold mb-4">Gợi ý dành cho bạn</h2>
