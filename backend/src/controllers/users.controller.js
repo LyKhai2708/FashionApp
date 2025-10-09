@@ -60,11 +60,41 @@ async function getMyInformation(req, res, next){
   } catch (err) {
     return next(new ApiError(500, 'Error fetching user'));
   }
-} 
+}
+
+async function changePassword(req, res, next) {
+  try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user.id;
+      
+      if (!currentPassword || !newPassword) {
+          return next(new ApiError(400, 'Mật khẩu hiện tại và mật khẩu mới là bắt buộc'));
+      }
+      
+      if (newPassword.length < 8) {
+          return next(new ApiError(400, 'Mật khẩu mới phải có ít nhất 8 ký tự'));
+      }
+      
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+      if (!passwordRegex.test(newPassword)) {
+          return next(new ApiError(400, 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt'));
+      }
+      
+      const result = await userService.changePassword(userId, currentPassword, newPassword);
+      return res.json(JSend.success(result));
+      
+  } catch (err) {
+      return next(new ApiError(500, err.message));
+  }
+}
+
+
 module.exports = {
   findUserByEmail,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  getMyInformation,
+  changePassword
 };

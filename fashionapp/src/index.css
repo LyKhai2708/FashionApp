@@ -5,7 +5,9 @@
   display: flex;
   align-items: center;
 }
-
+.ant-message {
+  z-index: 9999 !important;
+}
 @theme {
   --font-sans: Montserrat, sans-serif; 
 }

@@ -119,6 +119,7 @@ export default function Order() {
                 shipping_ward: wardName,
                 shipping_ward_code: values.ward,
                 shipping_detail_address: values.address,
+                notes: values.note,
                 items: items.map(item => ({
                     product_variant_id: item.variant.variant_id,
                     quantity: item.quantity,
@@ -244,6 +245,13 @@ export default function Order() {
                                 </Form.Item>
                             </div>
                             <Divider />
+
+                            <Title level={4}>Ghi chú cho đơn hàng</Title>
+                            <Form.Item name="note" rules={[{ required: false, message: "Vui lòng nhập ghi chú" }]}>
+                                <Input.TextArea rows={4} placeholder="Ghi chú cho đơn hàng" />
+                            </Form.Item>
+
+                            <Divider/>
                             {/* Phương thức vận chuyển */}
                             {/* <Title level={4}>Phương thức vận chuyển</Title>
                             <Form.Item name="shipping" rules={[{ required: true, message: "Chọn phương thức vận chuyển" }]}>
@@ -281,6 +289,8 @@ export default function Order() {
                                 </div>
                                 </Radio.Group>
                             </Form.Item>
+
+                            
                         </Form>
                     </div>
                 </div>

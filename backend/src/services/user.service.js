@@ -1,5 +1,6 @@
 const knex = require('../database/knex');
 const Paginator = require('./paginator');
+const bcrypt = require('bcrypt');
 function usersRepository() {
     return knex('users');
 }
@@ -18,7 +19,6 @@ function readUser(payload) {
 async function getUserById(id) {
     return usersRepository()
     .where('users.user_id', id)
-    .join('user_addresses', 'users.user_id', 'user_addresses.user_id')
     .select('*')
     .first();
 }
@@ -90,9 +90,35 @@ async function deleteUser(id) {
     return existingUser;
 }
 
+async function changePassword(id, currentPassword, newPassword) {
+    
+    const user = await usersRepository()
+        .where('user_id', id)
+        .where('del_flag', 0)
+        .first();
+    
+    if (!user) {
+        throw new Error('Người dùng không tồn tại');
+    }
+    try{
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        if (!isValidPassword) {
+            throw new Error('Mật khẩu hiện tại không đúng');
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await usersRepository()
+        .where({ user_id: id })
+        .update({ password: hashedPassword });
+        return { message: 'Đổi mật khẩu thành công' };
+    }catch(error){
+        throw error;
+    }
+}
+
 module.exports = {
     getUserById,
     getManyUsers,
     updateUser,
     deleteUser,
+    changePassword
 };

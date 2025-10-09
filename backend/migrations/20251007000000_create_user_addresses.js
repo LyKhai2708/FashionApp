@@ -12,7 +12,6 @@ exports.up = function(knex) {
         table.integer('ward_code').notNullable();
         table.text('detail_address').notNullable();
         table.boolean('is_default').defaultTo(false);
-        table.timestamps(true, true);
         
         // Foreign key
         table.foreign('user_id').references('user_id').inTable('users').onDelete('CASCADE');

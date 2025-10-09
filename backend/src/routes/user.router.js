@@ -2,10 +2,13 @@ const express = require('express');
 const router = express.Router();
 const usersController = require('../controllers/users.controller');
 const { methodNotAllowed } = require('../controllers/errors.controller');
+const { authMiddleware } = require('../middleware/auth.middleware');
 
 module.exports.setup = (app) => {
     app.use('/api/v1/users', router);
     
+    router.get('/profile', authMiddleware, usersController.getMyInformation);
+    router.patch('/password', authMiddleware, usersController.changePassword);
     /**
      * @swagger
      * /api/v1/users:

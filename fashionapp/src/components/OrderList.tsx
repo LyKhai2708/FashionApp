@@ -1,7 +1,7 @@
 import React from "react";
 import { Table, Button } from "antd";
 import type { ColumnsType } from "antd/es/table";
-
+import {formatVNDPrice} from '../utils/priceFormatter'
 export interface Order {
   id: string;
   date: string;
@@ -33,7 +33,7 @@ export default function OrdersList({ orders, onView }: Props) {
       title: "Tổng tiền",
       dataIndex: "total",
       key: "total",
-      render: (val: number) => val.toLocaleString("vi-VN") + "₫",
+      render: (val: number) => formatVNDPrice(val),
     },
     { title: "Trạng thái", dataIndex: "status", key: "status" },
     {

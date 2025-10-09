@@ -1,13 +1,24 @@
 import { Form, Input, Button, message, Typography } from "antd"
 import { LockOutlined } from "@ant-design/icons"
-
+import { useState } from "react"
+import { useMessage } from '../App'
+import { changePassword } from "../services/userService";
 export default function ChangePasswordForm() {
   const [form] = Form.useForm()
-
-  const handleFinish = (values: any) => {
-    console.log("Change password values:", values)
-    message.success("Đổi mật khẩu thành công!")
-    form.resetFields()
+  const [loading, setLoading] = useState(false);
+  const message = useMessage();
+  const handleFinish = async (values: any) => {
+    try {
+      setLoading(true);
+      await changePassword(values.currentPassword, values.newPassword);
+      message.success('Đổi mật khẩu thành công');
+      form.resetFields();
+    } catch (error: any) {
+        console.log('Change password error:', error);
+        message.error(error.message || 'Đổi mật khẩu thất bại');
+    } finally {
+        setLoading(false);
+    }
   }
 
   return (
@@ -23,7 +34,7 @@ export default function ChangePasswordForm() {
         {/* Mật khẩu cũ */}
         <Form.Item
           label="Mật khẩu cũ"
-          name="oldPassword"
+          name="currentPassword"
           rules={[{ required: true, message: "Vui lòng nhập mật khẩu cũ" }]}
         >
           <Input.Password
@@ -39,7 +50,7 @@ export default function ChangePasswordForm() {
           name="newPassword"
           rules={[
             { required: true, message: "Vui lòng nhập mật khẩu mới" },
-            { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" }
+            { min: 8, message: "Mật khẩu phải có ít nhất 8 ký tự" }
           ]}
         >
           <Input.Password
@@ -79,6 +90,8 @@ export default function ChangePasswordForm() {
             htmlType="submit"
             size="large"
             className="!bg-black w-full"
+            loading={loading}
+            block
           >
             Cập nhật mật khẩu
           </Button>

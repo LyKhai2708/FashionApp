@@ -73,16 +73,18 @@ async function createOrder(orderData, items) {
  * @returns {Promise<Object>} Danh sách đơn hàng và thông tin phân trang
  */
 async function getOrders(filters = {}, page = 1, limit = 10) {
-  console.log('aaaa');
   const offset = (page - 1) * limit;
   
   const query = knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
+    .leftJoin('orderdetails', 'orders.order_id', 'orderdetails.order_id')
     .select([
       'orders.*',
       'users.username as customer_name',
-      'users.email as customer_email'
+      'users.email as customer_email',
+      knex.raw('COUNT(orderdetails.order_id) as items_count')
     ])
+    .groupBy('orders.order_id')
     .orderBy('orders.order_date', 'desc');
 
   // Áp dụng bộ lọc
@@ -106,8 +108,27 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
     query.whereBetween('orders.order_date', [filters.start_date, filters.end_date]);
   }
 
-  // Đếm tổng số bản ghi
-  const countQuery = query.clone().clearSelect().count('* as count').first();
+  // Đếm tổng số bản ghi (cần query riêng vì có GROUP BY)
+  const countQuery = knex('orders')
+    .where((builder) => {
+      if (filters.user_id) {
+        builder.where('user_id', filters.user_id);
+      }
+      if (filters.order_status) {
+        builder.where('order_status', filters.order_status);
+      }
+      if (filters.payment_status) {
+        builder.where('payment_status', filters.payment_status);
+      }
+      if (filters.payment_method) {
+        builder.where('payment_method', filters.payment_method);
+      }
+      if (filters.start_date && filters.end_date) {
+        builder.whereBetween('order_date', [filters.start_date, filters.end_date]);
+      }
+    })
+    .count('* as count')
+    .first();
   
   // Phân trang
   query.offset(offset).limit(limit);

@@ -20,7 +20,7 @@ export default function Login() {
             console.log('Đăng nhập thành công!', values)
             navigate('/')
         } catch (error: any) {
-            message.error(error.message || 'Đăng nhập thất bại!')
+            message.error(error.response?.data?.message || 'Đăng nhập thất bại!')
         }
     }
 

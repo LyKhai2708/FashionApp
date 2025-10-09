@@ -24,7 +24,6 @@ class OrdersController {
   }
 
   async getMyOrders(req, res, next) {
-    console.log('testtt');
     try {
       const { 
         user_id,

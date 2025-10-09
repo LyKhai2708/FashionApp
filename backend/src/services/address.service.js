@@ -5,7 +5,7 @@ async function getUserAddresses(userId) {
     return await knex('user_addresses')
         .where('user_id', userId)
         .orderBy('is_default', 'desc')
-        .orderBy('created_at', 'desc');
+        .orderBy('id', 'desc');
 }
 
 
@@ -51,18 +51,11 @@ async function createAddress(userId, addressData) {
 
 
 async function updateAddress(addressId, userId, addressData) {
-    const { province, province_code, ward, ward_code, detail_address, is_default } = addressData;
+    const { province, province_code, ward, ward_code, detail_address } = addressData;
     
     const address = await getAddressById(addressId, userId);
     if (!address) {
         throw new Error('Địa chỉ không tồn tại');
-    }
-    
-    if (is_default) {
-        await knex('user_addresses')
-            .where('user_id', userId)
-            .whereNot('id', addressId)
-            .update({ is_default: false });
     }
     
     await knex('user_addresses')
@@ -73,7 +66,6 @@ async function updateAddress(addressId, userId, addressData) {
             ward,
             ward_code,
             detail_address,
-            is_default,
             updated_at: knex.fn.now()
         });
     
