@@ -39,35 +39,48 @@ async function getProductReview(productId,  page = 1, limit = 5){
 async function createProductReview(userId, reviewData){
     const {product_id, order_id, rating, comment} = reviewData
 
-    //kiem tra san pham duoc mua chua
-    const [orders] = await knex('order_details')
-    .innerJoin('orders', 'order_details.order_id', 'orders.order_id')
-    .innerJoin('product_variants', 'order_details.product_variant_id', 'product_variants.product_variant_id')
-    .select([
-        knex.raw('COUNT(*) as count'),
-    ])
-    .where('orders.user_id', userId)
-    .where('product_variants.product_id', product_id)
-    .where('orders.order_id', order_id);
-    if (orders[0].count === 0) {
-        throw new Error('Bạn chưa mua sản phẩm này không thể đánh giá');
+     const order = await knex('orders')
+        .where({
+            order_id: order_id,
+            user_id: userId,
+            status: 'delivered'
+        })
+        .first();
+    
+    if (!order) {
+        throw new Error('Đơn hàng không hợp lệ hoặc chưa được giao');
     }
-
+    
+    const orderDetail = await knex('orderdetails')
+        .join('product_variants', 'orderdetails.product_variant_id', 'product_variants.product_variants_id')
+        .where({
+            'orderdetails.order_id': order_id,
+            'product_variants.product_id': product_id
+        })
+        .first();
+    
+    if (!orderDetail) {
+        throw new Error('Sản phẩm không có trong đơn hàng này');
+    }
+    
     const existingReview = await knex('product_reviews')
-    .where('user_id', userId)
-    .where('product_id', product_id)
-    .where('order_id', order_id)
-    .first();
+        .where({
+            user_id: userId,
+            product_id: product_id,
+            order_id: order_id
+        })
+        .first();
     
     if (existingReview) {
-        throw new Error('Bạn đã đánh giá sản phẩm này rồi');
+        throw new Error('Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi');
     }
     const [result] = await knex('product_reviews').insert({
         user_id: userId,
         product_id,
         order_id,
         rating,
-        comment
+        comment,
+        is_verified_purchase: true
     })
     return result;
 }
@@ -77,7 +90,6 @@ async function updateProductReview(reviewId, userId, reviewData, isAdmin = false
     
     let query = knex('product_reviews').where('id', reviewId);
     
-    // Nếu không phải admin thì chỉ cho phép update review của chính mình
     if (!isAdmin) {
         query = query.where('user_id', userId);
     }

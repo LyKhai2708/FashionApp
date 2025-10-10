@@ -182,6 +182,23 @@ class OrdersController {
       return next(new ApiError(500, 'Lỗi khi hủy đơn hàng'));
     }
   }
+  async getEligibleOrdersForReview(req, res, next) {
+    try {
+      const { productId } = req.params;
+      const userId = req.user.id;
+  
+      if (!productId || isNaN(productId)) {
+        return next(new ApiError(400, "Product ID không hợp lệ"));
+      }
+  
+      const orders = await orderService.getEligibleOrdersForReview(userId, parseInt(productId));
+      return res.json(JSend.success({ orders }));
+    } catch (err) {
+      console.error('Error getting eligible orders:', err);
+      return next(new ApiError(500, "Lỗi khi lấy danh sách đơn hàng hợp lệ"));
+    }
+  }
+  
 }
 
 module.exports = new OrdersController();

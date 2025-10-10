@@ -3,13 +3,12 @@ import { UserOutlined, LockOutlined, ShoppingCartOutlined, LogoutOutlined, HomeO
 import { useState, useEffect } from "react";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import OrdersList from "../components/OrderList";
-import type {Order} from "../components/OrderList";
 import OrderDetail from "../components/OrderDetail";
-import orderService from "../services/orderService";
+import orderService, { type Order } from "../services/orderService";
 import userService from "../services/userService";
 import { useAuth } from "../contexts/AuthContext";    
-import AddressList from "../components/AddressList";
-import AddressForm from "../components/AddressForm";
+import AddressList from "../components/address/AddressList";
+import AddressForm from "../components/address/AddressForm";
 import type { Address } from "../services/addressService";
 import { useMessage } from '../App'
 export default function ProfilePage() {
@@ -17,9 +16,9 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("account");
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [orderDetail, setOrderDetail] = useState<any>(null);
+  const [orderDetail, setOrderDetail] = useState<Order | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -108,21 +107,7 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         const data = await orderService.getUserOrders();
-        
-        const mapped = data.map((order: any) => ({
-          id: order.order_id.toString(),
-          date: order.order_date ? new Date(order.order_date).toLocaleDateString('vi-VN') : 'N/A',
-          itemsCount: parseInt(order.items_count) || 0,
-          total: order.total_amount,
-          status: order.order_status === 'pending' ? 'Chờ duyệt' : 
-                  order.order_status === 'processing' ? 'Đang xử lý' :
-                  order.order_status === 'shipped' ? 'Đang giao' :
-                  order.order_status === 'delivered' ? 'Đã giao' :
-                  order.order_status === 'cancelled' ? 'Đã hủy' : 
-                  order.order_status
-        }));
-        
-        setOrders(mapped);
+        setOrders(data);
       } catch (error: any) {
         message.error('Không thể tải danh sách đơn hàng');
       } finally {
@@ -143,35 +128,8 @@ export default function ProfilePage() {
       
       try {
         setLoading(true);
-        const data = await orderService.getOrderById(parseInt(selectedOrderId));
-        
-        setOrderDetail({
-          id: data.order_id.toString(),
-          date: data.order_date ? new Date(data.order_date).toLocaleDateString('vi-VN') : 'N/A',
-          itemsCount: data.items?.length || 0,
-          total: data.total_amount,
-          status: data.order_status === 'pending' ? 'Chờ duyệt' : 
-                  data.order_status === 'processing' ? 'Đang xử lý' :
-                  data.order_status === 'shipped' ? 'Đang giao' :
-                  data.order_status === 'delivered' ? 'Đã giao' :
-                  data.order_status === 'cancelled' ? 'Đã hủy' : 
-                  data.order_status,
-          payment: data.payment_method === 'cod' ? 'Thanh toán khi nhận hàng' : 
-                   data.payment_method === 'bank_transfer' ? 'Chuyển khoản ngân hàng' :
-                   data.payment_method,
-          receiver: {
-            name: data.receiver_name || user?.username || '',
-            phone: data.receiver_phone || user?.phone || '',
-            address: `${data.shipping_detail_address}, ${data.shipping_ward}, ${data.shipping_province}`,
-            email: data.receiver_email || user?.email || ''
-          },
-          items: data.items?.map(item => ({
-            name: item.product_name,
-            price: item.price,
-            qty: item.quantity,
-            img: item.image_url
-          })) || []
-        });
+        const data = await orderService.getOrderById(selectedOrderId);
+        setOrderDetail(data);
       } catch (error: any) {
         message.error('Không thể tải chi tiết đơn hàng');
         setSelectedOrderId(null);
@@ -302,7 +260,7 @@ export default function ProfilePage() {
                   <Spin size="large" />
                 </div>
               ) : !selectedOrderId ? (
-                <OrdersList orders={orders} onView={(id) => setSelectedOrderId(id)} />
+                <OrdersList orders={orders} onView={setSelectedOrderId} />
               ) : (
                 <OrderDetail order={orderDetail} onBack={() => setSelectedOrderId(null)} />
               )}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Switch, Typography, message, Select } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import addressService from '../services/addressService';
-import type { Address, CreateAddressPayload } from '../services/addressService';
+import addressService from '../../services/addressService';
+import type { Address, CreateAddressPayload } from '../../services/addressService';
 
 const { Title } = Typography;
 

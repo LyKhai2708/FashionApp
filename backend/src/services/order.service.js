@@ -263,7 +263,7 @@ async function cancelOrder(orderId) {
 
 async function getEligibleOrdersForReview(userId, productId) {
   const orders = await knex('orders')
-    .select('orders.order_id', 'orders.created_at as order_date')
+    .select('orders.order_id', 'orders.order_date')
     .join('orderdetails', 'orders.order_id', 'orderdetails.order_id')
     .join('product_variants', 'orderdetails.product_variant_id', 'product_variants.product_variants_id')
     .leftJoin('product_reviews', function() {
@@ -274,7 +274,7 @@ async function getEligibleOrdersForReview(userId, productId) {
     .where('orders.user_id', userId)
     .andWhere('product_variants.product_id', productId)
     .andWhere('orders.status', 'delivered')
-    .whereNull('product_reviews.id') // Chỉ lấy orders chưa được review
+    .whereNull('product_reviews.id')
     .groupBy('orders.order_id')
     .orderBy('orders.created_at', 'desc');
 

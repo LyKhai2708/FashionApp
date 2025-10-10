@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Typography, Tag, Space, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
-import addressService from '../services/addressService';
-import type { Address } from '../services/addressService'
+import addressService from '../../services/addressService';
+import type { Address } from '../../services/addressService'
 const { Title, Text } = Typography;
 
 interface AddressListProps {
