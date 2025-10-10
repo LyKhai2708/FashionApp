@@ -15,7 +15,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
     currentPage,
     setCurrentPage
 }) => {
-    // Mock data - sẽ thay bằng API call sau
     const mockReviews = [
         {
             id: 1,
