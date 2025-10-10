@@ -1,31 +1,99 @@
 import { useState } from "react";
-import { Card, Form, Input, Typography, Divider, Row, Col } from "antd";
+import { Card, Form, Input, Typography, Divider, Row, Col, Button} from "antd";
 import { Link } from "react-router-dom";
-import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined} from "@ant-design/icons";
 import { Home } from "lucide-react";
-
+import { useMessage } from '../App'
+import { useEffect } from "react";
+import otpService from "../services/otpService";
+import { authService } from "../services/authService";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext'
 export default function Register() {
   const [form] = Form.useForm();
   const [otpSent, setOtpSent] = useState(false);
+  const message = useMessage()
+  const [loading, setLoading] = useState(false);
+  const [currentPhone, setCurrentPhone] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const { register } = useAuth()
+  const navigate = useNavigate();
 
-  const handleFinish = (values: any) => {
-    console.log("Register values:", values);
-    // Xử lý đăng ký ở đây
+  useEffect(() => {
+    if (countdown > 0) {
+        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+        return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+  const handleFinish = async (values: any) => {
+    try {
+      if (!phoneVerified) {
+        message.error('Vui lòng xác thực số điện thoại trước');
+        return;
+      }
+
+      setLoading(true);
+      const response = await register({
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        phone: currentPhone
+      });
+
+      message.success('Đăng ký thành công! Vui lòng đăng nhập.');
+      navigate('/login');
+    } catch (err: any) {
+      message.error(err.message || 'Đăng ký thất bại');
+      console.error("Đăng ký thất bại:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSendOtp = async () => {
     try {
-      //kiem tra so dien thoai
-      await form.validateFields(["phone"]);
-      console.log("sdt hợp lệ:", form.getFieldValue("phone"));
-  
-      // Nếu hợp lệ thì mới gửi OTP
-      console.log("OTP sent to phone");
+
+      const phone = form.getFieldValue('phone');
+            
+      if (!phone) {
+        message.error('Vui lòng nhập số điện thoại');
+        return;
+      }
+
+      setLoading(true);
+      await otpService.sendOtp(phone);
+            
       setOtpSent(true);
-    } catch (err) {
-      console.log("SĐT chưa hợp lệ:", err);
+      setCurrentPhone(phone);
+      setCountdown(60);
+      message.success('OTP đã được gửi đến số điện thoại của bạn');
+    } catch (err: any) {
+      message.error(err.message);
+    } finally {
+      setLoading(false);
     }
-}
+  }
+  const handleVerifyOtp = async () => {
+    try {
+      const otp = form.getFieldValue('otp');
+
+      if (!otp) {
+        message.error('Vui lòng nhập mã OTP');
+        return;
+      }
+      setLoading(true);
+      await otpService.verifyOtp(currentPhone, otp);
+      setPhoneVerified(true);
+      setOtpSent(false);
+      message.success('Xác thực thành công!');
+
+    } catch (err) {
+      console.log("Xác minh OTP thất bại:", err);
+    }finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -86,7 +154,7 @@ export default function Register() {
                   <Form.Item
                     className="flex-1"
                     label="Họ và tên"
-                    name="name"
+                    name="username"
                     rules={[
                       { required: true, message: "Vui lòng nhập họ và tên" },
                       { min: 2, message: "Họ và tên phải có ít nhất 2 ký tự" },
@@ -96,7 +164,7 @@ export default function Register() {
                       size="large"
                       placeholder="Nhập họ và tên"
                       prefix={<UserOutlined />}
-                      autoComplete="name"
+                      autoComplete="username"
                     />
                   </Form.Item>
 
@@ -154,65 +222,82 @@ export default function Register() {
                 >
                   <Input.Password
                     size="large"
-                    placeholder="Xác nhận mật khẩu"
+                    placeholder="Nhập lại mật khẩu"
                     prefix={<LockOutlined />}
                     autoComplete="new-password"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label="Số điện thoại"
-                  name="phone"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập số điện thoại" },
-                    {
-                      pattern: /^[0-9]{9,11}$/,
-                      message: "Số điện thoại không hợp lệ",
-                    },
-                  ]}
-                >
-                  <div className="flex gap-2">
-                    <Input
-                      size="large"
-                      placeholder="Nhập số điện thoại"
-                      prefix={<PhoneOutlined />}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
-                      className="w-20 h-10 rounded-md bg-black text-white text-sm hover:opacity-90 transition"
+                        name="phone"
+                        label="Số điện thoại"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập số điện thoại' },
+                            { pattern: /^(0|\+84)[0-9]{9,10}$/, message: 'Số điện thoại không hợp lệ' }
+                        ]}
                     >
-                      Gửi OTP
-                    </button>
-                  </div>
-                </Form.Item>
+                        <Input 
+                            prefix={<PhoneOutlined />} 
+                            placeholder="Nhập số điện thoại"
+                            size="large"
+                            disabled={phoneVerified}
+                            suffix={
+                                phoneVerified ? (
+                                    <span className="text-green-500">✓ Đã xác thực</span>
+                                ) : (
+                                    <Button 
+                                        type="link" 
+                                        onClick={handleSendOtp}
+                                        loading={loading}
+                                        disabled={countdown > 0}
+                                    >
+                                        {countdown > 0 ? `${countdown}s` : 'Gửi OTP'}
+                                    </Button>
+                                )
+                            }
+                        />
+                    </Form.Item>
 
-                {otpSent && (
-                  <Form.Item
-                    label="Mã OTP"
-                    name="otp"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập mã OTP" },
-                      {
-                        len: 6,
-                        message: "OTP phải gồm 6 ký tự",
-                      },
-                    ]}
-                  >
-                    <Input
-                      size="large"
-                      placeholder="Nhập mã OTP"
-                      prefix={<SafetyCertificateOutlined />}
-                    />
-                  </Form.Item>
-                )}
+                    {/* OTP Input - Hiện khi đã gửi OTP */}
+                    {otpSent && !phoneVerified && (
+                        <Form.Item
+                            name="otp"
+                            label="Mã OTP"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập mã OTP' },
+                                { len: 6, message: 'OTP phải có 6 số' }
+                            ]}
+                        >
+                            <Input 
+                                placeholder="Nhập mã OTP 6 số"
+                                size="large"
+                                maxLength={6}
+                                suffix={
+                                    <Button 
+                                        type="primary" 
+                                        onClick={handleVerifyOtp}
+                                        loading={loading}
+                                    >
+                                        Xác thực
+                                    </Button>
+                                }
+                            />
+                        </Form.Item>
+                  )}
 
-                <button
-                  type="submit"
-                  className="w-full h-11 rounded-full bg-black text-white font-medium shadow-lg hover:opacity-95 transition"
-                >
-                  ĐĂNG KÝ
-                </button>
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            size="large"
+                            block
+                            loading={loading}
+                            disabled={!phoneVerified}
+                            className="!bg-black !text-white hover:!bg-gray-800"
+                        >
+                            Đăng ký
+                        </Button>
+                    </Form.Item>
 
                 <Divider plain>hoặc</Divider>
 

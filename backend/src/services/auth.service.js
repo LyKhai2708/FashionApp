@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const knex = require('../database/knex');
+const { checkPhoneVerified } = require('./otp.service');
 
 const {ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET} = process.env;
 
@@ -25,20 +26,22 @@ function generateRefreshToken(user) {
     });
 }
 
-async function register(userData) {
-    const { username, email, password, phone, role = 'customer' } = userData;
-    
-    // Check if user already exists
-    const existingUser = await usersRepository().where('email', email).first();
+async function register(phone, userData) {
+
+    const { username, email, password, role = 'customer' } = userData;
+
+    const verified = await checkPhoneVerified(phone);
+    if (!verified) throw new Error('Số điện thoại chưa được xác thực');
+
+    const existingUser = await usersRepository()
+    .where('email', email)
+    .first();
     if (existingUser) {
         throw new Error('User already exists');
     }
     
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create user object
     const newUser = {
         username,
         email,
@@ -48,11 +51,14 @@ async function register(userData) {
         del_flag: 0
     };
     
-    // Insert user and get ID
     const [userId] = await usersRepository().insert(newUser);
     
-    // Return user without password
-    const user = await usersRepository().where('user_id', userId).select('user_id', 'username', 'email', 'phone', 'address', 'role').first();
+    //xóa otp
+    await knex('otp_verifications')
+        .where({ phone, purpose: 'register' })
+        .delete();
+
+    const user = await usersRepository().where('user_id', userId).select('user_id', 'username', 'email', 'phone','role').first();
     
     return user;
 }

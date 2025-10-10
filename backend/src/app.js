@@ -18,6 +18,7 @@ const colorsRouter = require('./routes/color.router');
 const promotionsRouter = require('./routes/promotions.router');
 const reviewsRouter = require('./routes/review.router');
 const addressRouter = require('./routes/address.router');
+const otpRouter = require('./routes/otp.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
@@ -56,6 +57,8 @@ imagesRouter.setup(app);
 promotionsRouter.setup(app);
 reviewsRouter.setup(app);
 addressRouter.setup(app);
+otpRouter.setup(app);
+
 app.use(resourceNotFound);
 app.use(handleError);
 

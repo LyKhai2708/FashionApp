@@ -1,39 +1,30 @@
-const knex = require('../db/knex');
+const knex = require('../database/knex');
 
 function generateOtp() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 
-async function sendOtpForRegister(phone, userdata) {
+async function sendOtpForRegister(phone) {
     try {
         await knex('otp_verifications')
-            .where({ phone, purpose: 'register', is_verified: false })
-            .delete();
+        .where({ phone, purpose: 'register', is_verified: false })
+        .delete();
 
         const otp = generateOtp();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); 
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         await knex('otp_verifications').insert({
             phone,
             otp,
             purpose: 'register',
-            userdata: JSON.stringify(userdata),
             expires_at: expiresAt,
             attempts: 0,
-            is_verified: false,
-            created_at: new Date(),
-            updated_at: new Date()
+            is_verified: false
         });
 
-        console.log(`OTP đăng ký gửi tới ${phone}: ${otp}`);
-        console.log(`Hết hạn lúc: ${expiresAt.toLocaleString('vi-VN')}`);
-
-        return {
-            success: true,
-            message: 'OTP đã được gửi',
-            expiresAt
-        };
+        console.log(`📱 OTP gửi tới ${phone}: ${otp}`);
+    return { success: true, message: 'OTP đã được gửi', expiresAt };
     } catch (error) {
         console.error('Send OTP register error:', error);
         throw new Error('Không thể gửi OTP');
@@ -91,13 +82,9 @@ async function sendOtpForChangePhone(userId, newPhone) {
 async function verifyOtpForRegister(phone, otp) {
     try {
         const record = await knex('otp_verifications')
-            .where({
-                phone,
-                purpose: 'register',
-                is_verified: false
-            })
-            .orderBy('created_at', 'desc')
-            .first();
+        .where({ phone, purpose: 'register', is_verified: false })
+        .orderBy('created_at', 'desc')
+        .first();
 
         if (!record) {
             throw new Error('OTP không tồn tại hoặc đã được sử dụng');
@@ -135,7 +122,6 @@ async function verifyOtpForRegister(phone, otp) {
         return {
             success: true,
             message: 'Xác thực thành công',
-            userdata: record.userdata ? JSON.parse(record.userdata) : null
         };
     } catch (error) {
         console.error('Verify OTP register error:', error);
@@ -210,25 +196,22 @@ async function verifyOtpForChangePhone(userId, newPhone, otp) {
     }
 }
 
-async function checkOtpVerified(phone, purpose = 'register') {
+async function checkPhoneVerified(phone) {
     const record = await knex('otp_verifications')
-        .where({
-            phone,
-            purpose,
-            is_verified: true
-        })
-        .orderBy('verified_at', 'desc')
+        .where({ phone, purpose: 'register', is_verified: true })
+        .where('verified_at', '>', new Date(Date.now() - 15 * 60 * 1000))
         .first();
-
     return !!record;
 }
 
 
-async function clearVerifiedOtp(phone, purpose = 'register') {
-    await knex('otp_verifications')
-        .where({ phone, purpose, is_verified: true })
-        .delete();
-}
+// async function clearVerifiedOtp(phone, purpose = 'register') {
+//     await knex('otp_verifications')
+//         .where({ phone, purpose, is_verified: true })
+//         .delete();
+// }
+
+
 
 module.exports = {
     generateOtp,
@@ -236,6 +219,5 @@ module.exports = {
     sendOtpForChangePhone,
     verifyOtpForRegister,
     verifyOtpForChangePhone,
-    checkOtpVerified,
-    clearVerifiedOtp
+    checkPhoneVerified
 };

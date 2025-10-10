@@ -9,44 +9,57 @@ async function register(req, res, next) {
         const { username, email, password, phone, role } = req.body;
         
         // Validation
-        if (!username || !email || !password) {
-            return next(new ApiError(400, 'Username, email and password are required'));
+        if (!username || !email || !password || !phone) {
+            return next(new ApiError(400, 'Thiếu thông tin'));
         }
         
         // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return next(new ApiError(400, 'Invalid email format'));
+            return next(new ApiError(400, 'Sai định dạng email'));
         }
         
         // Password strength validation
         if (password.length < 8) {
-            return next(new ApiError(400, 'Password must be at least 8 characters long'));
+            return next(new ApiError(400, 'Mật khẩu dài ít nhất 8 ký tự'));
         }
         
         // Password complexity validation
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
         if (!passwordRegex.test(password)) {
-            return next(new ApiError(400, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'));
+            return next(new ApiError(400, 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt'));
         }
+        const userdata = { username, email, password, role };
+        const result = await authService.register(
+            phone, userdata
+        );
         
-        const user = await authService.register({
-            username,
-            email,
-            password,
-            phone,
-            role
-        });
-        
+        // const token = authService.generateAccessToken(result);
+        // const refreshToken = authService.generateRefreshToken(result);
+        // res.cookie('refreshToken', refreshToken, 
+        //     { httpOnly: true,
+        //         secure: process.env.NODE_ENV === 'production',
+        //         sameSite: 'strict',
+        //         maxAge: 7 * 24 * 60 * 60 * 1000
+        // });
         return res.status(201).json(JSend.success({ 
-            user,
-            message: 'User registered successfully' 
+            message: 'Đăng ký thành công',
+            user: {
+                    id: result.user_id,
+                    username: result.username,
+                    email: result.email,
+                    phone: result.phone,
+                    role: 'customer'
+            },
         }));
         
     } catch (error) {
         console.log(error);
         if (error.message === 'User already exists') {
-            return next(new ApiError(409, 'User with this email already exists'));
+            return next(new ApiError(409, 'Email đã được sử dụng'));
+        }
+        if(error.message === 'Số điện thoại chưa được xác thực') {
+            return next(new ApiError(409, 'Số điện thoại chưa được xác thực'));
         }
         return next(new ApiError(500, 'An error occurred while registering user'));
     }

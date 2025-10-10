@@ -52,7 +52,7 @@ export default function ProfilePage() {
     
     try {
       setUpdating(true);
-      const result = await userService.updateUser(user.id, {
+      await userService.updateUser(user.id, {
         username: values.name,
         email: values.email,
         phone: values.phone
@@ -60,7 +60,6 @@ export default function ProfilePage() {
       
       message.success('Cập nhật thông tin thành công!');
       
-      // Reload user info
       loadUserInfo();
     } catch (error: any) {
       message.error(error.message || 'Cập nhật thất bại');
@@ -81,7 +80,6 @@ export default function ProfilePage() {
       const data = await userService.getUserById(user.id);
       setUserInfo(data);
       
-      // Set form values
       form.setFieldsValue({
         name: data.username,
         email: data.email,
@@ -131,7 +129,7 @@ export default function ProfilePage() {
         const data = await orderService.getOrderById(selectedOrderId);
         setOrderDetail(data);
       } catch (error: any) {
-        message.error('Không thể tải chi tiết đơn hàng');
+        message.error(error.data.message || 'Không thể tải chi tiết đơn hàng' );
         setSelectedOrderId(null);
       } finally {
         setLoading(false);

@@ -22,15 +22,20 @@ class AuthService {
   }
 
 
-  async register(userData: RegisterRequest): Promise<void> {
+  async register(data: RegisterRequest): Promise<AuthResponse> {
     try {
-      await api.post('/api/v1/auth/register', userData);
-
-      
+        const response = await api.post<AuthResponse>('/api/v1/auth/register', data);
+        console.log(response.data.data.token);
+        if (response.data.data?.token) {
+            accessTokenStorage.save(response.data.data.token);
+            userStorage.save(response.data.data.user);
+        }
+        
+        return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Đăng ký thất bại');
+        throw new Error(error.response?.data?.message || 'Đăng ký thất bại');
     }
-  }
+}
 
   async logout(): Promise<void> {
     try {
@@ -56,7 +61,6 @@ class AuthService {
       const { token } = response.data.data;
       console.log(token);
       
-      // Lưu token mới
       accessTokenStorage.save(token);
       
       return token;
