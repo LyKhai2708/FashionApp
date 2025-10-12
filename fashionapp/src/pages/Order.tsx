@@ -28,7 +28,10 @@ export default function Order() {
           .then(data => setProvinces(data));
     }, []);
     const formatCurrency = (value: number) => value.toLocaleString("vi-VN");
-    const shippingFee = 0;
+    
+    const FREE_SHIP_THRESHOLD = 200000;
+    const STANDARD_SHIPPING_FEE = 30000;
+    const shippingFee = totalPrice >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
     const total = totalPrice + shippingFee;
 
 
@@ -119,6 +122,7 @@ export default function Order() {
                 shipping_ward: wardName,
                 shipping_ward_code: values.ward,
                 shipping_detail_address: values.address,
+                // Backend tự động tính shipping_fee
                 notes: values.note,
                 items: items.map(item => ({
                     product_variant_id: item.variant.variant_id,
@@ -325,6 +329,11 @@ export default function Order() {
                                 <span>Phí vận chuyển</span>
                                 <span>{shippingFee > 0 ? `${formatCurrency(shippingFee)}₫` : "Miễn phí"}</span>
                             </div>
+                            {totalPrice < FREE_SHIP_THRESHOLD && totalPrice > 0 && (
+                                <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded mb-2">
+                                    Mua thêm {formatCurrency(FREE_SHIP_THRESHOLD - totalPrice)}₫ để được miễn phí ship!
+                                </div>
+                            )}
                             <Divider />
                             <div className="flex justify-between font-semibold text-lg mb-4">
                                 <span>Tổng cộng</span>

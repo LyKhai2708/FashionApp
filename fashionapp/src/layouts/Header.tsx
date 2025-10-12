@@ -1,10 +1,10 @@
-import { Menu as MenuIcon , ShoppingCart , User, Search, CameraIcon, ChevronDown } from "lucide-react"
-import { useMemo, useState, useEffect } from "react"
+import { Menu as MenuIcon , ShoppingCart , User, ChevronDown } from "lucide-react"
+import {useState, useEffect } from "react"
 import CartDrawer from "../components/CartDrawer"
-import type { CartItem } from "../services/cartService"
-import product1 from "../assets/product1.jpg"
-import product2 from "../assets/product2.jpg"
-import product3 from "../assets/product3.jpg"
+// import type { CartItem } from "../services/cartService"
+// import product1 from "../assets/product1.jpg"
+// import product2 from "../assets/product2.jpg"
+// import product3 from "../assets/product3.jpg"
 import { Link } from "react-router-dom"
 import { Drawer, Dropdown} from "antd"
 import type {MenuProps} from "antd"
@@ -14,6 +14,7 @@ import { useMessage } from "../App"
 import { useNavigate } from "react-router-dom"
 import { categoryService } from "../services/categoryService"
 import { useCart } from '../contexts/CartContext';
+import SearchBar from "../components/SearchBar"
 interface Category {
     category_id: number;
     category_name: string;
@@ -112,7 +113,7 @@ export default function Header() {
     const { totalItems } = useCart();
     return (
         <header className="w-full bg-white shadow sticky top-0 z-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px] flex items-center justify-between py-3">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px] flex items-stretch justify-between h-16">
         
         {/* Menu (mobile) */}
         <button onClick={() => setOpenMenu(true)} className="lg:hidden">
@@ -164,22 +165,21 @@ export default function Header() {
           </div>
         </Drawer>
         {/* Logo */}
-        <Link  to="/" className="text-xl font-bold text-black-600">DELULU</Link>
+        <Link  to="/" className="text-xl font-bold text-black-600 flex items-center">DELULU</Link>
 
         
 
         {/*nav*/}
-        <nav className="hidden lg:flex flex-wrap items-center space-x-5 text-gray-700 font-medium
-                text-xs">
+        <nav className="hidden lg:flex items-stretch space-x-5 text-gray-700 font-medium text-xs h-full">
 
         {/* mega dropdown*/}
-          <div className="relative group">
-            <span className="cursor-pointer inline-block border-b-2 border-transparent hover:border-black transition-colors duration-300">
+          <div className="relative group flex items-center">
+            <span className="cursor-pointer flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[4px] after:bg-black after:transition-all after:duration-300 hover:after:w-full">
               SẢN PHẨM
             </span>
 
             {/* Mega Menu */}
-            <div className="absolute left-[-250px] top-3 w-[1000px] bg-white shadow-lg rounded p-8 hidden group-hover:block z-50" style={{ width: "1200px" }}>
+            <div className="absolute left-[-250px] top-full w-[1000px] bg-white shadow-lg rounded rounded-t-none p-8 hidden group-hover:block z-50" style={{ width: "1200px" }}>
               <div className="grid grid-cols-5 gap-6">
                 <div className="col-span-1">
                   <img src="/dress1.jpg" alt="Categories" className="rounded-lg object-cover" />
@@ -235,18 +235,20 @@ export default function Header() {
             <Link
               key={link.name}
               to={link.href}
-              className="inline-block border-b-2 border-transparent hover:border-black transition-colors duration-300"
+              className="flex items-center h-full relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[4px] after:bg-black after:transition-all after:duration-300 hover:after:w-full"
             >
               {link.name}
             </Link>
           ))}
         </nav>
         <div className="flex items-center space-x-4">
-          <div className="flex item-center space-x-2 border-b-2 border-gray-300">
+          {/* <div className="flex item-center space-x-2 border-b-2 border-gray-300">
             <Search className="w-5 h-10 text-gray-700 cursor-pointer" />
             <input type="text" placeholder="Tìm kiếm" className="rounded-md focus:outline-none" />
             <CameraIcon className="w-5 h-10 text-gray-700 cursor-pointer hover:text-blue-600" />
-          </div>
+          </div> */}
+
+          <SearchBar /> 
           {/* Action icons */}
           <div className="flex items-center space-x-4">
             <div className="relative" onClick={() => setOpenCart(true)}>

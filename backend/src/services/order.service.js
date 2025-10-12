@@ -2,6 +2,16 @@ const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
 
 /**
+ * phí ship dựa vào tổng đơn hàng
+ */
+function calculateShippingFee(subTotal) {
+  const FREE_SHIP_THRESHOLD = 200000; // 200k
+  const STANDARD_SHIPPING_FEE = 30000; // 30k
+  
+  return subTotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
+}
+
+/**
  * Tạo mới đơn hàng
  * @param {Object} orderData - Thông tin đơn hàng
  * @param {Array} items - Danh sách sản phẩm trong đơn hàng
@@ -11,7 +21,8 @@ async function createOrder(orderData, items) {
   return await knex.transaction(async (trx) => {
     // Tính toán tổng tiền
     const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping_fee = orderData.shipping_fee || 0;
+    
+    const shipping_fee = calculateShippingFee(sub_total);
     const total_amount = sub_total + shipping_fee;
 
     // Tạo đơn hàng
@@ -283,6 +294,7 @@ async function getEligibleOrdersForReview(userId, productId) {
 module.exports = {
   createOrder,
   getOrders,
+  calculateShippingFee,
   getOrderById,
   updateOrderStatus,
   updatePaymentStatus,

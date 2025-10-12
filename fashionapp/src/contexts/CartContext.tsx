@@ -4,6 +4,7 @@ import cartService from '../services/cartService';
 import type { CartItem, AddToCartPayload } from '../services/cartService';
 import { useAuth } from './AuthContext';
 import { useMessage, useNotification } from '../App';
+import { formatVNDPrice } from '../utils/priceFormatter';
 
 interface CartState {
     items: CartItem[];
@@ -77,9 +78,19 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
     }, [isAuthenticated]);
 
     const showAddToCartNotification = (productDetails: Omit<CartItem, 'cart_item_id' | 'quantity'>, quantity: number) => {
-        notification.success({
-            message: 'Đã thêm vào giỏ hàng',
+        notification.open({
+            message: (
+                <>
+                  <span style={{ fontWeight: 700 }}>Đã thêm vào giỏ hàng</span>
+                  <hr style={{
+                    border: 'none',
+                    borderTop: '1px solid #e8e8e8',
+                    margin: '8px 0',
+                  }} />
+                </>
+              ),
             description: (
+                
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <img 
                         src={productDetails.thumbnail} 
@@ -92,10 +103,11 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
                             {productDetails.variant.size.name} {productDetails.variant.color ? `/ ${productDetails.variant.color.name}` : ''}
                         </div>
                         <div style={{ fontSize: '12px', color: '#666' }}>Số lượng: {quantity}</div>
+                        <div style={{ fontSize: '12px', fontWeight: 600}}>{formatVNDPrice(productDetails.price)}</div>
                     </div>
                 </div>
             ),
-            placement: 'bottomRight',
+            placement: 'topRight',
             duration: 3,
         });
     };

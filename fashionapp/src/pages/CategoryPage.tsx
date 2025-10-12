@@ -56,7 +56,6 @@ export default function CategoryPage() {
         };
     }, [getFiltersFromUrl]);
 
-    // Use product list hook
     const {
         products,
         loading,

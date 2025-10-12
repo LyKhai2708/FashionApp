@@ -47,15 +47,12 @@ export default function ProfilePage() {
   const handleFinish = async (values: any) => {
     if (!user?.id) return;
     
-    console.log('Updating user with values:', values); // ← DEBUG
-    console.log('User ID:', user.id); // ← DEBUG
-    
     try {
       setUpdating(true);
       await userService.updateUser(user.id, {
         username: values.name,
-        email: values.email,
-        phone: values.phone
+        email: values.email
+        // Không gửi phone - SĐT không được phép thay đổi
       });
       
       message.success('Cập nhật thông tin thành công!');
@@ -215,12 +212,8 @@ export default function ProfilePage() {
                 <Form.Item
                   label="Số điện thoại"
                   name="phone"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập số điện thoại" },
-                    { pattern: /^[0-9]{9,11}$/, message: "Số điện thoại không hợp lệ" },
-                  ]}
                 >
-                  <Input />
+                  <Input disabled className="!bg-gray-100 !cursor-not-allowed" />
                 </Form.Item>
 
                 <Form.Item

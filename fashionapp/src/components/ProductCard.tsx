@@ -8,9 +8,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface ProductCardProps {
     product: Product;
+    compact?: boolean; // true hiển thị ở chế độ nhỏ gọn
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, compact = false }: ProductCardProps) {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [liked, setLiked] = useState(product.is_favorite || false);
@@ -59,7 +60,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     
     return (
         <div 
-            className="cursor-pointer relative group flex flex-col border border-gray-200 rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow duration-300 h-full group-hover:z-20"
+            className={`cursor-pointer relative group flex flex-col border border-gray-200 rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow duration-300 h-full group-hover:z-20 ${compact ? 'text-xs' : ''}`}
             onClick={handleCardClick}
         >
             <img 
@@ -67,9 +68,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                 alt={product.name || 'Product Image'} 
                 className="w-full aspect-[3/4] object-cover" 
             />
-            <div className="p-4 flex flex-col flex-grow w-full min-w-0">
+            <div className={`flex flex-col flex-grow w-full min-w-0 ${compact ? 'p-2' : 'p-4'}`}>
                 <h3
-                className="text-sm mb-2 line-clamp-2 overflow-hidden text-ellipsis break-words min-h-[48px]"
+                className={`mb-2 line-clamp-${compact ? '1' : '2'} overflow-hidden text-ellipsis break-words ${compact ? 'min-h-[24px]' : 'min-h-[48px]'} ${compact ? 'text-xs' : 'text-sm'}`}
                 >
                 {product.name || 'Tên sản phẩm'}
                 </h3>
@@ -78,29 +79,29 @@ export default function ProductCard({ product }: ProductCardProps) {
                         <div className="flex flex-col">
                             {product.has_promotion && product.discounted_price ? (
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-md font-semibold text-red-500">
+                                    <span className={`${compact ? 'text-sm' : 'text-md'} font-semibold text-red-500`}>
                                         {formatVNDPrice(product.discounted_price)}
                                     </span>
                                     {product.base_price && (
-                                        <span className="text-sm text-gray-500 line-through">
+                                        <span className={`${compact ? 'text-xs' : 'text-sm'} text-gray-500 line-through`}>
                                             {formatVNDPrice(product.base_price)}
                                         </span>
                                     )}
                                 </div>
                             ) : (
-                                <span className="text-md font-semibold text-gray-900">
+                                <span className={`${compact ? 'text-sm' : 'text-md'} font-semibold text-gray-900`}>
                                     {formatVNDPrice(product.base_price)}
                                 </span>
                             )}
                         </div>
 
                     </div>
-                    {product.colors && product.colors.length > 0 ? (
+                    {product.colors && product.colors.length > 0 && !compact ? ( // Ẩn colors ở mode compact để nhỏ gọn
                         <div className="flex gap-2 mb-2 mt-2 flex-wrap">
                             {product.colors.map((color) => (
                                 <div 
                                     key={color?.color_id || Math.random()} 
-                                    className="w-8 h-8 rounded-full border-2 border-gray-300 cursor-pointer"
+                                    className="w-8 h-4 rounded-full border-2 border-gray-300 cursor-pointer"
                                     style={{ backgroundColor: color?.hex_code || '#ccc' }}
                                     title={color?.name || 'Màu sắc'}
                                 />
@@ -112,18 +113,19 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             </div>
             {product.discount_percent && product.discount_percent > 0 ? (
-                <div className='absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded'>
+                <div className={`absolute top-3 left-3 bg-red-500 text-white ${compact ? 'text-xxs px-1 py-0.5' : 'text-xs px-2 py-1'} font-bold rounded`}>
                     -{product.discount_percent}%
                 </div>
             ) : null}
             <button  
-                className={`cursor-pointer absolute top-3 right-3 rounded-full bg-white border border-black-500 px-2 py-2 ${loading ? 'opacity-50' : ''}`}
+                className={`cursor-pointer absolute top-3 right-3 rounded-full bg-white border border-black-500 ${compact ? 'px-1 py-1' : 'px-2 py-2'} ${loading ? 'opacity-50' : ''}`}
                 onClick={handleToggleFavorite}
                 disabled={loading}
             >
                 <HeartIcon 
                     className={(liked ? 'text-red-500' : 'text-gray-400') + ' transition-colors duration-200'} 
                     fill={liked ? 'currentColor' : 'none'}
+                    size={compact ? 16 : 20}
                 />
             </button>
             

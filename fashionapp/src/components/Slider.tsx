@@ -65,7 +65,7 @@ export default function Slider() {
                     onClick={() => setCurrentIndex(slideIndex)}
                     className="focus:outline-none cursor-pointer"
                 >
-                    <span className={`${slideIndex === currentIndex ? 'bg-white/60' : 'bg-white/40'} hover:bg-white/80 inline-block rounded-full h-3 w-3`}></span>
+                    <span className={`${slideIndex === currentIndex ? 'bg-black/60' : 'bg-white/40'} hover:bg-white/80 inline-block rounded-full h-1 w-5`}></span>
                 </button>
             ))}
         </div>

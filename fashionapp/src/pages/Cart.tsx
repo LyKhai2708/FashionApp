@@ -1,7 +1,6 @@
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import ProductSlider from "../components/ProductSlider";
 import { Link, useNavigate } from "react-router-dom";
-import type { CartItem } from "../services/cartService";
 import { useCart } from "../contexts/CartContext";
 import { useState } from "react";
 import { message } from "antd";
@@ -34,7 +33,7 @@ export default function Cart() {
         setUpdatingItems(prev => new Set(prev).add(itemId));
         try {
             await updateItemQuantity(itemId, newQuantity);
-        } catch (error) {
+        } catch {
             message.error('Cập nhật thất bại');
         } finally {
             setUpdatingItems(prev => {
@@ -54,7 +53,7 @@ export default function Cart() {
                 next.delete(itemId);
                 return next;
             });
-        } catch (error) {
+        } catch {
             message.error('Xóa thất bại');
             setDeletingItems(prev => {
                 const next = new Set(prev);
@@ -64,7 +63,9 @@ export default function Cart() {
         }
     };
     
-    const shipping = 0;
+    const FREE_SHIP_THRESHOLD = 200000;
+    const STANDARD_SHIPPING_FEE = 30000;
+    const shipping = totalPrice >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
     const grandTotal = totalPrice + shipping;
 
     const isEmpty = items.length === 0;
@@ -197,6 +198,11 @@ export default function Cart() {
                             <span className="text-gray-600">Phí vận chuyển</span>
                             <span className="font-medium">{shipping === 0 ? 'Miễn phí' : `${formatCurrency(shipping)}₫`}</span>
                         </div>
+                        {totalPrice < FREE_SHIP_THRESHOLD && totalPrice > 0 && (
+                            <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                                Mua thêm {formatCurrency(FREE_SHIP_THRESHOLD - totalPrice)}₫ để được miễn phí ship!
+                            </div>
+                        )}
                         <div className="border-t pt-3 flex items-center justify-between">
                             <span className="text-base font-semibold">Tổng cộng</span>
                             <span className="text-base font-bold text-red-500">{formatCurrency(grandTotal)}₫</span>

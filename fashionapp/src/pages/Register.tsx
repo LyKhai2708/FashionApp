@@ -45,7 +45,6 @@ export default function Register() {
       navigate('/login');
     } catch (err: any) {
       message.error(err.message || 'Đăng ký thất bại');
-      console.error("Đăng ký thất bại:", err);
     } finally {
       setLoading(false);
     }
@@ -69,7 +68,7 @@ export default function Register() {
       setCountdown(60);
       message.success('OTP đã được gửi đến số điện thoại của bạn');
     } catch (err: any) {
-      message.error(err.message);
+      message.error(err.message || 'Gửi OTP thất bại');
     } finally {
       setLoading(false);
     }
@@ -88,8 +87,8 @@ export default function Register() {
       setOtpSent(false);
       message.success('Xác thực thành công!');
 
-    } catch (err) {
-      console.log("Xác minh OTP thất bại:", err);
+    } catch (err: any) {
+      message.error(err.message || 'Xác thực thất bại');
     }finally {
       setLoading(false);
     }

@@ -8,6 +8,7 @@ import Breadcrumb from '../components/Breadcrumb';
 import { extractProductIdFromSlug } from '../utils/slugUtils';
 import { useCart } from '../contexts/CartContext';
 import ReviewSection from '../components/review/ReviewSection';
+import PolicyBenefits from '../components/PolicyBenefits';
 
 export default function ProductDetailPage() {
     const { addToCart } = useCart();
@@ -169,7 +170,7 @@ export default function ProductDetailPage() {
                                     -{product.price_info.discount_percent}%
                                 </div>
                             </>
-                        ):<span className='text-2xl font-semibold text-red-600'>
+                        ):<span className='text-2xl font-semibold text-black-600'>
                             {formatVNDPrice(product.price_info.base_price)}
                         </span>
 
@@ -178,7 +179,7 @@ export default function ProductDetailPage() {
 
                     {/* Color Selection */}
                     <div className='mt-6'>
-                        <span className='font-semibold'>Màu sắc: {selectedColor?.name}</span>
+                        <span className='font-semibold inline-block'>Màu sắc: <span className='text-gray-500 font-semibold'>{selectedColor?.name}</span></span>
                         <div className="flex gap-2 mt-2">
                             {product.variants
                                 .reduce((colors: any[], variant) => {
@@ -191,10 +192,10 @@ export default function ProductDetailPage() {
                                     <button
                                         key={color.color_id}
                                         onClick={() => setSelectedColor(color)}
-                                        className={`w-10 h-10 rounded-full border-2 cursor-pointer hover:border-black transition-colors ${
+                                        className={`w-15 h-8 rounded-full border-2 cursor-pointer hover:border-black transition-colors ${
                                             selectedColor?.color_id === color.color_id 
-                                                ? 'border-black ring-2 ring-gray-300' 
-                                                : 'border-gray-300'
+                                                ? 'border-blue-600 ring-1 ring-gray-300' 
+                                                : 'border-gray-300 hover:border-blue-600 hover:ring-1 hover:ring-gray-300'
                                         }`}
                                         style={{ backgroundColor: color.hex_code }}
                                         title={color.name}
@@ -206,15 +207,15 @@ export default function ProductDetailPage() {
 
                     {/* Size Selection */}
                     <div className='mt-6'>
-                        <span className='font-semibold'>Kích cỡ: {selectedSize?.name}</span>
+                        <span className='font-semibold block'>Kích thước: <span className='text-gray-500'>{selectedSize?.name}</span></span>
                         <div className='flex gap-2 mt-2'>
                             {availableSizes.map((size) => (
                                 <button 
                                     key={size.size_id}
-                                    className={`cursor-pointer transition border px-4 py-2 rounded ${
+                                    className={`cursor-pointer font-semibold transition border px-4 py-2 rounded-xl ${
                                         size.size_id === selectedSize?.size_id 
                                             ? 'border-black bg-black text-white' 
-                                            : 'border-gray-300 hover:border-black'
+                                            : 'bg-gray-200 border-gray-200 text-gray-500 hover:bg-black hover:text-white'
                                     }`} 
                                     onClick={() => setSelectedSize(size)}
                                 >
@@ -286,6 +287,9 @@ export default function ProductDetailPage() {
                             <Heart className={`w-5 h-5 ${product.is_favorite ? 'fill-current' : ''}`} />
                         </button>
                     </div>
+
+                    {/* Policy Benefits */}
+                    <PolicyBenefits />
 
                     {/* Product Tabs */}
                     <div className='mt-8'>

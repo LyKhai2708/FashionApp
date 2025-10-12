@@ -7,14 +7,12 @@ import type { ProductsParams } from "../types/product";
 export default function ProductPage() {
     const { getFiltersFromUrl, saveFiltersToUrl, clearUrlFilters } = useUrlFilters();
     
-    // Đọc filters từ URL TRƯỚC KHI khởi tạo hook
-    // useMemo đảm bảo chỉ chạy 1 lần khi mount
     const initialFilters = useMemo(() => {
         const urlFilters = getFiltersFromUrl();
-        console.log('🔄 Initial filters from URL:', urlFilters);
+
         return {
             limit: 12,
-            ...urlFilters // Merge URL filters vào initial params
+            ...urlFilters
         };
     }, [getFiltersFromUrl]);
     
@@ -39,23 +37,17 @@ export default function ProductPage() {
         { label: "Sản phẩm", href: "/products" }
     ];
     const handleFilterChange = (filters: ProductsParams) => {
-        console.log('🔧 ProductPage: Filter changed:', filters);
-        
-        // Nếu clear filters
         if (Object.keys(filters).length === 0) {
             clearUrlFilters();
         } else {
-            // Lưu vào URL
+
             saveFiltersToUrl(filters);
         }
         
         setFilters(filters);
     };
 
-    const handleSortChange = (sort: string) => {
-        console.log('📊 ProductPage: Sort changed:', sort);
-        
-        // Lưu sort vào URL
+    const handleSortChange = (sort: string) => {        
         const newFilters = { ...currentFilters, sort: sort as ProductsParams['sort'] };
         saveFiltersToUrl(newFilters);
         
