@@ -72,7 +72,8 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                 ]);
                 setColors(colorsData);
                 setSizes(sizesData);
-            } catch (error: any) {
+            } catch (error) {
+                console.log('Error fetching colors or sizes:', error);
             } finally {
                 setLoadingColors(false);
                 setLoadingSizes(false);

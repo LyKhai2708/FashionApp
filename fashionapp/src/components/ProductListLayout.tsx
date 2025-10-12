@@ -80,8 +80,8 @@ export default function ProductListLayout({
                 </div>
                 
                 <div className="flex items-center justify-end gap-4 flex-wrap">
-                    <FilterBar onFilterChange={onFilterChange} currentFilters={currentFilters} />
-                    <SortDropdown onSortChange={onSortChange} currentSort={currentFilters?.sort} />
+                    {onFilterChange && <FilterBar onFilterChange={onFilterChange} currentFilters={currentFilters} />}
+                    {onSortChange && <SortDropdown onSortChange={onSortChange} currentSort={currentFilters?.sort} />}
                 </div>
             </div>
 

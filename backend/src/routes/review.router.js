@@ -13,11 +13,8 @@ const { methodNotAllowed } = require('../controllers/errors.controller');
 
 module.exports.setup = (app) => {
 
-  app.use('/api/v1/products/:productId/reviews', authMiddleware, router);
-  
-
-  const reviewRouter = express.Router();
-  app.use('/api/v1/reviews', authMiddleware, reviewRouter);
+  // app.use('/api/v1/products/:productId/reviews', router);
+  app.use('/api/v1/reviews', authMiddleware, router);
 
   /**
    * @swagger
@@ -103,7 +100,7 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.get('/', reviewController.getProductReview);
+  router.get('/products/:productId', reviewController.getProductReview);
 
   /**
    * @swagger
@@ -183,7 +180,7 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.post('/', reviewController.createReview);
+  router.post('/products/:productId',authMiddleware, reviewController.createReview);
 
   /**
    * @swagger
@@ -244,7 +241,7 @@ module.exports.setup = (app) => {
    */
 
   // Direct review management routes
-  reviewRouter.put('/:id', reviewController.updateReview);
+  router.put('/:id',authMiddleware, reviewController.updateReview);
   
   /**
    * @swagger
@@ -292,10 +289,9 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  reviewRouter.delete('/:id', reviewController.deleteReview);
+  router.delete('/:id',authMiddleware, reviewController.deleteReview);
 
   // Method not allowed handlers
   router.all('/', methodNotAllowed);
   router.all('/:id', methodNotAllowed);
-  reviewRouter.all('/:id', methodNotAllowed);
 };

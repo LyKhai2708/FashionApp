@@ -5,7 +5,10 @@ const reviewService = require('../services/review.service');
 
 async function getProductReview(req, res, next) {
     const {productId} = req.params;
-    const { page = 1, limit = 5 } = req.query;
+    if (!productId) {
+        return next(new ApiError(400, "Product ID is required"));
+    }
+    const { page = 1, limit = 5, sortBy = 'newest', filterRating = 0 } = req.query;
     
     let result = {
         metadata: {
@@ -20,7 +23,7 @@ async function getProductReview(req, res, next) {
         total_reviews: 0
       };
     try {
-        result = await reviewService.getProductReview(productId, parseInt(page), parseInt(limit));
+        result = await reviewService.getProductReview(productId, parseInt(page), parseInt(limit), sortBy, parseInt(filterRating));
         return res.json(JSend.success({
             metadata: result.metadata,
             reviews: result.reviews,

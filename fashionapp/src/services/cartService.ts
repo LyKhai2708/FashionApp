@@ -40,7 +40,6 @@ class CartService {
             const response = await api.get<any>('/api/v1/cart');
             const backendData = response.data.data.cart;
             
-            // Transform backend response to match frontend interface
             const cart = backendData.items.map((item: any) => ({
                 cart_item_id: item.cart_id,
                 product_id: item.product.product_id,

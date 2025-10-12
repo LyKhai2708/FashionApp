@@ -88,7 +88,6 @@ async function hardDeleteVariant(variantId) {
 
 async function updateVariant(variantId, payload) {
     return await knex.transaction(async (trx) => {
-        // Lấy thông tin variant hiện tại
         const existingVariant = await trx('product_variants')
             .where("product_variants_id", variantId)
             .first();
@@ -99,17 +98,15 @@ async function updateVariant(variantId, payload) {
         
         const variant = readVariant(payload);
         
-        // Nếu color_id thay đổi, cần check product_color
         if (variant.color_id && variant.color_id !== existingVariant.color_id) {
-            // Kiểm tra xem product_color mới đã tồn tại chưa
+
             let productColor = await trx('product_colors')
                 .where({
                     product_id: existingVariant.product_id,
                     color_id: variant.color_id
                 })
                 .first();
-            
-            // Nếu chưa có thì tạo mới product_color
+
             if (!productColor) {
                 await trx('product_colors').insert({
                     product_id: existingVariant.product_id,
@@ -119,7 +116,6 @@ async function updateVariant(variantId, payload) {
             }
         }
         
-        // Update variant
         const updated = await trx('product_variants')
             .where("product_variants_id", variantId)
             .update(variant);

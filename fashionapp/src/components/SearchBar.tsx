@@ -108,7 +108,7 @@ export default function SearchBar() {
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={handleFocus} 
                     placeholder="Tìm kiếm..."
-                    className="flex-grow px-4 py-2 outline-none text-sm"
+                    className="flex-grow cursor-pointer px-4 py-2 outline-none text-sm"
                 />
                 <button className="px-3 py-2 text-gray-500">
                     <SearchIcon size={18} />
@@ -153,7 +153,7 @@ export default function SearchBar() {
                                     <div className="mt-6 text-center">
                                         <button
                                             onClick={handleViewAll}
-                                            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 text-base"
+                                            className="bg-black font-semibold text-white px-6 py-2 rounded-lg cursor-pointer text-base"
                                         >
                                             XEM TẤT CẢ
                                         </button>

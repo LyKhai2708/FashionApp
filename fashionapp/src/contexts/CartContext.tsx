@@ -117,7 +117,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             try{
                 await cartService.addToCart(payload);
                 showAddToCartNotification(productDetails, payload.quantity);
-                await fetchCart(true); // Skip merge when adding to cart
+                await fetchCart(true); 
             }catch(err: any) {
                 message.error(err.message || 'Thêm sản phẩm vào giỏ hàng thất bại');
                 throw err;

@@ -17,7 +17,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
 }) => {
     return (
         <div className="flex flex-wrap gap-4 mb-6 p-4 bg-white">
-            {/* Sort */}
+
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Sắp xếp:</span>
                 <Select
@@ -31,7 +31,7 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
                 />
             </div>
 
-            {/* Filter by Rating */}
+
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Lọc theo sao:</span>
                 <div className="flex gap-2 ">

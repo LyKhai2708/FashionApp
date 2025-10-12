@@ -16,6 +16,8 @@ export default function ProductDetailPage() {
     const { slug } = useParams<{ slug: string }>();
     
     const productId = extractProductIdFromSlug(slug || '');
+
+    console.log('Extracted productId:', productId);
     
     const {
         product,
@@ -230,7 +232,7 @@ export default function ProductDetailPage() {
                         <span className='font-semibold'>Số lượng:</span>
                         <div className='inline-flex items-center border border-gray-400 rounded'>
                             <button 
-                                className='cursor-pointer px-3 py-2 rounded-l hover:bg-black hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed' 
+                                className='cursor-pointer px-3 py-2 rounded-l transition disabled:opacity-50 disabled:cursor-not-allowed' 
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={quantity <= 1}
                             >
@@ -251,7 +253,7 @@ export default function ProductDetailPage() {
                                 style={{WebkitAppearance: 'none', MozAppearance: 'textfield'}}
                             />
                             <button 
-                                className='cursor-pointer px-3 py-2 rounded-r hover:bg-black hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed' 
+                                className='cursor-pointer px-3 py-2 rounded-r transition disabled:opacity-50 disabled:cursor-not-allowed' 
                                 onClick={() => handleQuantityChange(1)}
                                 disabled={quantity >= stockQuantity}
                             >

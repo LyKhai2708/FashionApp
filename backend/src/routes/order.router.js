@@ -4,17 +4,13 @@ const ordersController = require('../controllers/orders.controller');
 const {authMiddleware, authorizeRoles} = require('../middleware/auth.middleware');
 const { methodNotAllowed } = require('../controllers/errors.controller');
 
-/**
- * @swagger
- * tags:
- *   name: Orders
- *   description: Order management endpoints
- */
+
 
 module.exports.setup = (app) => {
   
   app.use('/api/v1/orders', authMiddleware, router);
 
+  router.get('/product/:productId/reviews', ordersController.getEligibleOrdersForReview);
   router.get('/me', ordersController.getMyOrders);
   /**
    * @swagger

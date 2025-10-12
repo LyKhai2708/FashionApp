@@ -19,6 +19,7 @@ import Order from '../pages/Order';
 import OrderSuccess from '../pages/OrderSuccess';
 import ProfilePage from '../pages/ProfilePage';
 import NotFound from '../layouts/404Page';
+import SearchPage from '../pages/SearchPage';
 
 
 const publicRoutes: RouteType[] = [
@@ -29,6 +30,7 @@ const publicRoutes: RouteType[] = [
   { path: '/collection/:categorySlug', component: CategoryPage },
   { path: '/products/:slug', component: ProductDetailPage },
   { path: '/cart', component: Cart },
+  { path: '/search', component: SearchPage },
 ];
 
 const privateRoutes: RouteType[] = [

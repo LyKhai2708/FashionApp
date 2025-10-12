@@ -1,5 +1,4 @@
 import {Form, Input, Select, Radio, Divider, Typography } from "antd";
-import { Package, CreditCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
@@ -47,7 +46,7 @@ export default function Order() {
             navigate('/cart');
         }
     }, [isAuthenticated, items, cartLoading, navigate]);
-    // Load default address and populate dropdowns
+
     useEffect(() => {
         const loadDefaultAddress = async () => {
             if (!isAuthenticated) return;
@@ -57,14 +56,14 @@ export default function Order() {
                 const address = await addressService.getDefaultAddress();
                 
                 if (address && address.province_code) {
-                    // Set form values
+
                     form.setFieldsValue({
                         province: address.province_code,
                         ward: address.ward_code,
                         address: address.detail_address
                     });
 
-                    // Load wards
+
                     const provinceRes = await fetch(
                         `https://provinces.open-api.vn/api/v2/p/${address.province_code}?depth=2`
                     );
@@ -81,6 +80,14 @@ export default function Order() {
         loadDefaultAddress();
     }, [isAuthenticated, form]);
 
+    const [showBankInfo, setShowBankInfo] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank'>('cod');
+
+    const handlePaymentChange = (e: any) => {
+        const value = e.target.value;
+        setPaymentMethod(value);
+        setShowBankInfo(value === 'bank'); 
+    };
 
     const handleProvinceChange = async (provinceCode: string) => {
         form.setFieldsValue({ ward: undefined });
@@ -122,7 +129,6 @@ export default function Order() {
                 shipping_ward: wardName,
                 shipping_ward_code: values.ward,
                 shipping_detail_address: values.address,
-                // Backend tự động tính shipping_fee
                 notes: values.note,
                 items: items.map(item => ({
                     product_variant_id: item.variant.variant_id,
@@ -274,7 +280,7 @@ export default function Order() {
                             <Title level={4}>Phương thức thanh toán</Title>
 
                             <Form.Item name="payment" rules={[{ required: true, message: "Chọn phương thức thanh toán" }]}>
-                                <Radio.Group className="w-2/3">
+                                <Radio.Group className="w-2/3" onChange={handlePaymentChange} value={paymentMethod}>
                                 <div className=" flex flex-col items-start justify-center border border-gray-200 p-4 rounded-md shadow-lg">
 
                                     <Radio value="cod">
@@ -286,14 +292,31 @@ export default function Order() {
                                     <Divider/>
                                     <Radio value="bank">
                                         <div className="flex items-center gap-2">
-                                            <CreditCard className="w-8 h-8"/>
+                                            <img className="w-8 h-8" src="/bank-transfer.png"/>
                                             <span className="text-lg">Thanh toán qua ngân hàng</span>
                                         </div>
                                     </Radio>
                                 </div>
                                 </Radio.Group>
                             </Form.Item>
-
+                            <div
+                                className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                                    showBankInfo ? 'max-h-[200px]' : 'max-h-0'
+                                }`}
+                            >
+                                {showBankInfo && (
+                                    <div className="mb-2 p-4 border border-gray-200 rounded-md shadow-lg bg-gray-50">
+                                        <Title level={5}>Thông tin chuyển khoản</Title>
+                                        <p><strong>Ngân hàng:</strong> MBBank</p>
+                                        <p><strong>Số tài khoản:</strong> 0896670687</p>
+                                        <p><strong>Chủ tài khoản:</strong> LY PHUONG KHAI</p>
+                                        <p><strong>Nội dung chuyển khoản:</strong> [SĐT]-[Mã đơn hàng]-[Nội dung muốn thêm nếu có]</p>
+                                        <p className="text-sm text-gray-600 mt-2">
+                                            Vui lòng chuyển khoản đúng số tiền {formatCurrency(total)}₫ và ghi rõ nội dung. Sau khi chuyển khoản, vui lòng gọi hotline: 0896670687 để nhân viên sẽ xác nhận và xử lý đơn hàng.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                             
                         </Form>
                     </div>

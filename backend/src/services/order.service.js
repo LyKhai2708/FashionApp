@@ -11,12 +11,7 @@ function calculateShippingFee(subTotal) {
   return subTotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
 }
 
-/**
- * Tạo mới đơn hàng
- * @param {Object} orderData - Thông tin đơn hàng
- * @param {Array} items - Danh sách sản phẩm trong đơn hàng
- * @returns {Promise<Object>} Đơn hàng đã tạo
- */
+
 async function createOrder(orderData, items) {
   return await knex.transaction(async (trx) => {
     // Tính toán tổng tiền
@@ -76,13 +71,7 @@ async function createOrder(orderData, items) {
   });
 }
 
-/**
- * Lấy danh sách đơn hàng với phân trang và lọc
- * @param {Object} filters - Bộ lọc
- * @param {number} page - Trang hiện tại
- * @param {number} limit - Số lượng mỗi trang
- * @returns {Promise<Object>} Danh sách đơn hàng và thông tin phân trang
- */
+
 async function getOrders(filters = {}, page = 1, limit = 10) {
   const offset = (page - 1) * limit;
   
@@ -119,7 +108,6 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
     query.whereBetween('orders.order_date', [filters.start_date, filters.end_date]);
   }
 
-  // Đếm tổng số bản ghi (cần query riêng vì có GROUP BY)
   const countQuery = knex('orders')
     .where((builder) => {
       if (filters.user_id) {
@@ -141,7 +129,6 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
     .count('* as count')
     .first();
   
-  // Phân trang
   query.offset(offset).limit(limit);
 
   const [orders, countResult] = await Promise.all([
@@ -165,11 +152,7 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
   };
 }
 
-/**
- * Lấy chi tiết đơn hàng theo ID
- * @param {number} orderId - ID đơn hàng
- * @returns {Promise<Object>} Thông tin chi tiết đơn hàng
- */
+
 async function getOrderById(orderId) {
   const order = await knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
@@ -222,12 +205,7 @@ async function updateOrderStatus(orderId, order_status) {
   return updated > 0;
 }
 
-/**
- * Cập nhật trạng thái thanh toán
- * @param {number} orderId - ID đơn hàng
- * @param {string} payment_status - Trạng thái thanh toán
- * @returns {Promise<boolean>} Kết quả cập nhật
- */
+
 async function updatePaymentStatus(orderId, payment_status) {
   const validStatuses = ['unpaid', 'paid', 'refund'];
   
@@ -242,11 +220,7 @@ async function updatePaymentStatus(orderId, payment_status) {
   return updated > 0;
 }
 
-/**
- * Hủy đơn hàng
- * @param {number} orderId - ID đơn hàng
- * @returns {Promise<boolean>} Kết quả hủy đơn hàng
- */
+
 async function cancelOrder(orderId) {
   return await knex.transaction(async (trx) => {
     // Cập nhật trạng thái đơn hàng
@@ -298,5 +272,6 @@ module.exports = {
   getOrderById,
   updateOrderStatus,
   updatePaymentStatus,
-  cancelOrder
+  cancelOrder,
+  getEligibleOrdersForReview
 };
