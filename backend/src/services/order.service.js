@@ -258,10 +258,10 @@ async function getEligibleOrdersForReview(userId, productId) {
     })
     .where('orders.user_id', userId)
     .andWhere('product_variants.product_id', productId)
-    .andWhere('orders.status', 'delivered')
+    .andWhere('orders.order_status', 'delivered')
     .whereNull('product_reviews.id')
     .groupBy('orders.order_id')
-    .orderBy('orders.created_at', 'desc');
+    .orderBy('orders.order_date', 'desc');
 
   return orders;
 }

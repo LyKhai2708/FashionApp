@@ -20,7 +20,8 @@ async function getProductReview(req, res, next) {
         },
         reviews: [],
         average_rating: 0,
-        total_reviews: 0
+        total_reviews: 0,
+        rating_breakdown: {1:0,2:0,3:0,4:0,5:0}
       };
     try {
         result = await reviewService.getProductReview(productId, parseInt(page), parseInt(limit), sortBy, parseInt(filterRating));
@@ -28,7 +29,8 @@ async function getProductReview(req, res, next) {
             metadata: result.metadata,
             reviews: result.reviews,
             average_rating: result.average_rating,
-            total_reviews: result.total_reviews
+            total_reviews: result.total_reviews,
+            rating_breakdown: result.rating_breakdown
         }));
     } catch (err) {
         console.log(err);

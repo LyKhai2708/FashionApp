@@ -71,7 +71,7 @@ class ReviewService {
             const response = await api.get<any>(`/api/v1/reviews/products/${productId}`, {
                 params: { page, limit, sortBy, filterRating }
             });
-            return response.data.data;
+            return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể tải đánh giá');
         }

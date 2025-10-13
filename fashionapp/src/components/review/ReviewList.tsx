@@ -12,6 +12,7 @@ interface ReviewListProps {
     currentPage: number;
     setCurrentPage: (page: number) => void;
     refreshTrigger?: any;
+    onReviewUpdate?: () => void;
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({
@@ -20,7 +21,8 @@ const ReviewList: React.FC<ReviewListProps> = ({
     filterRating,
     currentPage,
     setCurrentPage,
-    refreshTrigger = 0
+    refreshTrigger = 0,
+    onReviewUpdate
 }) => {
     const message = useMessage();
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -39,7 +41,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
     const fetchReviews = async () => {
         setLoading(true);
         try {
-            console.log('Fetching reviews for product:', productId);
             const response = await reviewService.getProductReviews(
                 productId,
                 currentPage,
@@ -47,7 +48,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                 sortBy,
                 filterRating
             );
-            console.log('Fetched reviews:', response);
+            console.log('Fetched reviews:', response.data.reviews);
             setReviews(response.data.reviews);
             setMetadata(response.data.metadata);
         } catch (error: any) {
@@ -95,7 +96,10 @@ const ReviewList: React.FC<ReviewListProps> = ({
                     <ReviewItem 
                         key={review.id} 
                         review={review}
-                        onUpdate={fetchReviews}
+                        onUpdate={() => {
+                            fetchReviews();
+                            if (onReviewUpdate) onReviewUpdate(); 
+                        }}
                     />
                 ))}
             </div>

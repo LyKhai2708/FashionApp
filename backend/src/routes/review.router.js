@@ -14,7 +14,7 @@ const { methodNotAllowed } = require('../controllers/errors.controller');
 module.exports.setup = (app) => {
 
   // app.use('/api/v1/products/:productId/reviews', router);
-  app.use('/api/v1/reviews', authMiddleware, router);
+  app.use('/api/v1/reviews', router);
 
   /**
    * @swagger

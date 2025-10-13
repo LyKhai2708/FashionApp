@@ -30,6 +30,7 @@ const ReviewStats: React.FC<ReviewStatsProps> = ({productId, refreshTrigger = 0}
         setLoading(true);
         try {
             const response = await reviewService.getProductReviews(productId, 1, 1);
+          
             setStats({
                 average_rating: response.data.average_rating,
                 total_reviews: response.data.total_reviews,
@@ -43,6 +44,7 @@ const ReviewStats: React.FC<ReviewStatsProps> = ({productId, refreshTrigger = 0}
     };
 
     useEffect(() => {
+        console.log('refreshTrigger changed:', refreshTrigger);
         fetchStats();
     }, [productId, refreshTrigger]);
 

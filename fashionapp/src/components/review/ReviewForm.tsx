@@ -58,8 +58,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                 });
                 message.success('Đánh giá thành công!');
             }
-            onSuccess();
             handleClose();
+            onSuccess();
         } catch (error: any) {
             message.error(error.response?.data?.message || 'Có lỗi xảy ra');
         } finally {

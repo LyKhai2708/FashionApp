@@ -110,6 +110,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                 visible={editModalVisible}
                 onClose={() => setEditModalVisible(false)}
                 onSuccess={() => {
+                    setEditModalVisible(false);
                     if (onUpdate) onUpdate();
                 }}
                 productId={review.product_id}

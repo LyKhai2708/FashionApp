@@ -27,18 +27,24 @@ async function getProductReview(productId,  page = 1, limit = 5, sortBy = 'newes
         'users.phone as customer_phone'
     ]).limit(paginator.limit)
     .offset(paginator.offset);;
-
-    const [stats] = await knex('product_reviews')
-    .where('product_id', productId)
-    .select([
-        knex.raw('COUNT(*) as total_reviews'),
-        knex.raw('AVG(rating) as average_rating')
-    ]);
+    
+    const statsResult = await knex('product_reviews')
+        .where('product_id', productId)
+        .select([
+            knex.raw('COUNT(*) as total_reviews'),
+            knex.raw('AVG(rating) as average_rating')
+        ]);
+    
+    //khong co review nao
+    const stats = statsResult && statsResult[0] ? statsResult[0] : {
+        total_reviews: 0,
+        average_rating: null
+    };
 
     const ratingBreakdown = await knex('product_reviews')
     .where('product_id', productId)
     .select('rating')
-    .count('* as ratingCount')
+    .count('* as count')
     .groupBy('rating');
 
     const ratingBreakdownObj = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
@@ -54,9 +60,9 @@ async function getProductReview(productId,  page = 1, limit = 5, sortBy = 'newes
     return {
         reviews: result,
         metadata: paginator.getMetadata(totalRecords),
-        average_rating: stats[0].average_rating,
-        total_reviews: stats[0].total_reviews,
-        ratingBreakdown:  ratingBreakdownObj,
+        average_rating: parseFloat(stats.average_rating) || 0,
+        total_reviews: parseInt(stats.total_reviews) || 0,
+        rating_breakdown:  ratingBreakdownObj,
     }
 }
 async function createProductReview(userId, reviewData){
@@ -66,7 +72,7 @@ async function createProductReview(userId, reviewData){
         .where({
             order_id: order_id,
             user_id: userId,
-            status: 'delivered'
+            order_status: 'delivered'
         })
         .first();
     
@@ -117,7 +123,7 @@ async function updateProductReview(reviewId, userId, reviewData, isAdmin = false
         query = query.where('user_id', userId);
     }
     
-    const [result] = await query.update({
+    const result = await query.update({
         rating,
         comment,
         updated_at: knex.fn.now()
@@ -131,7 +137,7 @@ async function deleteProductReview(reviewId, userId, isAdmin){
     if(!isAdmin){
         query = query.where('user_id', userId)
     }
-    const [result] = await query.del()
+    const result = await query.del()
     return result;
 }
 module.exports = {

@@ -55,6 +55,13 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
     const handleReviewSuccess = () => {
         setRefreshTrigger(prev => prev + 1); //load lai danh gia
     };
+
+    const handleReviewUpdate = () => {
+    setRefreshTrigger(prev => {
+        console.log('Setting refreshTrigger from', prev, 'to', prev + 1);
+        return prev + 1;
+    });
+    };
     return (
         <div className="mt-10 pt-8 border-t border-gray-200">
             <div className="flex justify-between items-center mb-4">
@@ -87,6 +94,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
                 currentPage={currentPage}
                 setCurrentPage={setCurrentPage}
                 refreshTrigger={refreshTrigger}
+                onReviewUpdate={handleReviewUpdate}
             />
 
             <ReviewForm
