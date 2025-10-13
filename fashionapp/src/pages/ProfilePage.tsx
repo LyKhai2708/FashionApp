@@ -94,22 +94,22 @@ export default function ProfilePage() {
     }
   }, [user?.id]);
   
-  // Load orders list
-  useEffect(() => {
-    const loadOrders = async () => {
-      if (activeTab !== 'orders') return;
-      
-      try {
-        setLoading(true);
-        const data = await orderService.getUserOrders();
-        setOrders(data);
-      } catch (error: any) {
-        message.error('Không thể tải danh sách đơn hàng');
-      } finally {
-        setLoading(false);
-      }
-    };
+
+  const loadOrders = async () => {
+    if (activeTab !== 'orders') return;
     
+    try {
+      setLoading(true);
+      const data = await orderService.getUserOrders();
+      setOrders(data);
+    } catch (error: any) {
+      message.error('Không thể tải danh sách đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadOrders();
   }, [activeTab]);
 
@@ -251,7 +251,11 @@ export default function ProfilePage() {
                   <Spin size="large" />
                 </div>
               ) : !selectedOrderId ? (
-                <OrdersList orders={orders} onView={setSelectedOrderId} />
+                <OrdersList 
+                  orders={orders} 
+                  onView={setSelectedOrderId}
+                  onOrderCancelled={loadOrders}
+                />
               ) : (
                 <OrderDetail order={orderDetail} onBack={() => setSelectedOrderId(null)} />
               )}

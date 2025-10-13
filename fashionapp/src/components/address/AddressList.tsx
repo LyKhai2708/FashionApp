@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import {HomeOutlined} from '@ant-design/icons';
 import { Card, Button, Typography, Tag, Space, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import addressService from '../../services/addressService';
@@ -71,7 +72,7 @@ const AddressList: React.FC<AddressListProps> = ({ onAddAddress, onEditAddress }
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                     {address.is_default ? (
-                                        <Tag color="green">Mặc định</Tag>
+                                        <Tag color="blue"><HomeOutlined /> Mặc định</Tag>
                                     ) : null}
                                 </div>
                                 <Text type="secondary">
