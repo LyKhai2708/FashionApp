@@ -86,7 +86,7 @@ export default function Order() {
     const handlePaymentChange = (e: any) => {
         const value = e.target.value;
         setPaymentMethod(value);
-        setShowBankInfo(value === 'bank'); 
+        setShowBankInfo(value === 'bank_transfer'); 
     };
 
     const handleProvinceChange = async (provinceCode: string) => {
@@ -290,7 +290,7 @@ export default function Order() {
                                         </div>
                                     </Radio>
                                     <Divider/>
-                                    <Radio value="bank">
+                                    <Radio value="bank_transfer">
                                         <div className="flex items-center gap-2">
                                             <img className="w-8 h-8" src="/bank-transfer.png"/>
                                             <span className="text-lg">Thanh toán qua ngân hàng</span>

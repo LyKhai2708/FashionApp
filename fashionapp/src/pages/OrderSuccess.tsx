@@ -71,17 +71,17 @@ export default function OrderSuccess() {
                 </div>
 
                 <h1 className="text-3xl font-bold text-center mb-4">
-                    Thank you for your purchase
+                    Cảm ơn bạn đã mua hàng
                 </h1>
                 <p className="text-center text-gray-600 mb-2">
-                    We've received your order will ship in 5-7 business days.
+                    Chúng tôi đã nhận được đơn hàng của bạn và sẽ giao hàng trong 5-7 ngày làm việc.
                 </p>
                 <p className="text-center text-gray-600 mb-8">
-                    Your order number is <span className="font-semibold">#{order.order_id}</span>
+                    Số đơn hàng của bạn là <span className="font-semibold">#{order.order_id}</span>
                 </p>
 
                 <div className="border-t pt-6">
-                    <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
+                    <h2 className="text-xl font-semibold mb-6">Tóm tắt đơn hàng</h2>
 
                     <div className="space-y-4 mb-6">
                         {order.items && order.items.length > 0 ? (
@@ -114,7 +114,7 @@ export default function OrderSuccess() {
 
                     {/* Total */}
                     <div className="border-t pt-4 flex justify-between items-center">
-                        <span className="text-lg font-semibold">Total</span>
+                        <span className="text-lg font-semibold">Tổng</span>
                         <span className="text-lg font-bold">₫ {formatCurrency(order.total_amount)}</span>
                     </div>
                 </div>
@@ -125,7 +125,7 @@ export default function OrderSuccess() {
                         onClick={() => navigate('/')}
                         className="px-8 py-3 border-2 border-black rounded-md hover:bg-black hover:text-white transition font-medium"
                     >
-                        Back to Home
+                        Quay lại trang chủ
                     </button>
                 </div>
             </div>

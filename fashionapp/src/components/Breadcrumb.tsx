@@ -11,7 +11,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
     if (items.length === 0) return null;
 
     return (
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 text-xs">
             {items.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                     {item.href ? (

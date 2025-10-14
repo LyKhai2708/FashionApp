@@ -56,6 +56,17 @@ async function createOrder(orderData, items) {
       await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
         .decrement('stock_quantity', item.quantity);
+      
+      const variant = await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .select('product_id')
+        .first();
+      
+      if (variant) {
+        await trx('products')
+          .where('product_id', variant.product_id)
+          .increment('sold', item.quantity);
+      }
     }
 
     return { 
@@ -87,7 +98,7 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
     .groupBy('orders.order_id')
     .orderBy('orders.order_date', 'desc');
 
-  // Áp dụng bộ lọc
+
   if (filters.user_id) {
     query.where('orders.user_id', filters.user_id);
   }
@@ -175,6 +186,7 @@ async function getOrderById(orderId) {
     .leftJoin('colors','product_variants.color_id', 'colors.color_id')
     .select([
       'orderdetails.*',
+      'products.product_id',
       'products.name as product_name',
       'sizes.name as size_name',
       'colors.name as color_name',
@@ -223,8 +235,8 @@ async function updatePaymentStatus(orderId, payment_status) {
 
 async function cancelOrder(orderId) {
   return await knex.transaction(async (trx) => {
-    // Cập nhật trạng thái đơn hàng
-    const [updated] = await trx('orders')
+
+    const updated = await trx('orders')
     .update({order_status: 'cancelled'})
     .where('order_id', orderId)
     .andWhere('order_status', 'pending');
@@ -239,7 +251,18 @@ async function cancelOrder(orderId) {
     for (const item of orderItems) {
       await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
-        .increment('stock', item.quantity);
+        .increment('stock_quantity', item.quantity);
+      
+      const variant = await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .select('product_id')
+        .first();
+      
+      if (variant) {
+        await trx('products')
+          .where('product_id', variant.product_id)
+          .decrement('sold', item.quantity);
+      }
     }
 
     return true;

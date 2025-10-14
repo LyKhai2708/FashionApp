@@ -7,6 +7,7 @@ import reviewService from '../../services/reviewService';
 import { useMessage } from '../../App';
 import ReviewForm from './ReviewForm';
 import {Button } from 'antd';
+import {PenToolIcon} from 'lucide-react'
 import { PlusOutlined } from '@ant-design/icons';
 interface ReviewSectionProps {
     productId: number;
@@ -68,7 +69,9 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
                 <h2 className="text-2xl font-bold">Đánh giá sản phẩm</h2>
                 <Button
                     type="primary"
-                    icon={<PlusOutlined />}
+                    icon={<PenToolIcon 
+                    width={15}
+                    height={15}/>}
                     onClick={handleOpenReviewForm}
                 >
                     Viết đánh giá

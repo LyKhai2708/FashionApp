@@ -270,7 +270,6 @@ async function getManyProducts(query) {
 
     const paginator = new Paginator(page, limit);
 
-    // Helper function để build where conditions
     function applyFilters(builder) {
         if (search) builder.where('p.name', 'like', `%${search}%`);
         if (brand_id) builder.where('p.brand_id', brand_id);
@@ -300,14 +299,12 @@ async function getManyProducts(query) {
             `, [max_price]);
         }
         if (color_id) {
-            // Support multiple colors: "1,2,3" or single "1"
             const colorIds = color_id.toString().split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
             if (colorIds.length > 0) {
                 builder.whereIn('pv.color_id', colorIds);
             }
         }
         if (size_id) {
-            // Support multiple sizes: "1,2,3" or single "1"
             const sizeIds = size_id.toString().split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
             if (sizeIds.length > 0) {
                 builder.whereIn('pv.size_id', sizeIds);
@@ -315,7 +312,6 @@ async function getManyProducts(query) {
         }
     }
 
-    // Helper function để build base query
     function buildBaseQuery() {
         const promotionSubquery = knex.raw(
             `(SELECT pp.product_id, p.discount_percent
@@ -412,16 +408,13 @@ async function getManyProducts(query) {
             productsQuery = productsQuery.orderBy('p.created_at', 'desc');
     }
 
-    // Count query để lấy total records
     const [{ total }] = await buildBaseQuery()
         .where(applyFilters)
         .countDistinct('p.product_id as total');
 
-    // Execute main query
     const result = await productsQuery;
     const products = result;
 
-    // Lấy màu sắc và ảnh cho từng sản phẩm
     if (products.length > 0) {
         const productIds = products.map(p => p.product_id);
         
@@ -452,7 +445,7 @@ async function getManyProducts(query) {
             });
         }
 
-        // Gom màu theo product_id và gắn ảnh
+        //color by product and images
         const colorsByProduct = {};
         for (const color of colors) {
             if (!colorsByProduct[color.product_id]) {
@@ -466,7 +459,23 @@ async function getManyProducts(query) {
             });
         }
 
-        // Gắn màu vào từng sản phẩm
+        //reviews stats
+        const reviewsStats = await knex('product_reviews')
+            .whereIn('product_id', productIds)
+            .select('product_id')
+            .select(knex.raw('COUNT(*) as review_count'))
+            .select(knex.raw('AVG(rating) as average_rating'))
+            .groupBy('product_id');
+
+        const reviewsByProduct = {};
+        for (const stat of reviewsStats) {
+            reviewsByProduct[stat.product_id] = {
+                review_count: parseInt(stat.review_count) || 0,
+                average_rating: parseFloat(stat.average_rating) || 0
+            };
+        }
+
+        //color and reviews
         for (const product of products) {
             product.colors = colorsByProduct[product.product_id] || [];
             product.price_info = {
@@ -475,6 +484,10 @@ async function getManyProducts(query) {
                 discount_percent: product.discount_percent || 0,
                 has_promotion: product.has_promotion
             };
+            
+            const reviews = reviewsByProduct[product.product_id];
+            product.review_count = reviews ? reviews.review_count : 0;
+            product.average_rating = reviews ? reviews.average_rating : 0;
         }
     }
 

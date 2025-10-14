@@ -99,11 +99,15 @@ export default function Slider() {
     <div
       className="w-full relative h-[240px] sm:h-[320px] md:h-[400px] lg:h-[500px] xl:h-[560px] group overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseLeave={() => {
+        setIsPaused(false);
+        if (isDragging) {
+            handleDragEnd({ clientX: startX } as React.MouseEvent);
+        }
+        }}
       onMouseDown={handleDragStart}
       onMouseMove={handleDragMove}
       onMouseUp={handleDragEnd}
-      onMouseLeave={() => isDragging && handleDragEnd({ clientX: startX } as React.MouseEvent)}
       onTouchStart={handleDragStart}
       onTouchMove={handleDragMove}
       onTouchEnd={handleDragEnd}

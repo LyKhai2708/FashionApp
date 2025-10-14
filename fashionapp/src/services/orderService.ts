@@ -21,6 +21,7 @@ export interface CreateOrderPayload {
 }
 
 export interface OrderItemDetail {
+    product_id: number;
     product_name: string;
     size_name: string;
     color_name: string;
@@ -49,6 +50,7 @@ export interface Order {
     receiver_email: string;
     order_date: string;
     items?: OrderItemDetail[];
+    items_count?: number;
 }
 
 class OrderService {
@@ -84,6 +86,15 @@ class OrderService {
         } catch (error: any) {
             console.error('Get order error:', error);
             throw new Error(error.response?.data?.message || 'Không thể tải thông tin đơn hàng');
+        }
+    }
+
+    async cancelOrder(orderId: number): Promise<void> {
+        try {
+            await api.delete(`/api/v1/orders/${orderId}`);
+        } catch (error: any) {
+            console.error('Cancel order error:', error);
+            throw new Error(error.response?.data?.message || 'Không thể hủy đơn hàng');
         }
     }
 }

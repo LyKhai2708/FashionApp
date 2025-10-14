@@ -108,7 +108,16 @@ class ReviewService {
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể tải đơn hàng');
         }
-    } 
+    }
+
+    async checkReviewed(productId: number, orderId: number): Promise<Review | null> {
+        try {
+            const response = await api.get<any>(`/api/v1/reviews/reviewCheck/product/${productId}/order/${orderId}`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể kiểm tra đánh giá');
+        }
+    }
 }
 
 export default new ReviewService();

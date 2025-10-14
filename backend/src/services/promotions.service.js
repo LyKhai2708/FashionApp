@@ -26,7 +26,9 @@ async function createPromotion(payload) {
 async function getManyPromotion(payload){
     const {page = 1, limit = 10, promo_name, active, start_date, end_date} = payload;
     const paginator = new Paginator(page, limit);
-    let result = promotionRepository().where((builder) => {
+    let result = promotionRepository()
+    .leftJoin('promotion_products as pp', 'promotions.promo_id', 'pp.promo_id')
+    .where((builder) => {
         if(promo_name){
             builder.whereILike('name', `%${promo_name}%`);
         }
@@ -40,20 +42,26 @@ async function getManyPromotion(payload){
             builder.where('end_date', '<=', end_date);
         }
     }).select(
-        knex.raw('count(promo_id) OVER() AS recordCount'),
-        'promo_id',
-        'name',
-        'discount_percent',
-        'start_date',
-        'end_date',
-        'active'
-    ).limit(paginator.limit).offset(paginator.offset);
+            knex.raw('count(promotions.promo_id) OVER() AS recordCount'),
+            'promotions.promo_id',
+            'promotions.name',
+            'promotions.discount_percent',
+            'promotions.start_date',
+            'promotions.end_date',
+            'promotions.active',
+            knex.raw('COUNT(pp.product_id) as product_count')
+    )
+    .groupBy('promotions.promo_id')
+    .limit(paginator.limit).offset(paginator.offset);
     
     let totalRecords = 0;
     result = (await result).map((result) => {
         totalRecords = result.recordCount;
         delete result.recordCount;
-        return result;
+        return {
+            ...result,
+            product_count: parseInt(result.product_count) || 0
+        };
     });
     
     return {
@@ -74,14 +82,26 @@ async function addProductToPromotion(productId, promoId) {
     }
 
     // Kiểm tra product đã có promotion active chưa
-    const existingPromo = await knex('promotion_products as pp')
+    const overlappingPromo = await knex('promotion_products as pp')
         .join('promotions as p', 'pp.promo_id', 'p.promo_id')
         .where('pp.product_id', productId)
         .where('p.active', true)
+        .where('p.promo_id', '!=', promoId)
+        .where(function() {
+            this.whereRaw(
+                '(p.start_date <= ? AND p.end_date >= ?)',
+                [promotion.end_date, promotion.start_date]
+            );
+        })
+        .select('p.promo_id', 'p.name', 'p.start_date', 'p.end_date', 'p.discount_percent')
         .first();
 
-    if (existingPromo) {
-        throw new Error(`Sản phẩm đã có promotion: ${existingPromo.name}`);
+    if (overlappingPromo) {
+        throw new Error(
+            `Sản phẩm đã có promotion "${overlappingPromo.name}" ` +
+            `(${overlappingPromo.start_date} - ${overlappingPromo.end_date}, ${overlappingPromo.discount_percent}% OFF) ` +
+            `trùng thời gian với promotion mới.`
+        );
     }
 
     // Thêm promotion mới
@@ -155,13 +175,13 @@ async function getManyProductInPromotion(payload){
 
     let totalRecords = products[0].recordCount;
     
-    // Lấy màu sắc available cho mỗi sản phẩm
     const productIds = products.map(item => item.product_id);
     const availableColors = await knex('product_variants as pv')
         .join('colors as c', 'pv.color_id', 'c.color_id')
         .whereIn('pv.product_id', productIds)
         .where('pv.stock_quantity', '>', 0)
         .select('pv.product_id', 'c.color_id', 'c.name as color_name', 'c.hex_code')
+        .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
         .orderBy('c.name');
 
     // Group colors by product_id
@@ -215,6 +235,27 @@ async function deactivatePromotion(promoId) {
         .update({ active: false });
 }
 
+async function getPromotionById(promoId) {
+    const promotion = await knex('promotions')
+        .where('promo_id', promoId)
+        .first();
+        
+    if (!promotion) {
+        throw new Error('Promotion không tồn tại');
+    }
+    
+    // Get product count
+    const productCount = await knex('promotion_products')
+        .where('promo_id', promoId)
+        .count('product_id as count')
+        .first();
+    
+    return {
+        ...promotion,
+        product_count: parseInt(productCount.count) || 0
+    };
+}
+
 
 module.exports = {
     createPromotion,
@@ -223,4 +264,5 @@ module.exports = {
     removeProductFromPromotion,
     getManyProductInPromotion,
     deactivatePromotion,
+    getPromotionById,
 };

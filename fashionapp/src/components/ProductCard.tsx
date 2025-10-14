@@ -1,4 +1,4 @@
-import { HeartIcon } from 'lucide-react';
+import { HeartIcon, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Product } from '../types/product';
@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface ProductCardProps {
     product: Product;
-    compact?: boolean; // true hiển thị ở chế độ nhỏ gọn
+    compact?: boolean;
 }
 
 export default function ProductCard({ product, compact = false }: ProductCardProps) {
@@ -16,10 +16,12 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
     const navigate = useNavigate();
     const [liked, setLiked] = useState(product.is_favorite || false);
     const [loading, setLoading] = useState(false);
+    const [favoriteId, setFavoriteId] = useState(product.favorite_id);
 
     useEffect(() => {
         setLiked(product.is_favorite || false);
-    }, [product.is_favorite, user?.id]);
+        setFavoriteId(product.favorite_id);
+    }, [product.is_favorite, product.favorite_id, user?.id]);
 
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -32,20 +34,24 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
 
         if (loading) return;
 
+        const previousLiked = liked;
+        const previousFavoriteId = favoriteId;
+
         try {
             setLoading(true);
-
-            setLiked(!liked);
             
             const result = await favoriteService.toggleFavorite(
                 product.product_id,
-                liked ? product.favorite_id : undefined
+                liked ? favoriteId : undefined
             );
             
+            setLiked(result.isLiked);
+            setFavoriteId(result.favoriteId);
 
         } catch (error: any) {
 
-            setLiked(liked);
+            setLiked(previousLiked);
+            setFavoriteId(previousFavoriteId);
             console.error('Toggle favorite error:', error);
             alert(error.message || 'Có lỗi xảy ra');
         } finally {
@@ -70,10 +76,43 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
             />
             <div className={`flex flex-col flex-grow w-full min-w-0 ${compact ? 'p-2' : 'p-4'}`}>
                 <h3
-                className={`mb-2 line-clamp-${compact ? '1' : '2'} overflow-hidden text-ellipsis break-words ${compact ? 'min-h-[24px]' : 'min-h-[48px]'} ${compact ? 'text-xs' : 'text-sm'}`}
+                className={`line-clamp-${compact ? '1' : '2'} overflow-hidden text-ellipsis break-words ${compact ? 'min-h-[24px]' : 'min-h-[48px]'} ${compact ? 'text-xs' : 'text-sm'}`}
                 >
                 {product.name || 'Tên sản phẩm'}
                 </h3>
+                
+                {/* rating */}
+                <div className="flex items-center gap-1 mb-2">
+                    <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                            const rating = product.average_rating || 0;
+                            const isFilled = star <= Math.floor(rating);
+                            const isHalf = star === Math.ceil(rating) && rating % 1 >= 0.5;
+                            
+                            return (
+                                <Star 
+                                    key={star}
+                                    className={`w-3.5 h-3.5 ${
+                                        isFilled 
+                                            ? 'fill-yellow-400 text-yellow-400' 
+                                            : isHalf
+                                            ? 'fill-yellow-200 text-yellow-400'
+                                            : 'fill-none text-gray-300'
+                                    }`} 
+                                />
+                            );
+                        })}
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                        {product.average_rating && product.average_rating > 0 
+                            ? product.average_rating.toFixed(1) 
+                            : '0'}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                        ({product.review_count || 0 } reviews) 
+                    </span>
+                </div>
+                
                 <div className='mt-auto'>
                     <div className='flex items-center flex-wrap justify-between'>
                         <div className="flex flex-col">

@@ -130,6 +130,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
             payload: { user, token } 
           });
         }
+
+        const handleLogout = () => {
+          dispatch({ type: LOGOUT });
+        };
+
+        window.addEventListener('auth:logout', handleLogout);
+
+        return () => {
+          window.removeEventListener('auth:logout', handleLogout);
+        };
     }, []);
 
     const contextValue: AuthContextType = {

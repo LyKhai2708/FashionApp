@@ -290,7 +290,7 @@ module.exports.setup = (app) => {
    *         $ref: '#/components/responses/ServerError'
    */
   router.delete('/:id',authMiddleware, reviewController.deleteReview);
-
+  router.get('/reviewCheck/product/:productId/order/:orderId',authMiddleware, reviewController.checkReviewed);
   // Method not allowed handlers
   router.all('/', methodNotAllowed);
   router.all('/:id', methodNotAllowed);

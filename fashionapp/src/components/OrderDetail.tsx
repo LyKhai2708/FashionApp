@@ -1,7 +1,8 @@
 import { Button, Divider, Tag } from "antd";
 import type { Order } from "../services/orderService";
 import { formatVNDPrice } from '../utils/priceFormatter';
-
+import { useState } from "react";
+import ReviewForm from "./review/ReviewForm";
 type Props = {
   order: Order | null;
   onBack: () => void;
@@ -45,9 +46,28 @@ const getPaymentStatusText = (status: string) => {
   }
 };
 
-export default function OrderDetail({ order, onBack }: Props) {
-  if (!order) return null;
 
+export default function OrderDetail({ order, onBack }: Props) {
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<{
+    productId: number;
+    orderId: number;
+  } | null>(null);
+
+  const handleOpenReview = (productId: number) => {
+    setSelectedProduct({
+      productId: productId,
+      orderId: order!.order_id
+    });
+    setReviewModalVisible(true);
+  };
+
+  const handleReviewSuccess = () => {
+    setReviewModalVisible(false);
+    setSelectedProduct(null);
+  };
+  if (!order) return null;
+  const isDelivered = order.order_status === 'delivered';
   return (
     <div className="bg-white p-4 rounded shadow">
       <div className="flex items-center justify-between mb-4">
@@ -100,6 +120,16 @@ export default function OrderDetail({ order, onBack }: Props) {
               <div className="text-sm text-gray-500">Số lượng: {item.quantity}</div>
             </div>
             <div className="font-semibold">{formatVNDPrice(item.price)}</div>
+
+            {isDelivered && (
+                <Button 
+                  size="small"
+                  type="primary"
+                  onClick={() => handleOpenReview(item.product_id)}
+                >
+                  Đánh giá
+                </Button>
+              )}
           </div>
         ))}
       </div>
@@ -118,6 +148,22 @@ export default function OrderDetail({ order, onBack }: Props) {
           <div>{formatVNDPrice(order.total_amount)}</div>
         </div>
       </div>
+
+      {selectedProduct && (
+        <ReviewForm
+          visible={reviewModalVisible}
+          onClose={() => {
+            setReviewModalVisible(false);
+            setSelectedProduct(null);
+          }}
+          onSuccess={handleReviewSuccess}
+          productId={selectedProduct.productId}
+          userOrders={[{
+            order_id: order.order_id,
+            order_date: order.order_date
+          }]}
+        />
+      )}
     </div>
   );
 }

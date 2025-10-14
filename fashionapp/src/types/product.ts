@@ -36,7 +36,9 @@ export interface Product {
     is_favorite: boolean;
     favorite_id?: number;
     colors: ProductColor[];        
-    price_info: PriceInfo;         
+    price_info: PriceInfo;
+    average_rating?: number;
+    review_count?: number;
 }
 
 // Variant cho product detail

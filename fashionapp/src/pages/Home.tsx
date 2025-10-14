@@ -1,43 +1,41 @@
 import ProductSlider from "../components/ProductSlider"
-import type { ReactNode, FC } from "react";
-import { Mars, Venus, Shirt, ShoppingBag, Sparkles } from "lucide-react";
+import type { FC } from "react";
 import ProductList from "../components/ProductList";
 import HomeLayout from "../layouts/HomeLayout";
 import { useFeaturedProducts } from "../hooks/useProductList";
-import { useNavigate } from "react-router-dom";
+import PromotionTabsSection from "../components/promotion/PromotionTabsSection";
+// interface CategoryItem {
+//     id: number;
+//     name: string;
+//     icon: ReactNode;
+//     slug: string;
+// }
 
-interface CategoryItem {
-    id: number;
-    name: string;
-    icon: ReactNode;
-    slug: string;
-}
-
-const categories: CategoryItem[] = [
-    { id: 1, name: "Nam", icon: <Mars className="w-10 h-10" />, slug: "nam" },
-    { id: 2, name: "Nữ", icon: <Venus className="w-10 h-10" />, slug: "nu" },
-    { id: 3, name: "Áo thun", icon: <Shirt className="w-10 h-10" />, slug: "ao-thun" },
-    { id: 4, name: "Quần", icon: <ShoppingBag className="w-10 h-10 rotate-90" />, slug: "quan" },
-    { id: 5, name: "Váy", icon: <Sparkles className="w-10 h-10" />, slug: "vay" },
-    { id: 6, name: "Túi xách", icon: <ShoppingBag className="w-10 h-10" />, slug: "tui-xach" },
-];
+// const categories: CategoryItem[] = [
+//     { id: 1, name: "Nam", icon: <Mars className="w-10 h-10" />, slug: "nam" },
+//     { id: 2, name: "Nữ", icon: <Venus className="w-10 h-10" />, slug: "nu" },
+//     { id: 3, name: "Áo thun", icon: <Shirt className="w-10 h-10" />, slug: "ao-thun" },
+//     { id: 4, name: "Quần", icon: <ShoppingBag className="w-10 h-10 rotate-90" />, slug: "quan" },
+//     { id: 5, name: "Váy", icon: <Sparkles className="w-10 h-10" />, slug: "vay" },
+//     { id: 6, name: "Túi xách", icon: <ShoppingBag className="w-10 h-10" />, slug: "tui-xach" },
+// ];
 
 const Home: FC = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     
     const { 
         products: featuredProducts, 
         loading: featuredLoading 
     } = useFeaturedProducts(8);
 
-    const handleCategoryClick = (category: CategoryItem) => {
-        navigate(`/collection/${category.slug}`);
-    };
+    // const handleCategoryClick = (category: CategoryItem) => {
+    //     navigate(`/collection/${category.slug}`);
+    // };
 
     return (
         <HomeLayout>
             {/* Category Section */}
-            <section className="mx-auto max-w-6xl p-4 flex flex-col items-center">
+            {/* <section className="mx-auto max-w-6xl p-4 flex flex-col items-center">
                 <h2 className="font-bold text-2xl">DANH MỤC SẢN PHẨM</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
                     {categories.map((category) => (
@@ -53,21 +51,21 @@ const Home: FC = () => {
                         </button>
                     ))}
                 </div>
+            </section> */}
+            <PromotionTabsSection />
+            <section className="mt-20">
+                <h2 className="text-xl font-bold mb-4">SẢN PHẨM NỔI BẬT</h2>
+                <ProductSlider products={featuredProducts} loading={featuredLoading} />
             </section>
 
-            <div className="mt-20">
-                <h2 className="text-xl font-bold mb-4">SẢN PHẨM NỔI BẬT</h2>
-                <ProductSlider />
-            </div>
-
-            <div className="mt-20">
+            <section className="mt-20">
                 <h2 className="text-xl font-bold mb-4">HÀNG MỚI VỀ</h2>
                 <ProductList 
                     products={featuredProducts} 
                     loading={featuredLoading}
                     limit={8}
                 />
-            </div>
+            </section>
         </HomeLayout>
     )
 }

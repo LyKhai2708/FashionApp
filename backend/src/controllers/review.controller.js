@@ -58,6 +58,16 @@ async function createReview(req, res, next) {
     }
 }
 
+async function checkReviewed(userId, productId, orderId) {
+    try {
+        const existingReview = await reviewService.findReviewByUserProductOrder(userId, productId, orderId);
+        return existingReview;
+    }catch (err) {
+        console.error('Error checking existing review:', err);
+        return next(new ApiError(500, err.message || "Error checking existing review"));
+    }
+    
+}
 async function updateReview(req, res, next) {
     try {
         const { rating, comment } = req.body;
@@ -97,5 +107,6 @@ module.exports = {
     getProductReview,
     createReview,
     updateReview,
-    deleteReview
+    deleteReview,
+    checkReviewed
 };

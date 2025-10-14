@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductListLayout from '../components/ProductListLayout';
 import { useSearchProducts } from '../hooks/useProductList';
 
 export default function SearchPage() {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+    const [searchParams] = useSearchParams();
+    const searchTerm = searchParams.get('q') || '';
 
-    const { products, totalCount, loading, loadingMore, hasMore, loadMore } = useSearchProducts(searchTerm);
+    const { products, totalCount, loading, loadingMore, hasMore, loadMore, setFilters } = useSearchProducts(searchTerm);
 
     useEffect(() => {
-        const query = searchParams.get('q') || '';
-        setSearchTerm(query);
-        setSearchParams({ q: query });
-    }, [searchParams]);
+        if (searchTerm) {
+            setFilters({ search: searchTerm });
+        }
+    }, [searchTerm, setFilters]);
 
     const breadcrumbs = [
         { label: 'Sản phẩm', href: '/products' },

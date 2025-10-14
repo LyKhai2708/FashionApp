@@ -114,6 +114,17 @@ async function createProductReview(userId, reviewData){
     return result;
 }
 
+async function checkReviewed(userId, productId, orderId) {
+    const existingReview = await knex('product_reviews')
+        .where({
+            user_id: userId,
+            product_id: productId,
+            order_id: orderId
+        })
+        .first();
+    
+    return !!existingReview;
+}
 async function updateProductReview(reviewId, userId, reviewData, isAdmin = false){
     const {rating, comment} = reviewData;
     
@@ -144,5 +155,6 @@ module.exports = {
     getProductReview,
     createProductReview,
     updateProductReview,
-    deleteProductReview
+    deleteProductReview,
+    checkReviewed
 }
