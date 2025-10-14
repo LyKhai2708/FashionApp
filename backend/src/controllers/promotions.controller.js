@@ -14,7 +14,21 @@ async function getPromotionsbyFilter(req, res, next) {
         }
       }
     try {
-        result = await promotionService.getManyPromotion(req.query);
+        const { active, page, limit, promo_name, start_date, end_date } = req.query;
+        
+        const filters = {
+            page: page ? parseInt(page) : 1,
+            limit: limit ? parseInt(limit) : 10,
+            promo_name,
+            start_date,
+            end_date
+        };
+        
+        if (active !== undefined) {
+            filters.active = active === 'true' || active === true;
+        }
+        
+        result = await promotionService.getManyPromotion(filters);
     } catch (err) {
         console.log(err);
         return next(new ApiError(500, "Error fetching promotions"));
@@ -42,11 +56,10 @@ async function createPromotion(req, res, next) {
         return next(new ApiError(400, 'End date should be a string'));
     }
 
-    // Date validation
     const startDate = new Date(req.body.start_date);
     const endDate = new Date(req.body.end_date);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+    today.setHours(0, 0, 0, 0);
 
     if (isNaN(startDate.getTime())) {
         return next(new ApiError(400, 'Start date is not a valid date'));
@@ -105,7 +118,10 @@ async function getProductsInPromotion(req, res, next) {
             page: page ? parseInt(page) : 1,
             limit: limit ? parseInt(limit) : 10
         });
-        return res.json(JSend.success({ result }));
+        return res.json(JSend.success({ 
+            products: result.products,
+            metadata: result.metadata 
+        }));
     } catch (err) {
         console.log(err);
         return next(new ApiError(500, "Error fetching products in promotion"));
@@ -123,6 +139,20 @@ async function deactivatePromotion(req, res, next) {
     }
 }
 
+async function getPromotionById(req, res, next) {
+    try {
+        const { promo_id } = req.params;
+        const promotion = await promotionService.getPromotionById(parseInt(promo_id));
+        return res.json(JSend.success({ promotion }));
+    } catch (err) {
+        console.log(err);
+        if (err.message === 'Promotion không tồn tại') {
+            return next(new ApiError(404, err.message));
+        }
+        return next(new ApiError(500, "Error fetching promotion"));
+    }
+}
+
 
 module.exports = {
     getPromotionsbyFilter,
@@ -131,4 +161,5 @@ module.exports = {
     removeProductFromPromotion,
     getProductsInPromotion,
     deactivatePromotion,
+    getPromotionById,
 };

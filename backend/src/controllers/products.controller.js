@@ -62,7 +62,21 @@ async function getProducts(req, res, next) {
         }
       }
   try {
-    result = await productService.getManyProducts(req.query);
+    const query = { ...req.query };
+    if (query.brand_id) {
+      query.brand_id = parseInt(query.brand_id);
+    }
+    if (query.category_id) {
+      query.category_id = parseInt(query.category_id);
+    }
+    if (query.page) {
+      query.page = parseInt(query.page);
+    }
+    if (query.limit) {
+      query.limit = parseInt(query.limit);
+    }
+    
+    result = await productService.getManyProducts(query);
 
     return res.json(JSend.success(
         {

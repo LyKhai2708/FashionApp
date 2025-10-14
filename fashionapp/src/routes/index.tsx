@@ -20,6 +20,8 @@ import OrderSuccess from '../pages/OrderSuccess';
 import ProfilePage from '../pages/ProfilePage';
 import NotFound from '../layouts/404Page';
 import SearchPage from '../pages/SearchPage';
+import PromotionDetailPage from '../pages/PromotionDetailPage';
+
 
 
 const publicRoutes: RouteType[] = [
@@ -31,6 +33,7 @@ const publicRoutes: RouteType[] = [
   { path: '/products/:slug', component: ProductDetailPage },
   { path: '/cart', component: Cart },
   { path: '/search', component: SearchPage },
+  { path: '/promotions/:id', component: PromotionDetailPage },
 ];
 
 const privateRoutes: RouteType[] = [

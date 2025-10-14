@@ -21,6 +21,122 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+
+.promotion-tabs .ant-tabs-nav {
+    margin-bottom: 0;
+}
+
+.promotion-tabs .ant-tabs-nav-list {
+    gap: 8px;
+}
+
+/* Individual Tab */
+.promotion-tabs .ant-tabs-tab {
+    border-radius: 12px 12px 0 0;
+    border: 2px solid #e5e7eb;
+    border-bottom: none;
+    background: white;
+    transition: all 0.3s ease;
+    padding: 12px 20px;
+    margin: 0;
+}
+
+.promotion-tabs .ant-tabs-tab:hover {
+    border-color: #ef4444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+}
+
+/* Active Tab */
+.promotion-tabs .ant-tabs-tab-active {
+    border-color: #ef4444 !important;
+    border-bottom-color: white !important;
+    background: white;
+    position: relative;
+    z-index: 2;
+}
+
+.promotion-tabs .ant-tabs-tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: white;
+}
+
+.promotion-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* Tab Content Container */
+.promotion-tabs .ant-tabs-content-holder {
+    border: 2px solid #ef4444;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 0 24px;
+    background: white;
+}
+
+/* Ink Bar (underline) - Hide it */
+.promotion-tabs .ant-tabs-ink-bar {
+    display: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .promotion-tabs .ant-tabs-nav-list {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; 
+        -ms-overflow-style: none; 
+        gap: 4px;
+    }
+    
+    .promotion-tabs .ant-tabs-nav-list::-webkit-scrollbar {
+        display: none; 
+    }
+    
+    .promotion-tabs .ant-tabs-tab {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .promotion-tabs .ant-tabs-content-holder {
+        padding: 0 12px;
+    }
+}
+
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .promotion-tabs .ant-tabs-tab {
+        padding: 10px 16px;
+    }
+    
+    .promotion-tabs .ant-tabs-content-holder {
+        padding: 0 16px;
+    }
+}
+
+.promotion-tabs .ant-tabs-tabpane {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

@@ -100,6 +100,8 @@ apiClient.interceptors.response.use(
                 
                 clearAuthStorage();
                 
+                window.dispatchEvent(new CustomEvent('auth:logout'));
+                
                 console.log('❌ AXIOS - Redirecting to login...');
                 window.location.href = '/login';
                 return Promise.reject(refreshError);

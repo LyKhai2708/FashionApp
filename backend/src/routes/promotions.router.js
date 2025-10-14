@@ -255,6 +255,44 @@ module.exports.setup = (app) => {
      *         $ref: '#/components/responses/ServerError'
      */
     router.get('/:promo_id/products', promotionController.getProductsInPromotion);
+    
+    /**
+     * @swagger
+     * /api/v1/promotions/{promo_id}:
+     *   get:
+     *     summary: Get promotion by ID
+     *     description: Retrieve a single promotion by its ID
+     *     tags: [Promotions]
+     *     parameters:
+     *       - in: path
+     *         name: promo_id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: Promotion ID
+     *     responses:
+     *       200:
+     *         description: Promotion retrieved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   enum: [success]
+     *                 data:
+     *                   type: object
+     *                   properties:
+     *                     promotion:
+     *                       $ref: '#/components/schemas/Promotion'
+     *       404:
+     *         description: Promotion not found
+     *       500:
+     *         $ref: '#/components/responses/ServerError'
+     */
+    router.get('/:promo_id', promotionController.getPromotionById);
+    
     /**
      * @swagger
      * /api/v1/promotions/{promo_id}:

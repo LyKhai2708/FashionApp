@@ -165,6 +165,9 @@ export default function ProductDetailPage() {
                         
                         {product.price_info.has_promotion ? (
                             <>
+                                <span className='text-black font-semibold text-lg'>
+                                    {formatVNDPrice(product.price_info.discounted_price)}
+                                </span>
                                 <span className='line-through text-gray-400 text-lg'>
                                     {formatVNDPrice(product.price_info.base_price)}
                                 </span>
