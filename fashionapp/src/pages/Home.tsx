@@ -53,13 +53,15 @@ const Home: FC = () => {
                 </div>
             </section> */}
             <PromotionTabsSection />
-            <section className="mt-20">
-                <h2 className="text-xl font-bold mb-4">SẢN PHẨM NỔI BẬT</h2>
+            <section className="mt-20 text-center">
+                <h2 className="text-xl font-bold mb-4 ">SẢN PHẨM NỔI BẬT</h2>
+                <h3 className="text-sm text-gray-500 mb-5">Những sản phẩm được yêu thích nhất</h3>
                 <ProductSlider products={featuredProducts} loading={featuredLoading} />
             </section>
 
-            <section className="mt-20">
+            <section className="mt-20 text-center">
                 <h2 className="text-xl font-bold mb-4">HÀNG MỚI VỀ</h2>
+                <h3 className="text-sm text-gray-500 mb-5">Đừng bỏ lỡ những sản phẩm mới nhất</h3>
                 <ProductList 
                     products={featuredProducts} 
                     loading={featuredLoading}

@@ -176,37 +176,105 @@ async function getManyProductInPromotion(payload){
     let totalRecords = products[0].recordCount;
     
     const productIds = products.map(item => item.product_id);
-    const availableColors = await knex('product_variants as pv')
-        .join('colors as c', 'pv.color_id', 'c.color_id')
+    
+    // Lấy colors với product_color_id
+    const colors = await knex('product_colors as pc')
+        .join('colors as c', 'pc.color_id', 'c.color_id')
+        .whereIn('pc.product_id', productIds)
+        .select('pc.product_id', 'pc.product_color_id', 'c.color_id', 'c.name as color_name', 'c.hex_code', 'pc.display_order')
+        .orderBy('pc.display_order');
+
+    // Lấy images
+    const productColorIdsForImages = colors.map(c => c.product_color_id);
+    const images = await knex('images')
+        .whereIn('product_color_id', productColorIdsForImages)
+        .select('product_color_id', 'image_url', 'is_primary', 'display_order')
+        .orderBy('display_order');
+
+    // Group images by product_color_id
+    const imagesByProductColor = {};
+    for (const img of images) {
+        if (!imagesByProductColor[img.product_color_id]) {
+            imagesByProductColor[img.product_color_id] = [];
+        }
+        imagesByProductColor[img.product_color_id].push({
+            image_url: img.image_url,
+            is_primary: img.is_primary,
+            display_order: img.display_order
+        });
+    }
+
+    // Lấy variants (sizes)
+    const variants = await knex('product_variants as pv')
+        .join('sizes as s', 'pv.size_id', 's.size_id')
         .whereIn('pv.product_id', productIds)
-        .where('pv.stock_quantity', '>', 0)
-        .select('pv.product_id', 'c.color_id', 'c.name as color_name', 'c.hex_code')
-        .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
-        .orderBy('c.name');
+        .select(
+            'pv.product_variants_id as variant_id',
+            'pv.product_id',
+            'pv.color_id',
+            'pv.size_id',
+            's.name as size_name',
+            'pv.stock_quantity'
+        )
+        .orderBy('s.size_id');
+
+    // Group variants by product_id and color_id
+    const variantsByProductAndColor = {};
+    for (const variant of variants) {
+        const key = `${variant.product_id}_${variant.color_id}`;
+        if (!variantsByProductAndColor[key]) {
+            variantsByProductAndColor[key] = [];
+        }
+        variantsByProductAndColor[key].push({
+            variant_id: variant.variant_id,
+            size_id: variant.size_id,
+            size_name: variant.size_name,
+            stock_quantity: variant.stock_quantity
+        });
+    }
 
     // Group colors by product_id
-    const colorsByProduct = availableColors.reduce((acc, color) => {
-        if (!acc[color.product_id]) {
-            acc[color.product_id] = [];
+    const colorsByProduct = {};
+    for (const color of colors) {
+        if (!colorsByProduct[color.product_id]) {
+            colorsByProduct[color.product_id] = [];
         }
-        acc[color.product_id].push({
+        const key = `${color.product_id}_${color.color_id}`;
+        colorsByProduct[color.product_id].push({
             color_id: color.color_id,
             name: color.color_name,
-            hex_code: color.hex_code
+            hex_code: color.hex_code,
+            images: imagesByProductColor[color.product_color_id] || [],
+            sizes: variantsByProductAndColor[key] || []
         });
-        return acc;
-    }, {});
+    }
     
-    // Format kết quả
+    // Format kết quả theo chuẩn Product interface
     const formattedProducts = products.map((item) => {
-        delete item.recordCount;
+        const colors = colorsByProduct[item.product_id] || [];
+        
         return {
-            ...item,
-            available_colors: colorsByProduct[item.product_id] || [],
+            product_id: item.product_id,
+            name: item.product_name,
+            slug: item.slug,
+            description: '',
+            base_price: parseFloat(item.base_price),
+            thumbnail: item.thumbnail,
+            brand_id: 0,
+            category_id: 0,
+            created_at: '',
+            brand_name: item.brand_name,
+            category_name: item.category_name,
+            discount_percent: item.discount_percent,
+            discounted_price: parseFloat(item.discounted_price),
+            has_promotion: true,
+            is_favorite: false,
+            colors: colors,
             price_info: {
                 base_price: parseFloat(item.base_price),
                 discounted_price: parseFloat(item.discounted_price),
                 discount_percent: item.discount_percent,
+                has_promotion: true
             }
         };
     });

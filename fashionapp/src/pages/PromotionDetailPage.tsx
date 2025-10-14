@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { Breadcrumb, Spin } from 'antd';
-import { Home, ChevronRight, Calendar, Tag } from 'lucide-react';
+import { Calendar, Tag } from 'lucide-react';
 import ProductListLayout from '../components/ProductListLayout';
 import Countdown from '../components/promotion/CountDown';
 import promotionService from '../services/promotionService';
-import type { Promotion, PromotionProduct } from '../services/promotionService';
+import type { Promotion } from '../services/promotionService';
 import type { Product } from '../types/product';
 
 const PromotionDetailPage = () => {
@@ -49,46 +49,11 @@ const PromotionDetailPage = () => {
                 limit: 12
             });
 
-            const convertedProducts: Product[] = response.products.map((p: PromotionProduct) => {
-                const uniqueColors = Array.from(
-                    new Map(
-                        p.available_colors.map(c => [c.color_id, c])
-                    ).values()
-                );
-
-                return {
-                    product_id: p.product_id,
-                    name: p.product_name,
-                    description: '',
-                    slug: p.slug,
-                    base_price: p.base_price,
-                    thumbnail: p.thumbnail,
-                    brand_id: 0,
-                    category_id: 0,
-                    created_at: '',
-                    brand_name: p.brand_name,
-                    category_name: p.category_name,
-                    discount_percent: p.discount_percent,
-                    discounted_price: p.discounted_price,
-                    has_promotion: true,
-                    is_favorite: false,
-                    colors: uniqueColors.map(c => ({
-                        color_id: c.color_id,
-                        name: c.name,
-                        hex_code: c.hex_code,
-                        images: []
-                    })),
-                    price_info: {
-                        ...p.price_info,
-                        has_promotion: true
-                    }
-                };
-            });
 
             if (reset) {
-                setProducts(convertedProducts);
+                setProducts(response.products);
             } else {
-                setProducts(prev => [...prev, ...convertedProducts]);
+                setProducts(prev => [...prev, ...response.products]);
             }
 
             setTotalCount(response.metadata.totalRecords);

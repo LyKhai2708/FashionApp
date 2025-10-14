@@ -4,25 +4,23 @@ import { SearchIcon, XIcon, CameraIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { productService } from '../services/productService';
 import type { Product } from '../types/product';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
 export default function SearchBar() {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Product[]>([]);
     const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
-    const [recentProducts, setRecentProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
     const overlayRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { products: recentProducts } = useRecentlyViewed();
 
     useEffect(() => {
         setTrendingKeywords([
             'Áo thun', 'Quần Shorts', 'Áo Polo', 'Áo khoác chống nắng', 'Găng tay chống nắng', 'Quần dài'
-        ]); //hard code tạm 
-
-        const storedRecent = JSON.parse(localStorage.getItem('recentViewed') || '[]');
-        setRecentProducts(storedRecent); //chưa làm xong
+        ]);
     }, []);
 
     useEffect(() => {
@@ -147,7 +145,9 @@ export default function SearchBar() {
                                 <>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {results.map((product) => (
-                                            <ProductCard key={product.product_id} product={product} compact />
+                                            <div key={product.product_id} onClick={handleClose}>
+                                                <ProductCard product={product} compact />
+                                            </div>
                                         ))}
                                     </div>
                                     <div className="mt-6 text-center">
@@ -180,8 +180,10 @@ export default function SearchBar() {
                                 <h4 className="text-lg font-semibold mb-4">Sản phẩm xem gần đây</h4>
                                 {recentProducts.length > 0 ? (
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                        {recentProducts.map((product) => (
-                                            <ProductCard key={product.product_id} product={product} compact />
+                                        {recentProducts.slice(0, 4).map((product) => (
+                                            <div key={product.product_id} onClick={handleClose}>
+                                                <ProductCard product={product} compact />
+                                            </div>
                                         ))}
                                     </div>
                                 ) : (

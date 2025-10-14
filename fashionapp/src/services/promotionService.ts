@@ -1,4 +1,5 @@
 import { api } from '../utils/axios';
+import type { Product } from '../types/product';
 
 // ==================== INTERFACES ====================
 
@@ -12,34 +13,6 @@ export interface Promotion {
     active: boolean;
     product_count?: number;
     created_at?: string;
-}
-
-export interface PromotionProduct {
-    product_id: number;
-    product_name: string;
-    base_price: number;
-    thumbnail: string;
-    slug: string;
-    sold?: number;
-    brand_name: string;
-    category_name: string;
-    promo_id: number;
-    promo_name: string;
-    discount_percent: number;
-    start_date: string;
-    end_date: string;
-    active: boolean;
-    discounted_price: number;
-    available_colors: Array<{
-        color_id: number;
-        name: string;
-        hex_code: string;
-    }>;
-    price_info: {
-        base_price: number;
-        discounted_price: number;
-        discount_percent: number;
-    };
 }
 
 export interface PromotionsParams {
@@ -80,7 +53,7 @@ export interface PromotionProductsResponse {
             page: number;
             limit: number;
         };
-        products: PromotionProduct[];
+        products: Product[];
     };
 }
 

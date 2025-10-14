@@ -1,8 +1,16 @@
+export interface ProductSize {
+    variant_id: number;
+    size_id: number;
+    size_name: string;
+    stock_quantity: number;
+}
+
 export interface ProductColor {
     color_id: number;
     name: string;
     hex_code: string;
     images: ProductImage[];
+    sizes?: ProductSize[];
 }
 
 export interface ProductImage {

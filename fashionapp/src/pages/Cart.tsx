@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useState } from "react";
 import { message } from "antd";
+import RecentlyViewedSection from "../components/RecentlyViewedSection";
 
 export default function Cart() {
     const navigate = useNavigate()
@@ -218,6 +219,9 @@ export default function Cart() {
                     <Link to="/" className="block text-center mt-3 text-gray-600 hover:underline">Tiếp tục mua sắm</Link>
                 </div>
             </div>
+
+            <RecentlyViewedSection limit={8} />
+            
             <div className="mt-10">
                 <h2 className="font-semibold text-2xl">GỢI Ý DÀNH CHO BẠN</h2>
                 <ProductSlider></ProductSlider>

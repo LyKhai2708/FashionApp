@@ -47,60 +47,15 @@ const PromotionTabsSection = () => {
 
         setLoading(true);
         try {
-            
             const response = await promotionService.getPromotionProducts(promoId, { 
                 limit: 8 
             });
             
             const { products } = response;
             
-            if (!products || products.length === 0) {
-                setProductsCache(prev => ({
-                    ...prev,
-                    [promoId]: []
-                }));
-                return;
-            }
-            
-            const convertedProducts: Product[] = products.map(p => {
-                const uniqueColors = Array.from(
-                    new Map(
-                        p.available_colors.map(c => [c.color_id, c])
-                    ).values()
-                );
-                
-                return {
-                product_id: p.product_id,
-                name: p.product_name,
-                description: '',
-                slug: p.slug,
-                base_price: p.base_price,
-                thumbnail: p.thumbnail,
-                brand_id: 0,
-                category_id: 0,
-                created_at: '',
-                brand_name: p.brand_name,
-                category_name: p.category_name,
-                discount_percent: p.discount_percent,
-                discounted_price: p.discounted_price,
-                has_promotion: true,
-                is_favorite: false,
-                    colors: uniqueColors.map(c => ({
-                    color_id: c.color_id,
-                    name: c.name,
-                    hex_code: c.hex_code,
-                    images: []
-                })),
-                price_info: {
-                    ...p.price_info,
-                    has_promotion: true
-                }
-                };
-            });
-            
             setProductsCache(prev => ({
                 ...prev,
-                [promoId]: convertedProducts
+                [promoId]: products || []
             }));
         } catch (error) {
             console.error('Error fetching products:', error);

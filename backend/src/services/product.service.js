@@ -54,17 +54,14 @@ async function createProduct(payload) {
                 });
             });
             
-            // Insert product_colors và lấy các ID
             const productColorIds = await trx("product_colors").insert(colorInserts);
             
-            // Map color_id với product_color_id
             payload.colors.forEach((color, index) => {
-                const productColorId = productColorIds[0] + index; // MySQL auto increment
+                const productColorId = productColorIds[0] + index;
                 colorMap.set(color.color_id, productColorId);
             });
         }
         
-        // Bước 3: Thêm ảnh cho từng màu (product_images)
         if (payload.colors && payload.colors.length > 0) {
             for (const color of payload.colors) {
                 if (color.images && color.images.length > 0) {
@@ -81,7 +78,6 @@ async function createProduct(payload) {
             }
         }
         
-        // Bước 4: Thêm các biến thể (product_variants)
         if (payload.variants && payload.variants.length > 0) {
             const variantInserts = payload.variants.map(variant => ({
                 product_id: product_id,
@@ -339,12 +335,10 @@ async function getManyProducts(query) {
             });
         }
             
-        // Join variants nếu cần filter theo variant
         if (color_id || size_id) {
             query = query.join('product_variants as pv', 'p.product_id', 'pv.product_id');
         }
         
-        // Join category slug nếu cần
         if (category_slug) {
             query = query.join('categories as cat', 'p.category_id', 'cat.category_id');
         }
@@ -418,21 +412,20 @@ async function getManyProducts(query) {
     if (products.length > 0) {
         const productIds = products.map(p => p.product_id);
         
-        // Lấy màu sắc
+
         const colors = await knex('product_colors as pc')
             .join('colors as c', 'pc.color_id', 'c.color_id')
             .whereIn('pc.product_id', productIds)
             .select('pc.product_id', 'pc.product_color_id', 'c.color_id', 'c.name as color_name', 'c.hex_code', 'pc.display_order')
             .orderBy('pc.display_order');
 
-        // Lấy ảnh cho các màu
-        const productColorIds = colors.map(c => c.product_color_id);
+        const productColorIdsForImages = colors.map(c => c.product_color_id);
         const images = await knex('images')
-            .whereIn('product_color_id', productColorIds)
+            .whereIn('product_color_id', productColorIdsForImages)
             .select('product_color_id', 'image_url', 'is_primary', 'display_order')
             .orderBy('display_order');
 
-        // Gom ảnh theo product_color_id
+
         const imagesByProductColor = {};
         for (const img of images) {
             if (!imagesByProductColor[img.product_color_id]) {
@@ -453,13 +446,49 @@ async function getManyProducts(query) {
             }
             colorsByProduct[color.product_id].push({
                 color_id: color.color_id,
+                product_color_id: color.product_color_id,
                 name: color.color_name,
                 hex_code: color.hex_code,
                 images: imagesByProductColor[color.product_color_id] || []
             });
         }
 
-        //reviews stats
+        const variants = await knex('product_variants as pv')
+            .join('sizes as s', 'pv.size_id', 's.size_id')
+            .whereIn('pv.product_id', productIds)
+            .select(
+                'pv.product_variants_id as variant_id',
+                'pv.product_id',
+                'pv.color_id',
+                'pv.size_id',
+                's.name as size_name',
+                'pv.stock_quantity',
+            )
+            .orderBy('s.size_id');
+
+        const variantsByProductAndColor = {};
+        for (const variant of variants) {
+            const key = `${variant.product_id}_${variant.color_id}`;
+            if (!variantsByProductAndColor[key]) {
+                variantsByProductAndColor[key] = [];
+            }
+            variantsByProductAndColor[key].push({
+                variant_id: variant.variant_id,
+                size_id: variant.size_id,
+                size_name: variant.size_name,
+                stock_quantity: variant.stock_quantity
+            });
+        }
+
+        // Add sizes to each color
+        for (const productId in colorsByProduct) {
+            for (const color of colorsByProduct[productId]) {
+                const key = `${productId}_${color.color_id}`;
+                color.sizes = variantsByProductAndColor[key] || [];
+                delete color.product_color_id;
+            }
+        }
+
         const reviewsStats = await knex('product_reviews')
             .whereIn('product_id', productIds)
             .select('product_id')
@@ -475,7 +504,6 @@ async function getManyProducts(query) {
             };
         }
 
-        //color and reviews
         for (const product of products) {
             product.colors = colorsByProduct[product.product_id] || [];
             product.price_info = {
@@ -505,13 +533,13 @@ async function deleteProduct(id) {
 }
 async function hardDeleteProduct(id) {
     return await knex.transaction(async (trx) => {
-        // 1. Lấy tất cả ảnh cần xóa
+
         const images = await trx('images as img')
             .join('product_colors as pc', 'img.product_color_id', 'pc.product_color_id')
             .where('pc.product_id', id)
             .select('img.image_url');
         
-        // 2. Xóa dữ liệu database
+
         await trx('images').whereIn('product_color_id', 
             trx('product_colors').where('product_id', id).select('product_color_id')
         ).del();

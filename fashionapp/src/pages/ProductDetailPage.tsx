@@ -1,5 +1,5 @@
 import { Minus, Plus, Heart } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ProductSlider from '../components/ProductSlider';
 import { useProductDetail } from '../hooks/useProductDetail';
@@ -9,9 +9,11 @@ import { extractProductIdFromSlug } from '../utils/slugUtils';
 import { useCart } from '../contexts/CartContext';
 import ReviewSection from '../components/review/ReviewSection';
 import PolicyBenefits from '../components/PolicyBenefits';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
 export default function ProductDetailPage() {
     const { addToCart } = useCart();
+    const { addProduct } = useRecentlyViewed();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { slug } = useParams<{ slug: string }>();
     
@@ -37,6 +39,19 @@ export default function ProductDetailPage() {
     const [activeTab, setActiveTab] = useState('description');
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+    //them vao danh sach xem qua
+    useEffect(() => {
+        if (product) {
+            const productForStorage: any = {
+                ...product,
+                colors: product.variants?.map(v => v.color).filter((c, i, arr) => 
+                    arr.findIndex(item => item.color_id === c.color_id) === i
+                ) || []
+            };
+            addProduct(productForStorage);
+        }
+    }, [product, addProduct]);
 
 
     const handleAddToCart = async () => {
@@ -97,16 +112,6 @@ export default function ProductDetailPage() {
             </div>
         );
     }
-
-    // const categorySlug = product.category_name
-    //     .toLowerCase()
-    //     .normalize('NFD')
-    //     .replace(/[\u0300-\u036f]/g, '') 
-    //     .replace(/đ/g, 'd')
-    //     .replace(/[^a-z0-9\s-]/g, '')
-    //     .replace(/\s+/g, '-')
-    //     .replace(/-+/g, '-')
-    //     .trim();
 
     const breadcrumbs = [
         { label: "Trang chủ", href: "/" },

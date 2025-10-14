@@ -47,12 +47,11 @@ export default function CategoryPage() {
         fetchCategory();
     }, [categorySlug]);
 
-    // Đọc filters từ URL TRƯỚC KHI khởi tạo hook
     const initialFilters = useMemo(() => {
         const urlFilters = getFiltersFromUrl();
         return {
             limit: 12,
-            ...urlFilters // Merge URL filters vào initial params
+            ...urlFilters 
         };
     }, [getFiltersFromUrl]);
 
@@ -83,7 +82,6 @@ export default function CategoryPage() {
         if (Object.keys(filters).length === 0) {
             clearUrlFilters();
         } else {
-            // Lưu vào URL
             saveFiltersToUrl(filters);
         }
         
