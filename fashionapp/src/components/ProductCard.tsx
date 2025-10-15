@@ -199,7 +199,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                                         onClick={(e) => handleQuickAddToCart(e, size)}
                                         disabled={size.stock_quantity === 0 || addingToCart}
                                         className={`
-                                            px-3 py-2 text-sm font-semibold rounded-lg cursor-pointer
+                                        px-3 py-2 text-sm font-semibold rounded-lg cursor-pointer
                                             ${size.stock_quantity === 0 
                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through' 
                                                 : 'bg-white text-gray-900 hover:bg-gray-900 hover:text-white border border-gray-300'
@@ -233,11 +233,12 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                 </h3>
                 
                 {/* rating */}
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => {
-                            const rating = product.average_rating || 0;
-                            const isFilled = star <= Math.floor(rating);
+                {!compact && (
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                                const rating = product.average_rating || 0;
+                                const isFilled = star <= Math.floor(rating);
                             const isHalf = star === Math.ceil(rating) && rating % 1 >= 0.5;
                             
                             return (
@@ -262,7 +263,8 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                         {product.review_count || 0} đánh giá
                     </span>
-                </div>
+                </div> )
+                }
                 
                 <div className='mt-auto'>
                     <div className='flex items-center flex-wrap justify-between'>
