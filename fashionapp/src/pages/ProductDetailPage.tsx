@@ -69,7 +69,8 @@ export default function ProductDetailPage() {
                     variant_id: variant.variant_id,
                     size_id: variant.size.size_id,
                     size_name: variant.size.name,
-                    stock_quantity: variant.stock_quantity
+                    stock_quantity: variant.stock_quantity,
+                    active: variant.active
                 });
             });
             

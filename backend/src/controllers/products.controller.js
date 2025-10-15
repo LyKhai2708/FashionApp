@@ -59,6 +59,7 @@ async function getProducts(req, res, next) {
       }
   try {
     const query = { ...req.query };
+    const role = req.user?.role || null;
     if (query.brand_id) {
       query.brand_id = parseInt(query.brand_id);
     }
@@ -72,7 +73,7 @@ async function getProducts(req, res, next) {
       query.limit = parseInt(query.limit);
     }
     
-    result = await productService.getManyProducts(query);
+    result = await productService.getManyProducts(query, role);
 
     return res.json(JSend.success(
         {

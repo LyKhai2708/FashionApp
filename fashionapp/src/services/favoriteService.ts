@@ -1,5 +1,40 @@
 import { api } from '../utils/axios';
 
+export interface FavoriteProduct {
+  favorite_id: number;
+  product_id: number;
+  favorited_at: string;
+  product_name: string;
+  description: string;
+  base_price: string;
+  thumbnail: string;
+  sold: number;
+  slug: string;
+  brand_name: string;
+  category_name: string;
+  discount_percent: number | null;
+  discounted_price: string;
+  has_promotion: boolean;
+  available_colors: Array<{
+    color_id: number;
+    name: string;
+    hex_code: string;
+    primary_image: string | null;
+    sizes: Array<{
+      variant_id: number;
+      size_id: number;
+      size_name: string;
+      stock_quantity: number;
+    }>;
+  }>;
+  price_info: {
+    base_price: number;
+    discounted_price: number;
+    discount_percent: number | null;
+    has_promotion: boolean;
+  };
+}
+
 export interface Favorite {
   favorite_id: number;
   user_id: number;
@@ -10,7 +45,13 @@ export interface Favorite {
 export interface FavoritesResponse {
   status: 'success';
   data: {
-    favorites: Favorite[];
+    metadata: {
+      page: number;
+      limit: number;
+      totalRecords: number;
+      totalPages: number;
+    };
+    favorites: FavoriteProduct[];
   };
 }
 
@@ -23,17 +64,19 @@ export interface AddFavoriteResponse {
 
 class FavoriteService {
   
-  /**
-   * Lấy danh sách sản phẩm yêu thích của user
-   */
-  async getFavorites(): Promise<Favorite[]> {
+
+  async getFavorites(page: number = 1, limit: number = 20): Promise<{ favorites: FavoriteProduct[]; metadata: { page: number; limit: number; totalRecords: number; totalPages: number } }> {
     try {
-      const response = await api.get<FavoritesResponse>('/api/v1/favorites');
-      return response.data.data.favorites;
+      const response = await api.get<FavoritesResponse>('/api/v1/favorites', {
+        params: { page, limit }
+      });
+      return response.data.data;
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Get favorites error:', error);
-      throw new Error(error.response?.data?.message || 'Không thể tải danh sách yêu thích');
+      const message = error instanceof Error && 'response' in error && error.response ? 
+        (error.response as { data?: { message?: string } }).data?.message : undefined;
+      throw new Error(message || 'Không thể tải danh sách yêu thích');
     }
   }
 
@@ -47,9 +90,11 @@ class FavoriteService {
       });
       return response.data.data.favorite;
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Add favorite error:', error);
-      throw new Error(error.response?.data?.message || 'Không thể thêm vào danh sách yêu thích');
+      const message = error instanceof Error && 'response' in error && error.response ? 
+        (error.response as { data?: { message?: string } }).data?.message : undefined;
+      throw new Error(message || 'Không thể thêm vào danh sách yêu thích');
     }
   }
 
@@ -60,9 +105,11 @@ class FavoriteService {
     try {
       await api.delete(`/api/v1/favorites/${favoriteId}`);
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Remove favorite error:', error);
-      throw new Error(error.response?.data?.message || 'Không thể xóa khỏi danh sách yêu thích');
+      const message = error instanceof Error && 'response' in error && error.response ? 
+        (error.response as { data?: { message?: string } }).data?.message : undefined;
+      throw new Error(message || 'Không thể xóa khỏi danh sách yêu thích');
     }
   }
 
@@ -78,9 +125,11 @@ class FavoriteService {
         return { isLiked: true, favoriteId: favorite.favorite_id };
       }
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Toggle favorite error:', error);
-      throw new Error(error.response?.data?.message || 'Không thể cập nhật trạng thái yêu thích');
+      const message = error instanceof Error && 'response' in error && error.response ? 
+        (error.response as { data?: { message?: string } }).data?.message : undefined;
+      throw new Error(message || 'Không thể cập nhật trạng thái yêu thích');
     }
   }
 }

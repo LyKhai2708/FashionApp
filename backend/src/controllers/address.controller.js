@@ -36,10 +36,28 @@ async function getDefaultAddress(req, res, next) {
 async function createAddress(req, res, next) {
     try {
         const userId = req.user.id;
-        const { province, province_code, ward, ward_code, detail_address, is_default } = req.body;
+        const { 
+            province, 
+            province_code, 
+            ward, 
+            ward_code, 
+            detail_address, 
+            is_default,
+            receiver_name,
+            receiver_phone,
+            receiver_email
+        } = req.body;
         
         if (!province || !province_code || !ward || !ward_code || !detail_address) {
             return next(new ApiError(400, 'Thiếu thông tin địa chỉ'));
+        }
+        
+        if (receiver_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(receiver_email)) {
+            return next(new ApiError(400, 'Email người nhận không hợp lệ'));
+        }
+        
+        if (receiver_phone && !/^[0-9]{10,11}$/.test(receiver_phone)) {
+            return next(new ApiError(400, 'Số điện thoại người nhận không hợp lệ'));
         }
         
         const address = await addressService.createAddress(userId, {
@@ -48,7 +66,10 @@ async function createAddress(req, res, next) {
             ward,
             ward_code,
             detail_address,
-            is_default
+            is_default,
+            receiver_name,
+            receiver_phone,
+            receiver_email
         });
         
         return res.status(201).json(JSend.success({ address }));
@@ -65,7 +86,26 @@ async function updateAddress(req, res, next) {
     try {
         const userId = req.user.id;
         const addressId = parseInt(req.params.id);
-        const { province, province_code, ward, ward_code, detail_address, is_default } = req.body;
+        const { 
+            province, 
+            province_code, 
+            ward, 
+            ward_code, 
+            detail_address, 
+            is_default,
+            receiver_name,
+            receiver_phone,
+            receiver_email
+        } = req.body;
+        
+
+        if (receiver_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(receiver_email)) {
+            return next(new ApiError(400, 'Email người nhận không hợp lệ'));
+        }
+
+        if (receiver_phone && !/^[0-9]{10,11}$/.test(receiver_phone)) {
+            return next(new ApiError(400, 'Số điện thoại người nhận không hợp lệ'));
+        }
         
         const address = await addressService.updateAddress(addressId, userId, {
             province,
@@ -73,7 +113,10 @@ async function updateAddress(req, res, next) {
             ward,
             ward_code,
             detail_address,
-            is_default
+            is_default,
+            receiver_name,
+            receiver_phone,
+            receiver_email
         });
         
         return res.json(JSend.success({ address }));

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {HomeOutlined} from '@ant-design/icons';
+import {HomeOutlined, UserOutlined, PhoneOutlined, MailOutlined} from '@ant-design/icons';
 import { Card, Button, Typography, Tag, Space, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import addressService from '../../services/addressService';
@@ -70,14 +70,44 @@ const AddressList: React.FC<AddressListProps> = ({ onAddAddress, onEditAddress }
                     <Card key={address.id} className="border">
                         <div className="flex justify-between">
                             <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3">
                                     {address.is_default ? (
                                         <Tag color="blue"><HomeOutlined /> Mặc định</Tag>
                                     ) : null}
                                 </div>
-                                <Text type="secondary">
-                                    {address.detail_address}, {address.ward}, {address.province}
-                                </Text>
+                                {(address.receiver_name || address.receiver_phone || address.receiver_email) && (
+                                    <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                                        <Text strong className="text-gray-700 mb-2 block">Thông tin người nhận:</Text>
+                                        <div className="space-y-1">
+                                            {address.receiver_name && (
+                                                <div className="flex items-center gap-2">
+                                                    <UserOutlined className="text-gray-500" />
+                                                    <Text>{address.receiver_name}</Text>
+                                                </div>
+                                            )}
+                                            {address.receiver_phone && (
+                                                <div className="flex items-center gap-2">
+                                                    <PhoneOutlined className="text-gray-500" />
+                                                    <Text>{address.receiver_phone}</Text>
+                                                </div>
+                                            )}
+                                            {address.receiver_email && (
+                                                <div className="flex items-center gap-2">
+                                                    <MailOutlined className="text-gray-500" />
+                                                    <Text>{address.receiver_email}</Text>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Address */}
+                                <div className="flex items-start gap-2">
+                                    <HomeOutlined className="text-gray-500 mt-1" />
+                                    <Text type="secondary">
+                                        {address.detail_address}, {address.ward}, {address.province}
+                                    </Text>
+                                </div>
                             </div>
                             
                             <Space>

@@ -9,6 +9,9 @@ export interface Address {
     ward_code: number;
     detail_address: string;
     is_default: boolean;
+    receiver_name?: string;
+    receiver_phone?: string;
+    receiver_email?: string;
     created_at: string;
     updated_at: string;
 }
@@ -20,6 +23,9 @@ export interface CreateAddressPayload {
     ward_code: number;
     detail_address: string;
     is_default?: boolean;
+    receiver_name?: string;
+    receiver_phone?: string;
+    receiver_email?: string;
 }
 
 class AddressService {

@@ -121,7 +121,21 @@ export const recentlyViewedStorage = {
     },
     
     getProducts: (): Product[] => {
-        return recentlyViewedStorage.get().map(item => item.product);
+        return recentlyViewedStorage.get().map(item => {
+            // Filter out inactive variants from colors
+            const filteredProduct = {
+                ...item.product,
+                colors: item.product.colors?.map(color => ({
+                    ...color,
+                    sizes: color.sizes?.filter(size => 
+                        // Filter by active status (if exists) and stock quantity
+                        (size.active === undefined || size.active === 1) && 
+                        size.stock_quantity > 0
+                    ) || []
+                })) || []
+            };
+            return filteredProduct;
+        });
     },
     
     remove: (productId: number): void => {

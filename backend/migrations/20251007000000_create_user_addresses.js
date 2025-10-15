@@ -12,8 +12,10 @@ exports.up = function(knex) {
         table.integer('ward_code').notNullable();
         table.text('detail_address').notNullable();
         table.boolean('is_default').defaultTo(false);
-        
-        // Foreign key
+        table.string('receiver_name', 100);
+        table.string('receiver_phone', 20);
+        table.string('receiver_email', 100);
+
         table.foreign('user_id').references('user_id').inTable('users').onDelete('CASCADE');
         
         // Index

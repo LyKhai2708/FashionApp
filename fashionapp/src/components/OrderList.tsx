@@ -1,4 +1,4 @@
-import { Button, Typography, Empty, Popconfirm } from "antd";
+import { Button, Typography, Empty, Popconfirm, Pagination } from "antd";
 import { formatVNDPrice } from '../utils/priceFormatter';
 import type { Order } from '../services/orderService';
 import orderService from '../services/orderService';
@@ -9,6 +9,10 @@ type Props = {
   orders: Order[];
   onView: (id: number) => void;
   onOrderCancelled?: () => void;
+  total?: number;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
 };
 
 const getStatusText = (status: string) => {
@@ -33,7 +37,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function OrdersList({ orders, onView, onOrderCancelled }: Props) {
+export default function OrdersList({ orders, onView, onOrderCancelled, total, currentPage = 1, pageSize = 10, onPageChange }: Props) {
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const message = useMessage();
 
@@ -141,6 +145,19 @@ export default function OrdersList({ orders, onView, onOrderCancelled }: Props) 
           </div>
         </div>
       ))}
+      
+      {total && total > pageSize && (
+        <div className="flex justify-center mt-6">
+          <Pagination
+            current={currentPage}
+            total={total}
+            pageSize={pageSize}
+            onChange={onPageChange}
+            showSizeChanger={false}
+            showTotal={(total) => `Tổng ${total} đơn hàng`}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -129,7 +129,7 @@ async function removeProductFromPromotion(productId) {
         .del();
 }
 
-async function getManyProductInPromotion(payload){
+async function getManyProductInPromotion(payload, role = null){
     const {page = 1, limit = 10, promo_id} = payload;
     const paginator = new Paginator(page, limit);
     
@@ -176,22 +176,18 @@ async function getManyProductInPromotion(payload){
     let totalRecords = products[0].recordCount;
     
     const productIds = products.map(item => item.product_id);
-    
-    // Lấy colors với product_color_id
     const colors = await knex('product_colors as pc')
         .join('colors as c', 'pc.color_id', 'c.color_id')
         .whereIn('pc.product_id', productIds)
         .select('pc.product_id', 'pc.product_color_id', 'c.color_id', 'c.name as color_name', 'c.hex_code', 'pc.display_order')
         .orderBy('pc.display_order');
 
-    // Lấy images
     const productColorIdsForImages = colors.map(c => c.product_color_id);
     const images = await knex('images')
         .whereIn('product_color_id', productColorIdsForImages)
         .select('product_color_id', 'image_url', 'is_primary', 'display_order')
         .orderBy('display_order');
 
-    // Group images by product_color_id
     const imagesByProductColor = {};
     for (const img of images) {
         if (!imagesByProductColor[img.product_color_id]) {
@@ -205,7 +201,7 @@ async function getManyProductInPromotion(payload){
     }
 
     // Lấy variants (sizes)
-    const variants = await knex('product_variants as pv')
+    let queryVariant = knex('product_variants as pv')
         .join('sizes as s', 'pv.size_id', 's.size_id')
         .whereIn('pv.product_id', productIds)
         .select(
@@ -217,6 +213,13 @@ async function getManyProductInPromotion(payload){
             'pv.stock_quantity'
         )
         .orderBy('s.size_id');
+    
+    if (role === 'admin') {
+    } else {
+        queryVariant = queryVariant.where('pv.active', '=', 1);
+    }
+    
+    const variants = await queryVariant;
 
     // Group variants by product_id and color_id
     const variantsByProductAndColor = {};
@@ -249,7 +252,6 @@ async function getManyProductInPromotion(payload){
         });
     }
     
-    // Format kết quả theo chuẩn Product interface
     const formattedProducts = products.map((item) => {
         const colors = colorsByProduct[item.product_id] || [];
         

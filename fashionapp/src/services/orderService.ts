@@ -66,14 +66,19 @@ class OrderService {
         }
     }
 
-    async getUserOrders(): Promise<Order[]> {
+    async getUserOrders(page: number = 1, limit: number = 5): Promise<{ orders: Order[]; pagination: { total: number; total_pages: number; current_page: number; per_page: number } }> {
         try {
-            const response = await api.get<any>('/api/v1/orders/me');
-            console.log(response);
-            return response.data.data.orders;
-        } catch (error: any) {
-            console.error('Get orders error:', error);
-            throw new Error(error.response?.data?.message || 'Không thể tải danh sách đơn hàng');
+            const response = await api.get(`/api/v1/orders/me`, {
+                params: { page, limit }
+            });
+            return {
+                orders: response.data.data.orders || [],
+                pagination: response.data.data.pagination
+            };
+        } catch (error) {
+            const message = error instanceof Error && 'response' in error && error.response ? 
+                (error.response as { data?: { message?: string } }).data?.message : undefined;
+            throw new Error(message || 'Không thể tải danh sách đơn hàng');
         }
     }
 

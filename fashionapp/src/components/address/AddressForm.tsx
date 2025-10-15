@@ -44,6 +44,9 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                     province: address.province_code,
                     ward: address.ward_code,
                     detail_address: address.detail_address,
+                    receiver_name: address.receiver_name,
+                    receiver_phone: address.receiver_phone,
+                    receiver_email: address.receiver_email,
                     is_default: defaultValue
                 });
                 
@@ -96,6 +99,9 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                 ward: wardName,
                 ward_code: values.ward,
                 detail_address: values.detail_address,
+                receiver_name: values.receiver_name,
+                receiver_phone: values.receiver_phone,
+                receiver_email: values.receiver_email,
                 ...(address ? {} : { is_default: values.is_default || false })
             };
 
@@ -180,6 +186,42 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                         placeholder="Số nhà, tên đường..." 
                     />
                 </Form.Item>
+                <div className="mb-4">
+                    <Title level={5} className="!mb-3">Thông tin người nhận (tùy chọn)</Title>
+                    
+                    <Form.Item
+                        label="Tên người nhận"
+                        name="receiver_name"
+                    >
+                        <Input placeholder="Nhập tên người nhận" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Số điện thoại người nhận"
+                        name="receiver_phone"
+                        rules={[
+                            {
+                                pattern: /^[0-9]{10,11}$/,
+                                message: 'Số điện thoại không hợp lệ (10-11 số)'
+                            }
+                        ]}
+                    >
+                        <Input placeholder="Nhập số điện thoại" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Email người nhận"
+                        name="receiver_email"
+                        rules={[
+                            {
+                                type: 'email',
+                                message: 'Email không hợp lệ'
+                            }
+                        ]}
+                    >
+                        <Input placeholder="Nhập email" />
+                    </Form.Item>
+                </div>
 
                 {!address && (
                     <Form.Item name="is_default" valuePropName="checked" initialValue={false}>

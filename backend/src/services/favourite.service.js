@@ -5,10 +5,10 @@ function favoriteRepository() {
     return knex('favorites');
 }
 
-async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
+async function getFavorites(user_id, {page = 1, limit = 10} = {}, role = null) {
     const paginator = new Paginator(page, limit);
-    console.log(user_id, page, limit);
-    // Lấy promotion active cho mỗi product
+
+
     const promotionSubquery = knex.raw(
         `(SELECT pp.product_id, p.discount_percent
         FROM promotion_products pp
@@ -18,7 +18,6 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
         AND p.end_date >= CURDATE()) AS active_promotions`
     );
 
-    // Query chính để lấy favorites
     let result = knex('favorites as f')
         .leftJoin('products as p', 'f.product_id', 'p.product_id')
         .leftJoin('brand as b', 'p.brand_id', 'b.id')
@@ -40,7 +39,6 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
             'b.name as brand_name',
             'c.category_name',
             'active_promotions.discount_percent',
-            // Tính giá sau giảm
             knex.raw(`
                 CASE 
                     WHEN active_promotions.discount_percent IS NOT NULL 
@@ -48,7 +46,7 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
                     ELSE p.base_price 
                 END as discounted_price
             `),
-            // Kiểm tra có promotion không
+
             knex.raw(`
                 CASE 
                     WHEN active_promotions.discount_percent IS NOT NULL 
@@ -73,7 +71,6 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
     let totalRecords = favorites[0].recordCount;
     const productIds = favorites.map(item => item.product_id);
     
-    // Lấy màu sắc và ảnh chính của mỗi màu
     const productColors = await knex('product_colors as pc')
         .join('colors as c', 'pc.color_id', 'c.color_id')
         .leftJoin('images as img', function() {
@@ -92,22 +89,56 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}) {
         .orderBy('pc.display_order')
         .orderBy('c.name');
 
+    let queryVariant = knex('product_variants as pv')
+        .join('sizes as s', 'pv.size_id', 's.size_id')
+        .whereIn('pv.product_id', productIds)
+        .select(
+            'pv.product_variants_id as variant_id',
+            'pv.product_id',
+            'pv.color_id',
+            'pv.size_id',
+            's.name as size_name',
+            'pv.stock_quantity'
+        );
+    
+    if (role === 'admin') {
+    } else {
+        queryVariant = queryVariant.where('pv.active', '=', 1);
+    }
+    
+    const productVariants = await queryVariant;
+
+    const sizesByProductColor = productVariants.reduce((acc, variant) => {
+        const key = `${variant.product_id}_${variant.color_id}`;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push({
+            variant_id: variant.variant_id,
+            size_id: variant.size_id,
+            size_name: variant.size_name,
+            stock_quantity: variant.stock_quantity
+        });
+        return acc;
+    }, {});
+
     // Group colors by product_id
     const colorsByProduct = productColors.reduce((acc, color) => {
         if (!acc[color.product_id]) {
             acc[color.product_id] = [];
         }
         
+        const key = `${color.product_id}_${color.color_id}`;
         acc[color.product_id].push({
             color_id: color.color_id,
             name: color.color_name,
             hex_code: color.hex_code,
-            primary_image: color.primary_image
+            primary_image: color.primary_image,
+            sizes: sizesByProductColor[key] || []
         });
         return acc;
     }, {});
 
-    // Format kết quả
     const formattedFavorites = favorites.map((item) => {
         delete item.recordCount;
         

@@ -112,12 +112,13 @@ async function getProductsInPromotion(req, res, next) {
     try {
         const { promo_id } = req.params;
         const { page, limit } = req.query;
+        const role = req.user?.role || null;
         
         const result = await promotionService.getManyProductInPromotion({
             promo_id: parseInt(promo_id),
             page: page ? parseInt(page) : 1,
             limit: limit ? parseInt(limit) : 10
-        });
+        }, role);
         return res.json(JSend.success({ 
             products: result.products,
             metadata: result.metadata 

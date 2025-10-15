@@ -259,7 +259,7 @@ async function updateProduct(id, payload) {
 
 
   
-async function getManyProducts(query) {
+async function getManyProducts(query, role = null) {
     const { search, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10, sort, user_id } = query;
 
     const paginator = new Paginator(page, limit);
@@ -453,7 +453,7 @@ async function getManyProducts(query) {
             });
         }
 
-        const variants = await knex('product_variants as pv')
+        let queryVariant = knex('product_variants as pv')
             .join('sizes as s', 'pv.size_id', 's.size_id')
             .whereIn('pv.product_id', productIds)
             .select(
@@ -465,6 +465,12 @@ async function getManyProducts(query) {
                 'pv.stock_quantity',
             )
             .orderBy('s.size_id');
+        if (role === 'admin') {
+        } else {
+            queryVariant.where('pv.active', '=', 1);
+        }
+        const variants = await queryVariant;
+        
 
         const variantsByProductAndColor = {};
         for (const variant of variants) {
@@ -480,7 +486,6 @@ async function getManyProducts(query) {
             });
         }
 
-        // Add sizes to each color
         for (const productId in colorsByProduct) {
             for (const color of colorsByProduct[productId]) {
                 const key = `${productId}_${color.color_id}`;

@@ -3,27 +3,26 @@ const ApiError = require('../api-error');
 const JSend = require('../jsend');
 
 async function getFavorites(req, res, next) {
-    console.log('user_id', req.user.id);
     const user_id = req.user.id;
+    const role = req.user?.role || null;
     let result = {
         metadata: {
           totalRecords: 0,
-          firstPage: 1,
-          lastPage: 1,
           page: 1,
-          limit: 5,
+          limit: 10,
+          totalPages: 1,
         },
         favorites: []
       };
     try {
-        result = await favouriteService.getFavorites(user_id,req.query);
+        result = await favouriteService.getFavorites(user_id, req.query, role);
         return res.json(JSend.success({
             metadata: result.metadata,
             favorites: result.favorites
         }));
-    } catch (err) {
-        console.log(err);
-        return next(new ApiError(500, "Error fetching favorites"));
+    } catch (error) {
+        console.error('Error getting favorites:', error);
+        return next(new ApiError(500, 'Lỗi khi lấy danh sách yêu thích'));
     }
 }
 

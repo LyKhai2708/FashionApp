@@ -19,6 +19,9 @@ export default function ProfilePage() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [orderDetail, setOrderDetail] = useState<Order | null>(null);
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderTotal, setOrderTotal] = useState(0);
+  const orderLimit = 5;
   const [userInfo, setUserInfo] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -100,9 +103,12 @@ export default function ProfilePage() {
     
     try {
       setLoading(true);
-      const data = await orderService.getUserOrders();
-      setOrders(data);
-    } catch (error: any) {
+      const data = await orderService.getUserOrders(orderPage, orderLimit);
+      console.log('Orders data:', data);
+      console.log('Total:', data.pagination.total, 'Page size:', orderLimit);
+      setOrders(data.orders);
+      setOrderTotal(data.pagination.total);
+    } catch (error) {
       message.error('Không thể tải danh sách đơn hàng');
     } finally {
       setLoading(false);
@@ -111,7 +117,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadOrders();
-  }, [activeTab]);
+  }, [activeTab, orderPage]);
 
   // Load order detail
   useEffect(() => {
@@ -256,6 +262,10 @@ export default function ProfilePage() {
                   orders={orders} 
                   onView={setSelectedOrderId}
                   onOrderCancelled={loadOrders}
+                  total={orderTotal}
+                  currentPage={orderPage}
+                  pageSize={orderLimit}
+                  onPageChange={setOrderPage}
                 />
               ) : (
                 <OrderDetail order={orderDetail} onBack={() => setSelectedOrderId(null)} />

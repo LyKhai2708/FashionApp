@@ -28,7 +28,17 @@ async function getAddressById(addressId, userId) {
  * Create new address
  */
 async function createAddress(userId, addressData) {
-    const { province, province_code, ward, ward_code, detail_address, is_default } = addressData;
+    const { 
+        province, 
+        province_code, 
+        ward, 
+        ward_code, 
+        detail_address, 
+        is_default,
+        receiver_name,
+        receiver_phone,
+        receiver_email
+    } = addressData;
     
     // If this is default address, unset other default addresses
     if (is_default) {
@@ -44,14 +54,26 @@ async function createAddress(userId, addressData) {
         ward,
         ward_code,
         detail_address,
-        is_default: is_default || false
+        is_default: is_default || false,
+        receiver_name,
+        receiver_phone,
+        receiver_email
     });
     return await getAddressById(id, userId);
 }
 
 
 async function updateAddress(addressId, userId, addressData) {
-    const { province, province_code, ward, ward_code, detail_address } = addressData;
+    const { 
+        province, 
+        province_code, 
+        ward, 
+        ward_code, 
+        detail_address,
+        receiver_name,
+        receiver_phone,
+        receiver_email
+    } = addressData;
     
     const address = await getAddressById(addressId, userId);
     if (!address) {
@@ -66,6 +88,9 @@ async function updateAddress(addressId, userId, addressData) {
             ward,
             ward_code,
             detail_address,
+            receiver_name,
+            receiver_phone,
+            receiver_email,
             updated_at: knex.fn.now()
         });
     

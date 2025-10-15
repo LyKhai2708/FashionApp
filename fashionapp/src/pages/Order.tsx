@@ -60,7 +60,10 @@ export default function Order() {
                     form.setFieldsValue({
                         province: address.province_code,
                         ward: address.ward_code,
-                        address: address.detail_address
+                        address: address.detail_address,
+                        fullName: address.receiver_name || user?.username || '',
+                        phone: address.receiver_phone || user?.phone || '',
+                        email: address.receiver_email || user?.email || ''
                     });
 
 

@@ -35,7 +35,6 @@ export const useUrlFilters = () => {
         return filters;
     }, [searchParams]);
 
-    // Lưu filters vào URL
     const saveFiltersToUrl = useCallback((filters: ProductsParams) => {
         const params = new URLSearchParams();
 

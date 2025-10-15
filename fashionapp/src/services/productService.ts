@@ -46,10 +46,8 @@ class ProductService{
             }
             if(params.size_id){
                 if(Array.isArray(params.size_id)){
-                    // Multiple sizes: size_id=1,2,3
                     query.append('size_id', params.size_id.join(','));
                 } else {
-                    // Single size
                     query.append('size_id', params.size_id.toString());
                 }
             }

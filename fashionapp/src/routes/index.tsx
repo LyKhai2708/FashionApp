@@ -21,6 +21,7 @@ import ProfilePage from '../pages/ProfilePage';
 import NotFound from '../layouts/404Page';
 import SearchPage from '../pages/SearchPage';
 import PromotionDetailPage from '../pages/PromotionDetailPage';
+import FavoritesPage from '../pages/FavoritesPage';
 
 
 
@@ -40,6 +41,7 @@ const privateRoutes: RouteType[] = [
   { path: '/order', component: Order },
   { path: '/order/success/:orderId', component: OrderSuccess },
   { path: '/profile', component: ProfilePage },
+  { path: '/favorites', component: FavoritesPage },
 ];
 
 
