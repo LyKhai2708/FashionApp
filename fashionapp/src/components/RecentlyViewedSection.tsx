@@ -22,10 +22,10 @@ const RecentlyViewedSection = ({
     }
 
     return (
-        <div className="py-8">
-            <div className="flex items-center gap-2 mb-6">
+        <div>
+            {/* <div className="flex items-center gap-2 mb-6">
                 <h2 className="font-semibold text-2xl">SẢN PHẨM ĐÃ XEM GẦN ĐÂY</h2>
-            </div>
+            </div> */}
 
             <ProductSlider
                 products={displayProducts}
@@ -33,7 +33,7 @@ const RecentlyViewedSection = ({
                 slidesPerView={{
                     mobile: 2,
                     tablet: 3,
-                    desktop: 5
+                    desktop: 4
                 }}
             />
         </div>

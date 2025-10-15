@@ -5,16 +5,13 @@ const JSend = require("../jsend");
 async function createProduct(req, res, next) {
   try {
     const payload = { ...req.body };
-    
-    // Xử lý ảnh upload nếu có
     if (req.files && req.files.length > 0) {
-      // Tạo danh sách đường dẫn ảnh
+
       const imagePaths = req.files.map(file => `/public/uploads/${file.filename}`);
-      
-      // Ảnh đầu tiên làm thumbnail cho product
+
       payload.thumbnail = imagePaths[0];
       
-      // Parse variants nếu được gửi dưới dạng JSON string
+
       if (typeof payload.variants === 'string') {
         try {
           payload.variants = JSON.parse(payload.variants);
@@ -23,22 +20,21 @@ async function createProduct(req, res, next) {
         }
       }
       
-      // Phân chia ảnh cho các variants
+     
       if (payload.variants && Array.isArray(payload.variants)) {
-        let imageIndex = 1; // Bỏ qua ảnh đầu tiên (đã dùng làm thumbnail)
+        let imageIndex = 1; 
         
         payload.variants.forEach((variant, variantIndex) => {
   variant.images = [];
   const imagesPerVariant = variant.imageCount || 0;
-  // Gán ảnh cho variant này nếu còn ảnh riêng
+
   for (let i = 0; i < imagesPerVariant && imageIndex < imagePaths.length; i++) {
     variant.images.push(imagePaths[imageIndex]);
     imageIndex++;
   }
 });
       }
-      
-      // Lưu tất cả ảnh vào payload để service xử lý
+
       payload.uploadedImages = imagePaths;
     }
     

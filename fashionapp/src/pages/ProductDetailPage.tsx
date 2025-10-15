@@ -10,6 +10,8 @@ import { useCart } from '../contexts/CartContext';
 import ReviewSection from '../components/review/ReviewSection';
 import PolicyBenefits from '../components/PolicyBenefits';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import RecentlyViewedSection from '../components/RecentlyViewedSection';
+import { useRelatedProducts } from '../hooks/useProductList';
 
 export default function ProductDetailPage() {
     const { addToCart } = useCart();
@@ -18,8 +20,6 @@ export default function ProductDetailPage() {
     const { slug } = useParams<{ slug: string }>();
     
     const productId = extractProductIdFromSlug(slug || '');
-
-    console.log('Extracted productId:', productId);
     
     const {
         product,
@@ -40,14 +40,42 @@ export default function ProductDetailPage() {
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+    const { 
+        products: relatedProductsRaw, 
+        loading: relatedLoading 
+    } = useRelatedProducts(product?.category_id, 8);
+
+    const relatedProducts = relatedProductsRaw.filter(p => p.product_id !== productId);
+
     //them vao danh sach xem qua
     useEffect(() => {
         if (product) {
+            const colorMap = new Map();
+            
+            product.variants?.forEach(variant => {
+                const colorId = variant.color.color_id;
+                
+                if (!colorMap.has(colorId)) {
+                    colorMap.set(colorId, {
+                        color_id: variant.color.color_id,
+                        name: variant.color.name,
+                        hex_code: variant.color.hex_code,
+                        images: variant.color.images || [],
+                        sizes: []
+                    });
+                }
+                
+                colorMap.get(colorId).sizes.push({
+                    variant_id: variant.variant_id,
+                    size_id: variant.size.size_id,
+                    size_name: variant.size.name,
+                    stock_quantity: variant.stock_quantity
+                });
+            });
+            
             const productForStorage: any = {
                 ...product,
-                colors: product.variants?.map(v => v.color).filter((c, i, arr) => 
-                    arr.findIndex(item => item.color_id === c.color_id) === i
-                ) || []
+                colors: Array.from(colorMap.values())
             };
             addProduct(productForStorage);
         }
@@ -298,7 +326,6 @@ export default function ProductDetailPage() {
                         </button>
                     </div>
 
-                    {/* Policy Benefits */}
                     <PolicyBenefits />
 
                     {/* Product Tabs */}
@@ -350,15 +377,14 @@ export default function ProductDetailPage() {
                 </div>
             </div>
             <ReviewSection productId={productId} /> 
-            {/* Related Products Slider */}
             <div className="mt-20">
-                <h2 className="text-xl font-bold mb-4">Gợi ý dành cho bạn</h2>
-                <ProductSlider />
+                <h2 className="text-xl font-bold mb-4">Các sản phẩm đã xem</h2>
+                <RecentlyViewedSection/>
             </div>
             
             <div className="mt-20">
                 <h2 className="text-xl font-bold mb-4">Sản phẩm liên quan</h2>
-                <ProductSlider />
+                <ProductSlider products={relatedProducts} loading={relatedLoading} />
             </div>
         </>
     );

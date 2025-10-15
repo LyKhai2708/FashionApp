@@ -47,11 +47,11 @@ const ProductSlider: React.FC<ProductSliderProps> = ({
         );
     }
 
-    // Empty state
     if (!products || products.length === 0) {
         return (
-            <div className="py-8">
-                <Empty description="Không có sản phẩm" />
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <div className="text-6xl mb-4">📦</div>
+                <h3 className="text-lg font-medium mb-2">Không có sản phẩm nào</h3>
             </div>
         );
     }
@@ -91,7 +91,6 @@ const ProductSlider: React.FC<ProductSliderProps> = ({
                     ))}
                 </Swiper>
                 
-                {/* Custom Navigation Buttons - Only show if more than slidesPerView */}
                 {products.length > (slidesPerView.desktop || 4) && (
                     <>
                         <button className={`cursor-pointer swiper-button-prev-${uniqueId} absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full shadow-lg hover:bg-white hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center group`}>

@@ -1,6 +1,6 @@
 const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
-
+const nodemailer = require('nodemailer');
 /**
  * phí ship dựa vào tổng đơn hàng
  */
@@ -13,7 +13,7 @@ function calculateShippingFee(subTotal) {
 
 
 async function createOrder(orderData, items) {
-  return await knex.transaction(async (trx) => {
+  const orderResult = await knex.transaction(async (trx) => {
     // Tính toán tổng tiền
     const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
@@ -80,6 +80,143 @@ async function createOrder(orderData, items) {
       ...orderData 
     };
   });
+
+  sendOrderConfirmationEmail(
+    orderResult.order_id, 
+    orderData, 
+    items, 
+    orderResult.sub_total, 
+    orderResult.shipping_fee, 
+    orderResult.total_amount
+  ).catch(err => {
+    console.error('Email sending failed (non-blocking):', err.message);
+  });
+
+  return orderResult;
+}
+
+async function sendOrderConfirmationEmail(orderId, orderData, items, subTotal, shippingFee, totalAmount) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('Email credentials not configured. Skipping email.');
+    return;
+  }
+
+  try {
+    const orderDetails = await knex('orderdetails as od')
+      .join('product_variants as pv', 'od.product_variant_id', 'pv.product_variants_id')
+      .join('products as p', 'pv.product_id', 'p.product_id')
+      .leftJoin('colors as c', 'pv.color_id', 'c.color_id')
+      .leftJoin('sizes as s', 'pv.size_id', 's.size_id')
+      .where('od.order_id', orderId)
+      .select(
+        'p.name as product_name',
+        'p.thumbnail',
+        'c.name as color_name',
+        's.name as size_name',
+        'od.quantity',
+        'od.price',
+        'od.sub_total'
+      );
+
+
+    
+    if (orderDetails.length === 0) {
+      console.warn(`No order details found for order #${orderId}`);
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const itemsHtml = orderDetails.map(item => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+          ${item.product_name}<br>
+          <small style="color: #666;">${item.color_name ? `Màu: ${item.color_name}` : ''} ${item.size_name ? `| Size: ${item.size_name}` : ''}</small>
+        </td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
+          ${item.price.toLocaleString('vi-VN')}₫<br>
+          <small style="color: #666;">Tổng: ${item.sub_total.toLocaleString('vi-VN')}₫</small>
+        </td>
+      </tr>
+    `).join('');
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: orderData.receiver_email,
+      subject: `Xác nhận đơn hàng #${orderId} - DELULU Fashion`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #f8f8f8; padding: 20px; text-align: center;">
+            <h1 style="color: #8FD9FB; margin: 0;">DELULU FASHION</h1>
+          </div>
+          
+          <div style="padding: 20px;">
+            <h2>Xin chào ${orderData.receiver_name}!</h2>
+            <p>Cảm ơn bạn đã đặt hàng tại DELULU Fashion. Đơn hàng <strong>#${orderId}</strong> của bạn đã được đặt thành công và đang trong quá trình xử lý.</p>
+            
+            <h3>Chi tiết đơn hàng:</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f8f8f8;">
+                  <th style="padding: 10px; text-align: left;">Sản phẩm</th>
+                  <th style="padding: 10px; text-align: center;">SL</th>
+                  <th style="padding: 10px; text-align: right;">Giá</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f8f8f8; border-radius: 5px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>Tạm tính:</span>
+                <strong>${subTotal.toLocaleString('vi-VN')}₫</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>Phí vận chuyển:</span>
+                <strong>${shippingFee === 0 ? 'Miễn phí' : shippingFee.toLocaleString('vi-VN') + '₫'}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #ddd;">
+                <span style="font-size: 18px;">Tổng cộng:</span>
+                <strong style="font-size: 18px; color: #ef4444;">${totalAmount.toLocaleString('vi-VN')}₫</strong>
+              </div>
+            </div>
+            
+            <h3>Thông tin giao hàng:</h3>
+            <p>
+              <strong>Người nhận:</strong> ${orderData.receiver_name}<br>
+              <strong>Số điện thoại:</strong> ${orderData.receiver_phone}<br>
+              <strong>Địa chỉ:</strong> ${orderData.shipping_detail_address}, ${orderData.shipping_ward}, ${orderData.shipping_province}
+            </p>
+            
+            <p><strong>Phương thức thanh toán:</strong> ${orderData.payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng'}</p>
+            
+            <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
+              <p style="margin: 0;">💡 <strong>Lưu ý:</strong> Đơn hàng của bạn sẽ được xử lý trong vòng 24h. Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>08966670687</strong></p>
+            </div>
+          </div>
+          
+          <div style="background: #f8f8f8; padding: 20px; text-align: center; margin-top: 20px;">
+            <p style="margin: 0; color: #666;">© 2025 DELULU Fashion. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email xác nhận đã gửi thành công cho đơn hàng #${orderId}`);
+  } catch (error) {
+    console.error(`Lỗi gửi email cho đơn hàng #${orderId}:`, error.message);
+    throw error;
+  }
 }
 
 

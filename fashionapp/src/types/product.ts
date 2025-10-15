@@ -101,7 +101,7 @@ export interface ProductDetail {
     max_price?: number;
     color_id?: number | number[]; // Support single or multiple colors
     size_id?: number | number[];  // Support single or multiple sizes
-    sort?: 'price_asc' | 'price_desc' | 'newest';
+    sort?: 'price_asc' | 'price_desc' | 'newest' | 'sold';
   }
   
   export interface ProductsResponse {

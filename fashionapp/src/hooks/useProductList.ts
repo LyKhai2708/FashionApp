@@ -65,7 +65,6 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
         reset: boolean = false
     ) => {
         try {
-            // Cancel previous request
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
             }
@@ -155,7 +154,6 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             };
 
         } else {
-            // Merge new filters
             newFilters = {
                 page: 1,
                 limit: currentFilters.limit || 12,
@@ -163,7 +161,6 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
                 ...filters
             };
             
-            // Remove undefined/null values
             Object.keys(newFilters).forEach(key => {
                 const value = newFilters[key as keyof ProductsParams];
                 if (value === undefined || value === null || value === '') {
@@ -203,7 +200,6 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
                 ...(categoryId !== undefined && { category_id: categoryId })
             };
             
-            console.log('🎯 Initial fetch with:', initialFilters);
             setCurrentFilters(initialFilters);
             fetchProducts(initialFilters, true);
         }
@@ -223,7 +219,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             setHasMore(true);
             fetchProducts(newFilters, true);
         }
-    }, [categoryId]); // CHỈ depend categoryId
+    }, [categoryId]);
 
     return {
         products,
@@ -266,9 +262,23 @@ export const useFeaturedProducts = (limit: number = 8) => {
     });
 };
 
+export const useMostSoldProducts = (limit: number = 8) => {
+    return useProductList({
+        initialParams: { limit, sort: 'sold' },
+        autoFetch: true
+    });
+};
+
 export const useSearchProducts = (searchTerm: string) => {
     return useProductList({
         initialParams: { search: searchTerm, limit: 12 },
         autoFetch: !!searchTerm
+    });
+};
+
+export const useRelatedProducts = (categoryId: number | undefined, limit: number = 8) => {
+    return useProductList({
+        initialParams: { category_id: categoryId, limit, sort: 'newest' },
+        autoFetch: !!categoryId
     });
 };

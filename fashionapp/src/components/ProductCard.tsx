@@ -86,16 +86,18 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                 quantity: 1
             };
 
+            const finalPrice = parseFloat(String(product.discounted_price || product.base_price));
+
             const productDetails = {
                 product_id: product.product_id,
                 product_name: product.name,
                 slug: product.slug,
                 thumbnail: selectedColor.images[0]?.image_url || product.thumbnail,
-                price: product.discounted_price || product.base_price,
+                price: finalPrice,
                 variant: {
                     variant_id: size.variant_id,
                     stock_quantity: size.stock_quantity,
-                    final_price: product.discounted_price || product.base_price,
+                    final_price: finalPrice,
                     active: 1,
                     color: {
                         color_id: selectedColor.color_id,
@@ -142,13 +144,13 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                 
                 {!compact && showQuickAdd && hasVariants && (
                     <div 
-                        className="absolute bottom-0 left-0 right-0 h-1/2 backdrop-blur-md bg-black/30 flex flex-col items-center justify-center p-4 transition-all rounded-t-xl duration-200"
+                        className="absolute bottom-0 left-0 right-0 h-1/2 backdrop-blur-lg bg-black/20 flex flex-col items-center justify-center p-4 transition-all rounded-t-xl duration-200"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                         }}
                     >
-                        <div className="text-gray-900 text-sm font-semibold mb-3 flex items-center gap-1">
+                        <div className="text-gray-800 text-sm font-semibold mb-3 flex items-center gap-1">
                             Thêm nhanh vào giỏ hàng
                             <span className="text-lg">+</span>
                         </div>

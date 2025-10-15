@@ -1,9 +1,9 @@
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
-import ProductSlider from "../components/ProductSlider";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { useState } from "react";
 import { message } from "antd";
+import Breadcrumb from '../components/Breadcrumb';
 import RecentlyViewedSection from "../components/RecentlyViewedSection";
 
 export default function Cart() {
@@ -81,10 +81,16 @@ export default function Cart() {
             </div>
         );
     }
-
+    const breadcrumbs = [
+        { label: "Trang chủ", href: "/" },
+        { label: "Giỏ hàng"},
+    ];
     return (
+        <>
+        <Breadcrumb items={breadcrumbs}/>
         <div
         className="min-h-screen flex flex-col">
+            
             {/* Cart Content */}
             <div className="mt-10 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column: Cart Items or Empty State */}
@@ -187,7 +193,6 @@ export default function Cart() {
                     </>
                     )}
                 </div>
-                {/* Right Column: Order Summary */}
                 <div className="bg-gray-50 h-fit p-6 rounded-md shadow-lg">
                     <h3 className="text-lg font-semibold mb-4">TÓM TẮT ĐƠN HÀNG</h3>
                     <div className="space-y-3 text-sm">
@@ -219,13 +224,13 @@ export default function Cart() {
                     <Link to="/" className="block text-center mt-3 text-gray-600 hover:underline">Tiếp tục mua sắm</Link>
                 </div>
             </div>
-
+            
+            <div className="flex items-center gap-2 mb-4 mt-10">
+                <h2 className="font-semibold text-2xl">SẢN PHẨM ĐÃ XEM GẦN ĐÂY</h2>
+            </div>
             <RecentlyViewedSection limit={8} />
             
-            <div className="mt-10">
-                <h2 className="font-semibold text-2xl">GỢI Ý DÀNH CHO BẠN</h2>
-                <ProductSlider></ProductSlider>
-            </div>
         </div>
+    </>
     )
 }

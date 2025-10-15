@@ -48,7 +48,6 @@ const ReviewList: React.FC<ReviewListProps> = ({
                 sortBy,
                 filterRating
             );
-            console.log('Fetched reviews:', response.data.reviews);
             setReviews(response.data.reviews);
             setMetadata(response.data.metadata);
         } catch (error: any) {

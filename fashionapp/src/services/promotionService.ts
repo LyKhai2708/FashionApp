@@ -1,7 +1,7 @@
 import { api } from '../utils/axios';
 import type { Product } from '../types/product';
 
-// ==================== INTERFACES ====================
+
 
 export interface Promotion {
     promo_id: number;
@@ -90,20 +90,17 @@ class PromotionService {
         try {
             const response = await this.getPromotions({ 
                 active: true, 
-                limit: 50 // Lấy nhiều hơn để filter phía client
+                limit: 50 
             });
             
-            // Filter promotions đang trong khoảng thời gian
             const now = new Date();
             const currentPromotions = response.promotions.filter(promo => {
                 const start = new Date(promo.start_date);
                 const end = new Date(promo.end_date);
                 const isInRange = now >= start && now <= end;
-                console.log(`  - ${promo.name}: ${promo.start_date} to ${promo.end_date} → ${isInRange ? '✅' : '❌'}`);
                 return isInRange;
             });
             
-            // Limit kết quả
             const result = currentPromotions.slice(0, limit);
             return result;
         } catch (error) {

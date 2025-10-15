@@ -37,13 +37,11 @@ function imageRepository() {
 
 async function createProduct(payload) {
     return await knex.transaction(async (trx) => {
-        // Bước 1: Tạo sản phẩm chính
         const product = readProduct(payload);
         const [product_id] = await trx("products").insert(product);
         
-        // Bước 2: Thêm màu sắc cho sản phẩm (product_colors)
         const colorInserts = [];
-        const colorMap = new Map(); // Map để lưu color_id -> product_color_id
+        const colorMap = new Map(); 
         
         if (payload.colors && payload.colors.length > 0) {
             payload.colors.forEach((color, index) => {
@@ -359,6 +357,7 @@ async function getManyProducts(query) {
             'p.brand_id',
             'p.category_id',
             'p.created_at',
+            'p.sold',
             'b.name as brand_name',
             'c.category_name',
             'active_promotions.discount_percent',
@@ -388,14 +387,15 @@ async function getManyProducts(query) {
         .distinct('p.product_id')
         .limit(paginator.limit)
         .offset(paginator.offset);
-
-    // Apply sorting
     switch (sort) {
         case 'price_asc':
             productsQuery = productsQuery.orderByRaw(`CASE WHEN active_promotions.discount_percent IS NOT NULL THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2) ELSE p.base_price END ASC`);
             break;
         case 'price_desc':
             productsQuery = productsQuery.orderByRaw(`CASE WHEN active_promotions.discount_percent IS NOT NULL THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2) ELSE p.base_price END DESC`);
+            break;
+        case 'sold':
+            productsQuery = productsQuery.orderBy('p.sold', 'desc');
             break;
         case 'newest':
         default:

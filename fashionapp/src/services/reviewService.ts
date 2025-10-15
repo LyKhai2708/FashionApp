@@ -67,7 +67,6 @@ class ReviewService {
     async getProductReviews(productId: number, page: number = 1, limit: number = 5, sortBy: string = 'newest',
         filterRating: number = 0): Promise<ReviewsResponse> {
         try {
-            console.log('API call to get reviews with params:', { productId, page, limit, sortBy, filterRating });
             const response = await api.get<any>(`/api/v1/reviews/products/${productId}`, {
                 params: { page, limit, sortBy, filterRating }
             });

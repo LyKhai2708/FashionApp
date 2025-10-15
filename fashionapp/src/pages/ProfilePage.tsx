@@ -137,8 +137,8 @@ export default function ProfilePage() {
   }, [selectedOrderId, user]);
   const menuItems = [
     { key: "account", label: "Thông tin tài khoản", icon: <UserOutlined /> },
-    { key: "orders", label: "Đơn hàng của tôi", icon: <ShoppingCartOutlined /> },
-    { key: "addresses", label: "Địa chỉ giao hàng", icon: <HomeOutlined /> },
+    { key: "orders", label: "Đơn hàng", icon: <ShoppingCartOutlined /> },
+    { key: "addresses", label: "Địa chỉ", icon: <HomeOutlined /> },
     { key: "password", label: "Đổi mật khẩu", icon: <LockOutlined /> },
     { key: "logout", label: "Đăng xuất", icon: <LogoutOutlined /> },
   ];
@@ -146,7 +146,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen flex justify-center py-8 px-4">
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Sidebar */}
+
         <Card className="p-6 shadow-sm">
           <div className="flex flex-col items-center text-center mb-6">
             <Avatar size={80} icon={<UserOutlined />} />
@@ -161,10 +161,11 @@ export default function ProfilePage() {
             {menuItems.map((item) => (
               item.key === "logout" ? (
                 <Button
+                
                 key={item.key}
                 icon={item.icon}
                 block
-                className={`!flex items-center justify-start h-11 rounded-md font-medium transition
+                className={`!flex items-center justify-center h-11 rounded-md font-medium transition
                   ${activeTab === item.key 
                     ? "!bg-black !text-white hover:!bg-gray-800" 
                     : "!bg-white !text-black border hover:!bg-gray-100"}`}

@@ -113,7 +113,7 @@ export default function Header() {
     }, []);
     const { totalItems } = useCart();
     return (
-        <header className="w-full bg-white shadow sticky top-0 z-50">
+    <header className="w-full bg-white shadow sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px] flex items-stretch justify-between h-16">
         
         {/* Menu (mobile) */}

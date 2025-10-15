@@ -44,7 +44,6 @@ const ReviewStats: React.FC<ReviewStatsProps> = ({productId, refreshTrigger = 0}
     };
 
     useEffect(() => {
-        console.log('refreshTrigger changed:', refreshTrigger);
         fetchStats();
     }, [productId, refreshTrigger]);
 

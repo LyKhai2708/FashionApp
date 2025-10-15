@@ -42,7 +42,6 @@ export default function ProductList({ products = [], loading = false, limit }: P
             <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                 <div className="text-6xl mb-4">📦</div>
                 <h3 className="text-lg font-medium mb-2">Không có sản phẩm nào</h3>
-                <p className="text-sm">Hãy thử tìm kiếm với từ khóa khác</p>
             </div>
         );
     }
