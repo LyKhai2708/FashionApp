@@ -14,6 +14,7 @@ async function getDashboardStast(req,res, next){
         const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
         const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
 
+        
         const totalUsers = await knex('users')
             .where('is_active', 1)
             .count('user_id as count')
@@ -85,13 +86,17 @@ async function getDashboardStast(req,res, next){
             .orderBy('orders.order_date', 'desc')
             .limit(10);
 
-        //san pham ban nhieu
+        //san pham ban nhieu trong thang nay
         const topProducts = await knex('orderdetails')
+            .join('orders', 'orderdetails.order_id', 'orders.order_id')
             .join('product_variants', 'orderdetails.product_variant_id', 'product_variants.product_variants_id')
             .join('products', 'product_variants.product_id', 'products.product_id')
+            .whereBetween('orders.order_date', [startOfMonth, endOfMonth])
+            .where('orders.order_status', 'delivered')
+            .where('orders.payment_status', 'paid')
             .select(
                 'products.product_id',
-                'products.name',
+                'products.name as product_name',
                 knex.raw('SUM(orderdetails.quantity) as total_sold'),
                 knex.raw('SUM(orderdetails.quantity * orderdetails.price) as total_revenue')
             )
@@ -108,9 +113,9 @@ async function getDashboardStast(req,res, next){
             .where('product_variants.stock_quantity', '<', 10)
             .where('products.del_flag', 0)
             .select(
-                'products.name',
-                'sizes.name',
-                'colors.name',
+                'products.name as product_name',
+                'sizes.name as size_name',
+                'colors.name as color_name',
                 'product_variants.stock_quantity'
             )
             .orderBy('product_variants.stock_quantity', 'asc')

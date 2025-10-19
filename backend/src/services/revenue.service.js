@@ -33,7 +33,7 @@ async function getRevenueByDays(days) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
-
+    console.log(startDate,endDate)
     const result = await knex('orders')
         .whereBetween('order_date', [startDate, endDate])
         .where('order_status', 'delivered')
@@ -41,7 +41,6 @@ async function getRevenueByDays(days) {
         .sum('total_amount as revenue')
         .count('order_id as order_count')
         .first();
-
     return {
         revenue: result.revenue || 0,
         orderCount: result.order_count || 0,
@@ -66,7 +65,7 @@ async function getMonthRevenue() {
         .sum('total_amount as revenue')
         .count('order_id as order_count')
         .first();
-
+    console.log(result);
     return {
         revenue: result.revenue || 0,
         orderCount: result.order_count || 0,
@@ -81,35 +80,53 @@ async function getMonthRevenue() {
 
 async function getDailyRevenue(days) {
     const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
+    endDate.setUTCHours(23, 59, 59, 999);
     
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
+    startDate.setUTCDate(startDate.getUTCDate() - days);
+    startDate.setUTCHours(0, 0, 0, 0);
 
     const results = await knex('orders')
         .whereBetween('order_date', [startDate, endDate])
         .where('order_status', 'delivered')
         .where('payment_status', 'paid')
         .select(
-            knex.raw('DATE(order_date) as date'),
+            knex.raw("DATE_FORMAT(CONVERT_TZ(order_date, '+00:00', '+07:00'), '%Y-%m-%d') as date"),
             knex.raw('SUM(total_amount) as revenue'),
             knex.raw('COUNT(order_id) as order_count')
         )
-        .groupBy(knex.raw('DATE(order_date)'))
+        .groupBy(knex.raw("DATE_FORMAT(CONVERT_TZ(order_date, '+00:00', '+07:00'), '%Y-%m-%d')"))
         .orderBy('date', 'asc');
     
 
     const dateMap = new Map();
     results.forEach(r => {
-        dateMap.set(r.date, r);
+        let dateStr;
+        if (r.date instanceof Date) {
+            const year = r.date.getUTCFullYear();
+            const month = String(r.date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(r.date.getUTCDate()).padStart(2, '0');
+            dateStr = `${year}-${month}-${day}`;
+        } else {
+            dateStr = r.date;
+        }
+        
+        dateMap.set(dateStr, {
+            date: dateStr,
+            revenue: parseFloat(r.revenue) || 0,
+            order_count: parseInt(r.order_count) || 0
+        });
     });
 
     const filledResults = [];
     const currentDate = new Date(startDate);
     
     while (currentDate <= endDate) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        const year = currentDate.getUTCFullYear();
+        const month = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getUTCDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
         if (dateMap.has(dateStr)) {
             filledResults.push(dateMap.get(dateStr));
         } else {
@@ -130,7 +147,6 @@ async function getRevenueComparison() {
     const today = await getTodayRevenue();
     const month = await getMonthRevenue();
 
-    //só sánh với hôm qua
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);

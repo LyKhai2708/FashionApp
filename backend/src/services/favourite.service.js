@@ -84,7 +84,6 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}, role = null) {
         .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
         .orderBy('c.color_id');
     
-    // Lấy primary images
     const primaryImages = await knex('images')
         .whereIn('product_id', productIds)
         .where('is_primary', true)

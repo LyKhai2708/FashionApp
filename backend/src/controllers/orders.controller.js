@@ -55,13 +55,22 @@ class OrdersController {
   async getOrders(req, res, next) {
     try {
       const { 
-        status, 
+        order_status,
+        payment_status,
+        payment_method,
         start_date, 
         end_date, 
         page = 1, 
         limit = 10 
       } = req.query;
 
+      const filters = {
+        order_status,
+        payment_status,
+        payment_method,
+        start_date,
+        end_date
+      };
 
       const result = await orderService.getOrders(
         filters,
@@ -69,7 +78,10 @@ class OrdersController {
         parseInt(limit, 10)
       );
 
-      return res.json(JSend.success(result));
+      return res.json(JSend.success({
+        orders: result.data,
+        pagination: result.pagination
+      }));
     } catch (error) {
       console.error('Error getting orders:', error);
       return next(new ApiError(500, 'Lỗi khi lấy danh sách đơn hàng'));
@@ -85,7 +97,7 @@ class OrdersController {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      // Kiểm tra quyền truy cập
+
       if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
         return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
       }
@@ -152,12 +164,6 @@ class OrdersController {
 
   async cancelOrder(req, res, next) {
     try {
-      
-      
-      const userId = req.user?.user_id;
-      if (!userId) {
-        return next(new ApiError(401, 'Bạn cần đăng nhập để hủy đơn'));
-      }
       const { id } = req.params;
       const { cancel_reason } = req.body;
 
@@ -175,12 +181,7 @@ class OrdersController {
         return next(new ApiError(403, 'Bạn không có quyền hủy đơn hàng này'));
       }
 
-    
-      const cancelled = await orderService.cancelOrder(Number(id), order.user_id, cancel_reason);
-      
-      if (!cancelled) {
-        return next(new ApiError(400, 'Không thể hủy đơn hàng chỉ hủy được khi trạng thái là pending'));
-      }
+      await orderService.cancelOrder(Number(id), cancel_reason);
 
       return res.json(JSend.success({ message: 'Hủy đơn hàng thành công' }));
     } catch (error) {

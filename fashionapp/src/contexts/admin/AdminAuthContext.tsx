@@ -151,11 +151,13 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             intervalId = setInterval(async () => {
                 if (authService.getCurrentAdmin()) {
                     try {
+                        console.log('start auto-refresh');
                         await refreshToken();
                     } catch (error: any) {
                         console.log('Admin auto-refresh failed:', error.message);
                     }
                 } else {
+                    console.log('Admin not authenticated');
                     if (intervalId) clearInterval(intervalId);
                 }
             }, 600000);

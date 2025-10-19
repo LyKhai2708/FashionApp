@@ -39,10 +39,7 @@ const navItems: NavItem[] = [
       </svg>
     ),
     name: "Orders",
-    subItems: [
-      { name: "All Orders", path: "/admin/orders" },
-      { name: "Pending Orders", path: "/admin/orders/pending" },
-    ],
+    path: "/admin/orders",
   },
   {
     icon: (

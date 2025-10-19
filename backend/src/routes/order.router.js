@@ -582,7 +582,7 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.delete('/:id', authMiddleware, ordersController.cancelOrder);
+  router.delete('/:id/cancel', authMiddleware, ordersController.cancelOrder);
   router.all('/', methodNotAllowed);
   router.all('/:id', methodNotAllowed);
   router.all('/:id/status', methodNotAllowed);

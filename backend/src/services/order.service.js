@@ -409,7 +409,7 @@ async function updateOrderStatus(orderId, order_status, adminId = null, cancelRe
     if (!order.delivered_at) patch.delivered_at = knex.fn.now();
   }
 
-  const [updated] = await knex('orders')
+  const updated = await knex('orders')
     .where('order_id', orderId)
     .update(patch);
 
@@ -418,13 +418,13 @@ async function updateOrderStatus(orderId, order_status, adminId = null, cancelRe
 
 
 async function updatePaymentStatus(orderId, payment_status) {
-  const validStatuses = ['unpaid', 'paid', 'refund'];
+  const validStatuses = ['unpaid', 'paid', 'pending_refund', 'refunded'];
   
   if (!validStatuses.includes(payment_status)) {
     throw new Error('Trạng thái thanh toán không hợp lệ');
   }
 
-  const [updated] = await knex('orders')
+  const updated = await knex('orders')
     .where('order_id', orderId)
     .update({ payment_status });
 
@@ -432,27 +432,31 @@ async function updatePaymentStatus(orderId, payment_status) {
 }
 
 
-async function cancelOrder(orderId, userId, cancelReason = null) {
+async function cancelOrder(orderId, cancelReason = null) {
   return await knex.transaction(async (trx) => {
-
     const order = await trx('orders')
       .where({ order_id: orderId })
       .first();
 
-    if (!order) return false;
-
-    if (order.user_id !== userId) {
-      throw new Error('Bạn không có quyền hủy đơn hàng này');
+    if (!order) {
+      throw new Error('Không tìm thấy đơn hàng');
     }
 
     if (order.order_status !== 'pending') {
-      throw new Error('Đơn hàng không thể hủy khi không ở trạng thái pending');
+      throw new Error('Chỉ có thể hủy đơn hàng đang chờ xử lý');
     }
+
+    let newPaymentStatus = order.payment_status;
+    if (order.payment_status === 'paid') {
+      newPaymentStatus = 'pending_refund';
+    }
+
     const updated = await trx('orders')
       .where({ order_id: orderId })
       .andWhere('order_status', 'pending')
       .update({
         order_status: 'cancelled',
+        payment_status: newPaymentStatus,
         cancelled_at: trx.fn.now(),
         cancel_reason: cancelReason ?? null,
         updated_at: trx.fn.now(),

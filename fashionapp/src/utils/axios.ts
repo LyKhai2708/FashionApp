@@ -37,9 +37,9 @@ const processQueue = (error: any, token: string | null = null ) => {
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-
-        const isAdminRoute = config.url?.includes('/admin');
-        const token = isAdminRoute 
+        // Check context: đang ở admin panel hay user site
+        const isAdminContext = window.location.pathname.startsWith('/admin');
+        const token = isAdminContext 
             ? authService.getAdminToken()     
             : authService.getAccessToken();
 
@@ -61,10 +61,9 @@ apiClient.interceptors.response.use(
         
         const originalRequest = error.config;
         
-        // Không retry nếu là login endpoint (user hoặc admin)
         const isLoginEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/admin/login');
         
-        if(error.response.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
+        if(error.response?.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
             
             if(isRefreshing) {
                 return new Promise((resolve, reject) => {
@@ -80,12 +79,12 @@ apiClient.interceptors.response.use(
             isRefreshing = true;
             
             try {
-                
-                const isAdminRoute = originalRequest.url?.includes('/admin');
+                // Check context: đang ở admin panel hay user site
+                const isAdminContext = window.location.pathname.startsWith('/admin');
                 
                 let newToken: string;
                 
-                if (isAdminRoute) {
+                if (isAdminContext) {
                     newToken = await authService.adminRefreshToken();
                 } else {
                     const response = await axios.post(
@@ -107,9 +106,10 @@ apiClient.interceptors.response.use(
             }catch(refreshError: any){
 
                 processQueue(refreshError, null);
-                const isAdminRoute = originalRequest.url?.includes('/admin');
+                // Check context: đang ở admin panel hay user site
+                const isAdminContext = window.location.pathname.startsWith('/admin');
                 
-                if (isAdminRoute) {
+                if (isAdminContext) {
                     clearAdminStorage();
                     window.dispatchEvent(new Event('admin:logout'));
                     window.location.href = '/admin/login';

@@ -62,6 +62,47 @@ export interface Order {
 }
 
 class OrderService {
+
+        async getAllOrders(params?: {
+        order_status?: string;
+        payment_status?: string;
+        payment_method?: string;
+        start_date?: string;
+        end_date?: string;
+        page?: number;
+        limit?: number;
+    }): Promise<{ orders: Order[]; pagination: any }> {
+        try {
+            const response = await api.get('/api/v1/orders', { params });
+        
+            return {
+                orders: response.data.data.orders || [],
+                pagination: response.data.data.pagination
+            };
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể lấy danh sách đơn hàng');
+        }
+    }
+
+    async updateOrderStatus(orderId: number, orderStatus: string): Promise<void> {
+    try {
+        await api.patch(`/api/v1/orders/${orderId}/status`, {
+            order_status: orderStatus
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Không thể cập nhật trạng thái');
+    }
+    }
+
+    async updatePaymentStatus(orderId: number, paymentStatus: string): Promise<void> {
+    try {
+        await api.patch(`/api/v1/orders/${orderId}/payment-status`, {
+            payment_status: paymentStatus
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Không thể cập nhật trạng thái thanh toán');
+    }
+}
     async createOrder(payload: CreateOrderPayload): Promise<Order> {
         try {
             console.log('Creating order with payload:', payload);
@@ -104,8 +145,10 @@ class OrderService {
 
     async cancelOrder(orderId: number, cancelReason: string): Promise<void> {
         try {
-            await api.patch(`/api/v1/orders/${orderId}/cancel`, {
-                cancel_reason: cancelReason
+            await api.delete(`/api/v1/orders/${orderId}/cancel`, {
+                data: {
+                    cancel_reason: cancelReason
+                }
             });
         } catch (error: any) {
             console.error('Cancel order error:', error);

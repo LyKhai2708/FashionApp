@@ -40,7 +40,55 @@ const Dashboard: React.FC = () => {
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <StatCard
+                    title="Tổng người dùng"
+                    value={stats.overview.users.total}
+                    changePercent={stats.overview.users.changePercent}
+                    showComparison={true}
+                    icon={
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-xl">👤</span>
+                        </div>
+                    }
+                />
 
+
+                <StatCard
+                    title="Tổng sản phẩm"
+                    value={stats.overview.products.total}
+                    showComparison={false}
+                    icon={
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <span className="text-xl">📦</span>
+                        </div>
+                    }
+                />
+
+
+                <StatCard
+                    title="Tổng đơn hàng"
+                    value={stats.overview.orders.total}
+                    changePercent={stats.overview.orders.changePercent}
+                    showComparison={true}
+                    icon={
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span className="text-xl">🛒</span>
+                        </div>
+                    }
+                />
+
+                <StatCard
+                    title="Đơn chờ xử lý"
+                    value={stats.overview.pendingOrders}
+                    showComparison={false}
+                    icon={
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <span className="text-xl">⏳</span>
+                        </div>
+                    }
+                />
+            </div>
             {/* Revenue Stats - 2 cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <RevenueCard
@@ -69,63 +117,82 @@ const Dashboard: React.FC = () => {
                 />
             </div>
 
-            {/* Revenue Chart */}
             <RevenueChart />
 
-            {/* Overview Stats - 4 cards với comparison */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Users - CÓ comparison */}
-                <StatCard
-                    title="Tổng người dùng"
-                    value={stats.overview.users.total}
-                    changePercent={stats.overview.users.changePercent}
-                    showComparison={true}
-                    icon={
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">👤</span>
-                        </div>
-                    }
-                />
+            
 
-                {/* Products - KHÔNG có comparison */}
-                <StatCard
-                    title="Tổng sản phẩm"
-                    value={stats.overview.products.total}
-                    showComparison={false}
-                    icon={
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">📦</span>
-                        </div>
-                    }
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-6 border-b">
+                        <h2 className="text-lg font-semibold">🏆 Sản phẩm bán chạy tháng này</h2>
+                    </div>
+                    <div className="p-6">
+                        {stats.topProducts.length > 0 ? (
+                            <div className="space-y-4">
+                                {stats.topProducts.map((product, index) => (
+                                    <div key={product.product_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <span className="text-sm font-bold text-blue-600">#{index + 1}</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{product.product_name}</p>
+                                                <p className="text-sm text-gray-500">Đã bán: {product.total_sold} sản phẩm</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-semibold text-green-600">
+                                                {new Intl.NumberFormat('vi-VN', {
+                                                    style: 'currency',
+                                                    currency: 'VND',
+                                                    notation: 'compact'
+                                                }).format(product.total_revenue)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-center py-4">Chưa có dữ liệu</p>
+                        )}
+                    </div>
+                </div>
 
-                {/* Orders - CÓ comparison */}
-                <StatCard
-                    title="Tổng đơn hàng"
-                    value={stats.overview.orders.total}
-                    changePercent={stats.overview.orders.changePercent}
-                    showComparison={true}
-                    icon={
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">🛒</span>
-                        </div>
-                    }
-                />
-
-                {/* Pending Orders - KHÔNG có comparison */}
-                <StatCard
-                    title="Đơn chờ xử lý"
-                    value={stats.overview.pendingOrders}
-                    showComparison={false}
-                    icon={
-                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">⏳</span>
-                        </div>
-                    }
-                />
+                <div className="bg-white rounded-lg shadow">
+                    <div className="p-6 border-b">
+                        <h2 className="text-lg font-semibold">⚠️ Sản phẩm sắp hết hàng (dưới 10 sản phẩm)</h2>
+                    </div>
+                    <div className="p-6">
+                        {stats.lowStockProducts.length > 0 ? (
+                            <div className="space-y-3">
+                                {stats.lowStockProducts.map((item, index) => (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-gray-900">{item.product_name}</p>
+                                            <p className="text-sm text-gray-500">
+                                                {item.size_name} - {item.color_name}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                                item.stock_quantity === 0 ? 'bg-red-100 text-red-700' :
+                                                item.stock_quantity < 5 ? 'bg-orange-100 text-orange-700' :
+                                                'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                                {item.stock_quantity} còn lại
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-center py-4">Tất cả sản phẩm đều đủ hàng</p>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            {/* Recent Orders Table */}
+
             <div className="bg-white rounded-lg shadow">
                 <div className="p-6 border-b">
                     <h2 className="text-lg font-semibold">Đơn hàng gần đây</h2>

@@ -1,13 +1,12 @@
-// src/admin/routes/AdminRoutes.tsx - FILE MỚI
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAdminAuth } from '../../contexts/admin/AdminAuthContext';
 
-// Admin pages
 import AdminLogin from '../../pages/admin/AdminLogin';
 import AdminLayout from '../../layouts/admin/AdminLayout';
 import Dashboard from '../../pages/admin/Dashboard';
+import Orders from '../../pages/admin/Orders';
+import OrderDetail from '../../pages/admin/OrderDetail';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -39,7 +38,8 @@ const AdminRoutes: React.FC = () => {
                 <Route path="dashboard" element={<Dashboard />} />
                 
                 <Route path="products" element={<div>Products</div>} />
-                <Route path="orders" element={<div>Orders</div>} />
+                <Route path="orders" element={<Orders />} />
+                <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="users" element={<div>Users</div>} />
             </Route>
 
