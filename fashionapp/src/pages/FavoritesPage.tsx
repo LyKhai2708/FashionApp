@@ -49,12 +49,12 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4">
       <Breadcrumb items={breadcrumbItems} />
       
       <div className="flex items-center gap-3 mb-6">
-        <HeartOutlined className="text-3xl text-red-500" />
-        <h1 className="text-3xl font-bold">Sản phẩm yêu thích</h1>
+        <HeartOutlined className="text-xl text-red-500" />
+        <h1 className="text-xl font-semibold">Sản phẩm yêu thích</h1>
         <span className="text-gray-500">({totalRecords} sản phẩm)</span>
       </div>
 

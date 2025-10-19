@@ -58,15 +58,36 @@ async function createReview(req, res, next) {
     }
 }
 
-async function checkReviewed(userId, productId, orderId) {
+async function checkReviewed(req, res, next) {
     try {
-        const existingReview = await reviewService.findReviewByUserProductOrder(userId, productId, orderId);
-        return existingReview;
-    }catch (err) {
+        const { productId, orderId } = req.params;
+        const userId = req.user.id;
+
+        if (!productId || !orderId || isNaN(productId) || isNaN(orderId)) {
+            return next(new ApiError(400, "Product ID hoặc Order ID không hợp lệ"));
+        }
+
+        const reviewed = await reviewService.checkReviewed(userId, parseInt(productId), parseInt(orderId));
+        return res.json(JSend.success({ reviewed }));
+    } catch (err) {
         console.error('Error checking existing review:', err);
         return next(new ApiError(500, err.message || "Error checking existing review"));
     }
-    
+}
+
+async function getMyReview(req, res, next){
+    try{
+        const { productId, orderId } = req.params;
+        const userId = req.user.id;
+        if (!productId || !orderId || isNaN(productId) || isNaN(orderId)) {
+            return next(new ApiError(400, "Product ID hoặc Order ID không hợp lệ"));
+        }
+        const review = await reviewService.getUserReview(userId, parseInt(productId), parseInt(orderId));
+        return res.json(JSend.success({ review }));
+    }catch(err){
+        console.error('Error getting user review:', err);
+        return next(new ApiError(500, err.message || "Error getting user review"));
+    }
 }
 async function updateReview(req, res, next) {
     try {
@@ -108,5 +129,6 @@ module.exports = {
     createReview,
     updateReview,
     deleteReview,
-    checkReviewed
+    checkReviewed,
+    getMyReview
 };

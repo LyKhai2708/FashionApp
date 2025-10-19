@@ -8,23 +8,20 @@ async function register(req, res, next) {
     try {
         const { username, email, password, phone, role } = req.body;
         
-        // Validation
         if (!username || !email || !password || !phone) {
             return next(new ApiError(400, 'Thiếu thông tin'));
         }
         
-        // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return next(new ApiError(400, 'Sai định dạng email'));
         }
         
-        // Password strength validation
         if (password.length < 8) {
             return next(new ApiError(400, 'Mật khẩu dài ít nhất 8 ký tự'));
         }
         
-        // Password complexity validation
+
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
         if (!passwordRegex.test(password)) {
             return next(new ApiError(400, 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt'));
@@ -73,6 +70,7 @@ async function login(req, res, next) {
     }
     const result = await authService.login(email, password);
 
+
     if(!result) {
         return next(new ApiError(401, 'Invalid email or password'));
     }
@@ -98,6 +96,45 @@ async function login(req, res, next) {
         return next(new ApiError(500, 'An error occurred while logging in'));
     }
 }
+
+async function adminLogin(req, res, next) {
+    try {
+        const { email, password } = req.body;
+        if(!email || !password) {
+            return next(new ApiError(400, 'Email and password are required'));
+        }
+        
+        const result = await authService.login(email, password);
+        if(!result) {
+            return next(new ApiError(401, 'Invalid email or password'));
+        }
+        
+        const {user, token, refreshToken} = result;
+
+        if(user.role !== 'admin') {
+            return next(new ApiError(403, 'Access denied. Admin privileges required.'));
+        }
+        res.cookie('refreshToken', refreshToken, 
+            { httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+        
+        return res.json({
+            status: "success",
+            data: {
+                user: { id: user.user_id, email: user.email, role: user.role },
+                token,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        return next(new ApiError(500, 'An error occurred while logging in'));
+    }
+}
+
+
 async function refresh(req, res, next) {
     const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) return next(new ApiError(401, 'No refresh token'));
@@ -124,7 +161,10 @@ function logout(req, res) {
   return res.json({ status: "success", message: "Logged out" });
 }
   
+
+
 module.exports = {
+  adminLogin,
   register,
   login,
   refresh,

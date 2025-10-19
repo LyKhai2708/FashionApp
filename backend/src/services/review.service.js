@@ -125,21 +125,28 @@ async function checkReviewed(userId, productId, orderId) {
     
     return !!existingReview;
 }
+async function getUserReview(userId, productId, orderId){
+    const review = await knex('product_reviews')
+        .where({ user_id: userId, product_id: productId, order_id: orderId })
+        .first();
+    return review || null;
+}
 async function updateProductReview(reviewId, userId, reviewData, isAdmin = false){
     const {rating, comment} = reviewData;
-    
-    let query = knex('product_reviews').where('id', reviewId);
-    
-    if (!isAdmin) {
-        query = query.where('user_id', userId);
+    const existing = await knex('product_reviews').where('id', reviewId).first();
+    if (!existing) return 0;
+    if (!isAdmin && existing.user_id !== userId) return 0;
+    if (existing.updated_at && existing.created_at && existing.updated_at.getTime() !== existing.created_at.getTime()) {
+        throw new Error('Bạn chỉ được chỉnh sửa đánh giá một lần');
     }
-    
-    const result = await query.update({
-        rating,
-        comment,
-        updated_at: knex.fn.now()
-    });
-    
+
+    const result = await knex('product_reviews')
+        .where('id', reviewId)
+        .update({
+            rating,
+            comment,
+            updated_at: knex.fn.now()
+        });
     return result;
 }
 
@@ -156,5 +163,6 @@ module.exports = {
     createProductReview,
     updateProductReview,
     deleteProductReview,
-    checkReviewed
+    checkReviewed,
+    getUserReview
 }

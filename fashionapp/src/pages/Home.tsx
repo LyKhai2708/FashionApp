@@ -5,25 +5,9 @@ import HomeLayout from "../layouts/HomeLayout";
 
 import { useFeaturedProducts, useMostSoldProducts } from "../hooks/useProductList";
 import PromotionTabsSection from "../components/promotion/PromotionTabsSection";
-// interface CategoryItem {
-//     id: number;
-//     name: string;
-//     icon: ReactNode;
-//     slug: string;
-// }
 
-// const categories: CategoryItem[] = [
-//     { id: 1, name: "Nam", icon: <Mars className="w-10 h-10" />, slug: "nam" },
-//     { id: 2, name: "Nữ", icon: <Venus className="w-10 h-10" />, slug: "nu" },
-//     { id: 3, name: "Áo thun", icon: <Shirt className="w-10 h-10" />, slug: "ao-thun" },
-//     { id: 4, name: "Quần", icon: <ShoppingBag className="w-10 h-10 rotate-90" />, slug: "quan" },
-//     { id: 5, name: "Váy", icon: <Sparkles className="w-10 h-10" />, slug: "vay" },
-//     { id: 6, name: "Túi xách", icon: <ShoppingBag className="w-10 h-10" />, slug: "tui-xach" },
-// ];
 
 const Home: FC = () => {
-    // const navigate = useNavigate();
-    
     const { 
         products: featuredProducts, 
         loading: featuredLoading 

@@ -1,4 +1,4 @@
-import { Button, Typography, Empty, Popconfirm, Pagination } from "antd";
+import { Button, Typography, Empty, Pagination, Modal, Input } from "antd";
 import { formatVNDPrice } from '../utils/priceFormatter';
 import type { Order } from '../services/orderService';
 import orderService from '../services/orderService';
@@ -39,13 +39,24 @@ const getStatusColor = (status: string) => {
 
 export default function OrdersList({ orders, onView, onOrderCancelled, total, currentPage = 1, pageSize = 10, onPageChange }: Props) {
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const message = useMessage();
 
-  const handleCancelOrder = async (orderId: number) => {
+  const handleCancelOrder = async () => {
+    if (!selectedOrderId || !cancelReason.trim()) {
+      message.error('Vui lòng nhập lý do hủy đơn hàng');
+      return;
+    }
+
     try {
-      setCancellingId(orderId);
-      await orderService.cancelOrder(orderId);
+      setCancellingId(selectedOrderId);
+      await orderService.cancelOrder(selectedOrderId, cancelReason.trim());
       message.success('Hủy đơn hàng thành công');
+      setCancelModalVisible(false);
+      setCancelReason('');
+      setSelectedOrderId(null);
       if (onOrderCancelled) {
         onOrderCancelled();
       }
@@ -54,6 +65,11 @@ export default function OrdersList({ orders, onView, onOrderCancelled, total, cu
     } finally {
       setCancellingId(null);
     }
+  };
+
+  const showCancelModal = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    setCancelModalVisible(true);
   };
 
   if (orders.length === 0) {
@@ -77,7 +93,7 @@ export default function OrdersList({ orders, onView, onOrderCancelled, total, cu
           <div className="flex items-center justify-between mb-3">
             <div>
               <Typography.Text strong className="text-base">
-                Đơn hàng #DELULU{new Date(order.order_date).getFullYear()}{String(new Date(order.order_date).getMonth() + 1).padStart(2, '0')}{String(order.order_id).padStart(6, '0')}
+                Đơn hàng #{order.order_code || `DELULU${new Date(order.order_date).getFullYear()}${String(new Date(order.order_date).getMonth() + 1).padStart(2, '0')}${String(order.order_id).padStart(6, '0')}`}
               </Typography.Text>
               <Typography.Text type="secondary" className="block text-xs mt-1">
                 {new Date(order.order_date).toLocaleDateString('vi-VN', {
@@ -117,22 +133,14 @@ export default function OrdersList({ orders, onView, onOrderCancelled, total, cu
             </div>
             <div className="flex gap-2">
               {order.order_status === 'pending' && (
-                <Popconfirm
-                  title="Hủy đơn hàng"
-                  description="Bạn có chắc chắn muốn hủy đơn hàng này?"
-                  onConfirm={() => handleCancelOrder(order.order_id)}
-                  okText="Hủy đơn"
-                  cancelText="Không"
-                  okButtonProps={{ danger: true }}
+                <Button 
+                  danger
+                  loading={cancellingId === order.order_id}
+                  disabled={cancellingId !== null}
+                  onClick={() => showCancelModal(order.order_id)}
                 >
-                  <Button 
-                    danger
-                    loading={cancellingId === order.order_id}
-                    disabled={cancellingId !== null}
-                  >
-                    Hủy đơn
-                  </Button>
-                </Popconfirm>
+                  Hủy đơn
+                </Button>
               )}
               <Button 
                 type="default"
@@ -158,6 +166,39 @@ export default function OrdersList({ orders, onView, onOrderCancelled, total, cu
           />
         </div>
       )}
+
+      {/* Cancel Modal */}
+      <Modal
+        title="Hủy đơn hàng"
+        open={cancelModalVisible}
+        onOk={handleCancelOrder}
+        onCancel={() => {
+          setCancelModalVisible(false);
+          setCancelReason('');
+          setSelectedOrderId(null);
+        }}
+        okText="Xác nhận hủy"
+        cancelText="Không hủy"
+        okButtonProps={{ danger: true, loading: cancellingId !== null }}
+        cancelButtonProps={{ disabled: cancellingId !== null }}
+      >
+        <div className="space-y-4">
+          <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Lý do hủy đơn hàng <span className="text-red-500">*</span>
+            </label>
+            <Input.TextArea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Vui lòng nhập lý do hủy đơn hàng..."
+              rows={3}
+              maxLength={500}
+              showCount
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

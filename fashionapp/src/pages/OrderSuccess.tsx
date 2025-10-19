@@ -4,6 +4,7 @@ import { CheckCircle } from 'lucide-react';
 import { Spin, message } from 'antd';
 import orderService from '../services/orderService';
 import type { Order } from '../services/orderService';
+import { formatVNDPrice } from '../utils/priceFormatter';
 
 interface OrderItem {
     product_name: string;
@@ -47,7 +48,6 @@ export default function OrderSuccess() {
         loadOrder();
     }, [orderId, navigate]);
 
-    const formatCurrency = (value: number) => value.toLocaleString('vi-VN');
 
     if (loading) {
         return (
@@ -101,7 +101,7 @@ export default function OrderSuccess() {
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-medium">₫ {formatCurrency(item.price * item.quantity)}</p>
+                                        <p className="font-medium">₫ {formatVNDPrice(item.price * item.quantity)}</p>
                                     </div>
                                 </div>
                             ))
@@ -115,7 +115,7 @@ export default function OrderSuccess() {
                     {/* Total */}
                     <div className="border-t pt-4 flex justify-between items-center">
                         <span className="text-lg font-semibold">Tổng</span>
-                        <span className="text-lg font-bold">₫ {formatCurrency(order.total_amount)}</span>
+                        <span className="text-lg font-bold">₫ {formatVNDPrice(order.total_amount)}</span>
                     </div>
                 </div>
 

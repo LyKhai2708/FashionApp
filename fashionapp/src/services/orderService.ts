@@ -32,6 +32,7 @@ export interface OrderItemDetail {
 
 export interface Order {
     order_id: number;
+    order_code: string;
     user_id: number;
     order_status: string;
     sub_total: number;
@@ -45,10 +46,17 @@ export interface Order {
     shipping_ward: string;
     shipping_ward_code: number;
     shipping_detail_address: string;
+    shipping_full_address?: string;
     receiver_name: string;        
     receiver_phone: string;       
     receiver_email: string;
     order_date: string;
+    shipped_at?: string;
+    delivered_at?: string;
+    cancelled_at?: string;
+    cancel_reason?: string;
+    updated_by?: number;
+    updated_at?: string;
     items?: OrderItemDetail[];
     items_count?: number;
 }
@@ -94,9 +102,11 @@ class OrderService {
         }
     }
 
-    async cancelOrder(orderId: number): Promise<void> {
+    async cancelOrder(orderId: number, cancelReason: string): Promise<void> {
         try {
-            await api.delete(`/api/v1/orders/${orderId}`);
+            await api.patch(`/api/v1/orders/${orderId}/cancel`, {
+                cancel_reason: cancelReason
+            });
         } catch (error: any) {
             console.error('Cancel order error:', error);
             throw new Error(error.response?.data?.message || 'Không thể hủy đơn hàng');

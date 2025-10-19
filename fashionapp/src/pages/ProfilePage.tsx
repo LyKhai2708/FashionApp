@@ -55,7 +55,6 @@ export default function ProfilePage() {
       await userService.updateUser(user.id, {
         username: values.name,
         email: values.email
-        // Không gửi phone - SĐT không được phép thay đổi
       });
       
       message.success('Cập nhật thông tin thành công!');
@@ -68,8 +67,15 @@ export default function ProfilePage() {
     }
   };
   
-  const logout = () => {
-    console.log("Logout");
+  const { logout: doLogout } = useAuth();
+  const handleLogout = async () => {
+    try {
+      await doLogout();
+      message.success('Đăng xuất thành công');
+      window.location.href = '/';
+    } catch (e) {
+      message.error('Đăng xuất thất bại');
+    }
   }
   
   // Load user info
@@ -104,8 +110,6 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       const data = await orderService.getUserOrders(orderPage, orderLimit);
-      console.log('Orders data:', data);
-      console.log('Total:', data.pagination.total, 'Page size:', orderLimit);
       setOrders(data.orders);
       setOrderTotal(data.pagination.total);
     } catch (error) {
@@ -164,7 +168,7 @@ export default function ProfilePage() {
             </Typography.Text>
           </div>
           <div className="flex flex-col gap-3">
-            {menuItems.map((item) => (
+              {menuItems.map((item) => (
               item.key === "logout" ? (
                 <Button
                 
@@ -175,7 +179,7 @@ export default function ProfilePage() {
                   ${activeTab === item.key 
                     ? "!bg-black !text-white hover:!bg-gray-800" 
                     : "!bg-white !text-black border hover:!bg-gray-100"}`}
-                onClick={() => {logout()}}
+                onClick={handleLogout}
               >
                 {item.label}
               </Button>

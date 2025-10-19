@@ -56,7 +56,7 @@ export const generatePublicRoutes = (isAuthenticated: boolean) => {
       Layout = Fragment;
     }
 
-    // Redirect to home if user is authenticated and tries to access login/register
+
     if (isAuthenticated && (route.path === '/login' || route.path === '/register')) {
       return <Route key={index} path={route.path} element={<Navigate to="/" />} />;
     }

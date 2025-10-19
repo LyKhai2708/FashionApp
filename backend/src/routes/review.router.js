@@ -291,6 +291,7 @@ module.exports.setup = (app) => {
    */
   router.delete('/:id',authMiddleware, reviewController.deleteReview);
   router.get('/reviewCheck/product/:productId/order/:orderId',authMiddleware, reviewController.checkReviewed);
+  router.get('/my/product/:productId/order/:orderId',authMiddleware, reviewController.getMyReview);
   // Method not allowed handlers
   router.all('/', methodNotAllowed);
   router.all('/:id', methodNotAllowed);

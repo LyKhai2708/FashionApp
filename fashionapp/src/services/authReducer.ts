@@ -2,7 +2,6 @@ import type { User, AuthState } from '../types/auth';
 import { userStorage, accessTokenStorage } from '../utils/storage';
 import { AUTH_ACTIONS } from './authActions';
 
-// Initial state - check existing auth data
 const existingUser = userStorage.get();
 const existingToken = accessTokenStorage.get();
 
@@ -27,7 +26,7 @@ type AuthAction =
   | { type: typeof AUTH_ACTIONS.CLEAR_ERROR }
   | { type: typeof AUTH_ACTIONS.SET_LOADING; payload: { isLoading: boolean } };
 
-// Reducer function
+
 export const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case AUTH_ACTIONS.LOGIN_START:

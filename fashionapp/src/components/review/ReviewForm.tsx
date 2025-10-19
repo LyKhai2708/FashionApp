@@ -33,8 +33,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     const [rating, setRating] = useState(initialData?.rating || 5);
     const [comment, setComment] = useState(initialData?.comment || '');
     const [orderId, setOrderId] = useState<number | undefined>(initialData?.order_id);
+    const [confirmVisible, setConfirmVisible] = useState(false);
 
-    const handleSubmit = async () => {
+    const doSubmit = async () => {
         if (!editMode && !orderId) {
             message.error('Vui lòng chọn đơn hàng');
             return;
@@ -67,6 +68,14 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         }
     };
 
+    const handleSubmit = async () => {
+        if (editMode && reviewId) {
+            setConfirmVisible(true);
+            return;
+        }
+        await doSubmit();
+    };
+
     const handleClose = () => {
         setRating(5);
         setComment('');
@@ -75,6 +84,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     };
 
     return (
+        <>
         <Modal
             title={editMode ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá'}
             open={visible}
@@ -94,8 +104,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             ]}
         >
             <div className="space-y-4">
-                {/* Chọn đơn hàng (chỉ khi tạo mới) */}
-                {!editMode && (
+
+                {!editMode && orderId === undefined && (
                     <div>
                         <label className="block mb-2 font-medium">
                             Chọn đơn hàng <span className="text-red-500">*</span>
@@ -137,6 +147,20 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                 </div>
             </div>
         </Modal>
+
+        {/* Confirm sửa 1 lần */}
+        <Modal
+            title="Xác nhận sửa đánh giá"
+            open={confirmVisible}
+            onCancel={() => setConfirmVisible(false)}
+            footer={[
+                <Button key="cancel" onClick={() => setConfirmVisible(false)}>Hủy</Button>,
+                <Button key="ok" type="primary" loading={loading} onClick={async () => { await doSubmit(); setConfirmVisible(false); }}>Xác nhận</Button>
+            ]}
+        >
+            Sau khi sửa, bạn sẽ không thể sửa lại lần nữa. Bạn có chắc chắn muốn sửa?
+        </Modal>
+        </>
     );
 };
 

@@ -1,6 +1,8 @@
 import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../types/auth';
-import { accessTokenStorage, userStorage, clearAuthStorage } from '../utils/storage';
+import { accessTokenStorage, userStorage, clearAuthStorage, adminTokenStorage, adminUserStorage, clearAdminStorage } from '../utils/storage';
 import { api } from '../utils/axios';
+
+export type AuthContext = 'user' | 'admin';
 
 class AuthService {
   
@@ -119,6 +121,76 @@ class AuthService {
       throw new Error(error.response?.data?.message || 'Cập nhật thông tin thất bại');
     }
   }
+
+
+  async adminLogin(credentials: LoginRequest): Promise<{user: User; token: string}> {
+    try {
+      const response = await api.post<AuthResponse>('/api/v1/admin/login', credentials);
+      
+      const { user, token } = response.data.data;
+      console.log('Admin login:', response.data.data);
+
+      adminTokenStorage.save(token);
+      adminUserStorage.save(user);
+      
+      return { user, token };
+      
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Đăng nhập thất bại');
+    }
+  }
+
+  async adminLogout(): Promise<void> {
+        try {
+            await api.post('/api/v1/auth/logout');
+        } catch (error) {
+            console.error('Admin logout API error:', error);
+        } finally {
+            clearAdminStorage();
+        }
+  }
+
+  async adminRefreshToken(): Promise<string> {
+        console.log('admin refresh token');
+        try {
+            const response = await api.post<AuthResponse>('/api/v1/auth/refresh', {}, {
+                withCredentials: true
+            });
+            
+            const { token } = response.data.data;
+            console.log('New admin token:', token);
+            
+            adminTokenStorage.save(token);
+            
+            return token;
+            
+        } catch (error: any) {
+            console.error('Admin refresh token error:', error);
+            clearAdminStorage();
+            throw new Error('Phiên đăng nhập admin hết hạn');
+        }
+    }
+    getCurrentAdmin(): User | null {
+        return adminUserStorage.get();
+    }
+
+
+    getAdminToken(): string | null {
+        return adminTokenStorage.get();
+    }
+
+    isAdminAuthenticated(): boolean {
+        const admin = this.getCurrentAdmin();
+        const token = this.getAdminToken();
+        return !!(admin && token && admin.role === 'admin');
+    }
+
+
+    getCurrentContext(): 'user' | 'admin' | null {
+        if (this.isAdminAuthenticated()) return 'admin';
+        if (this.isAuthenticated()) return 'user';
+        return null;
+    }
 }
 
 export  const authService = new AuthService();

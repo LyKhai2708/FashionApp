@@ -48,7 +48,7 @@ async function register(phone, userData) {
         password: hashedPassword,
         phone,
         role,
-        del_flag: 0
+        is_active: 1
     };
     
     const [userId] = await usersRepository().insert(newUser);

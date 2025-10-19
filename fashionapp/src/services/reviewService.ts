@@ -109,12 +109,21 @@ class ReviewService {
         }
     }
 
-    async checkReviewed(productId: number, orderId: number): Promise<Review | null> {
+    async checkReviewed(productId: number, orderId: number): Promise<boolean> {
         try {
             const response = await api.get<any>(`/api/v1/reviews/reviewCheck/product/${productId}/order/${orderId}`);
-            return response.data;
+            return response.data?.data?.reviewed === true;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể kiểm tra đánh giá');
+        }
+    }
+
+    async getMyReview(productId: number, orderId: number) {
+        try {
+            const response = await api.get<any>(`/api/v1/reviews/my/product/${productId}/order/${orderId}`);
+            return response.data?.data?.review || null;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể lấy đánh giá của bạn');
         }
     }
 }

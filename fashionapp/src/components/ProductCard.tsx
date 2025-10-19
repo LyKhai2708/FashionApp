@@ -6,6 +6,7 @@ import { formatVNDPrice } from '../utils/priceFormatter';
 import { favoriteService } from '../services/favoriteService';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useMessage } from '../App';
 
 interface ProductCardProps {
     product: Product;
@@ -15,6 +16,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, compact = false }: ProductCardProps) {
     const { user } = useAuth();
     const { addToCart } = useCart();
+    const message = useMessage();
     const navigate = useNavigate();
     const [liked, setLiked] = useState(product.is_favorite || false);
     const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
         e.stopPropagation();
         
         if (!user) {
-            alert('Vui lòng đăng nhập để thêm sản phẩm yêu thích');
+            message.warning('Vui lòng đăng nhập để thêm sản phẩm yêu thích');
             return;
         }
 
@@ -60,7 +62,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
             setLiked(previousLiked);
             setFavoriteId(previousFavoriteId);
             console.error('Toggle favorite error:', error);
-            alert(error.message || 'Có lỗi xảy ra');
+            message.error(error.message || 'Có lỗi xảy ra');
         } finally {
             setLoading(false);
         }
@@ -131,21 +133,12 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
     const handleColorChange = (e: React.MouseEvent, color: ProductColor) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Color changed:', color.name, 'Has sizes:', color.sizes?.length);
         setSelectedColor(color);
     };
     
     const hasVariants = selectedColor && selectedColor.sizes && selectedColor.sizes.length > 0;
     const hasColors = product.colors && product.colors.length > 0;
     
-    console.log('ProductCard render:', {
-        productName: product.name,
-        selectedColorName: selectedColor?.name,
-        sizesCount: selectedColor?.sizes?.length,
-        hasVariants,
-        hasColors,
-        showQuickAdd
-    });
 
     return (
         <div 
@@ -314,7 +307,8 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                     -{product.discount_percent}%
                 </div>
             ) : null}
-            <button  
+            
+            {!compact &&  (<button  
                 className={`cursor-pointer absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl ${compact ? 'p-2' : 'p-2.5'} ${loading ? 'opacity-50' : ''} hover:scale-110 transition-all duration-200 border border-gray-200`}
                 onClick={handleToggleFavorite}
                 disabled={loading}
@@ -322,9 +316,10 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                 <HeartIcon 
                     className={(liked ? 'text-red-500' : 'text-gray-500') + ' transition-colors duration-200'} 
                     fill={liked ? 'currentColor' : 'none'}
-                    size={compact ? 16 : 18}
+                    size={18}
                 />
-            </button>
+            </button>)
+            }
             
         </div>
     )

@@ -156,3 +156,69 @@ export const recentlyViewedStorage = {
         }
     }
 }
+
+//cho admin
+const ADMIN_STORAGE_KEYS = {
+    access_token: 'admin_access_token',
+    user: 'admin_user'                  
+} as const;
+
+export const adminTokenStorage = {
+    save: (token: string): void => {
+        try {
+            localStorage.setItem(ADMIN_STORAGE_KEYS.access_token, token);
+        } catch (e) {
+            console.error('Error saving admin access token', e);
+        }
+    },
+    get: (): string | null => {
+        try {
+            return localStorage.getItem(ADMIN_STORAGE_KEYS.access_token);
+        } catch (e) {
+            console.error('Error getting admin access token', e);
+            return null;
+        }
+    },
+    remove: (): void => {
+        try {
+            localStorage.removeItem(ADMIN_STORAGE_KEYS.access_token);
+        } catch (e) {
+            console.error('Error removing admin access token', e);
+        }
+    }
+};
+
+export const adminUserStorage = {
+    save: (user: User): void => {
+        try {
+            localStorage.setItem(ADMIN_STORAGE_KEYS.user, JSON.stringify(user));
+        } catch (e) {
+            console.error('Error saving admin user', e);
+        }
+    },
+    get: (): User | null => {
+        try {
+            const user = localStorage.getItem(ADMIN_STORAGE_KEYS.user);
+            return user ? JSON.parse(user) : null;
+        } catch (e) {
+            console.error('Error getting admin user', e);
+            return null;
+        }
+    },
+    remove: (): void => {
+        try {
+            localStorage.removeItem(ADMIN_STORAGE_KEYS.user);
+        } catch (e) {
+            console.error('Error removing admin user', e);
+        }
+    }
+};
+
+export const clearAdminStorage = (): void => {
+    adminTokenStorage.remove();
+    adminUserStorage.remove();
+};
+
+export const isAdminAuth = (): boolean => {
+    return !!adminTokenStorage.get();
+};

@@ -1,9 +1,10 @@
-import { Button, Divider, Tag, Card, Typography, Space } from "antd";
+import { Button, Divider, Tag, Card, Typography, Space, Modal, Rate } from "antd";
 import { ArrowLeftOutlined, UserOutlined, PhoneOutlined, MailOutlined, HomeOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
 import type { Order } from "../services/orderService";
 import { formatVNDPrice } from '../utils/priceFormatter';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReviewForm from "./review/ReviewForm";
+import reviewService from "../services/reviewService";
 
 const { Title, Text } = Typography;
 type Props = {
@@ -55,7 +56,12 @@ export default function OrderDetail({ order, onBack }: Props) {
   const [selectedProduct, setSelectedProduct] = useState<{
     productId: number;
     orderId: number;
+    reviewId?: number;
+    editMode?: boolean;
+    initialData?: { rating: number; comment: string; order_id: number };
   } | null>(null);
+  const [viewModal, setViewModal] = useState<null | { rating: number; comment: string }>(null);
+  const [itemReviews, setItemReviews] = useState<Record<number, any>>({}); // productId -> review | null
 
   const handleOpenReview = (productId: number) => {
     setSelectedProduct({
@@ -65,12 +71,44 @@ export default function OrderDetail({ order, onBack }: Props) {
     setReviewModalVisible(true);
   };
 
+  const handleOpenEdit = (productId: number) => {
+    const review = itemReviews[productId];
+    if (!review) return;
+    setSelectedProduct({
+      productId,
+      orderId: order!.order_id,
+      reviewId: review.id,
+      editMode: true,
+      initialData: { rating: review.rating, comment: review.comment, order_id: order!.order_id }
+    });
+    setReviewModalVisible(true);
+  };
+
   const handleReviewSuccess = () => {
     setReviewModalVisible(false);
     setSelectedProduct(null);
+    if (order && selectedProduct?.productId) {
+      fetchItemReview(selectedProduct.productId);
+    }
   };
   if (!order) return null;
   const isDelivered = order.order_status === 'delivered';
+
+  const fetchItemReview = async (productId: number) => {
+    try {
+      const review = await reviewService.getMyReview(productId, order!.order_id);
+      setItemReviews(prev => ({ ...prev, [productId]: review }));
+    } catch (_) {
+      setItemReviews(prev => ({ ...prev, [productId]: null }));
+    }
+  };
+
+  useEffect(() => {
+    if (!order || !isDelivered) return;
+    const productIds = (order.items || []).map((i: any) => i.product_id);
+    productIds.forEach(pid => fetchItemReview(pid));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.order_id, isDelivered]);
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Header */}
@@ -84,17 +122,49 @@ export default function OrderDetail({ order, onBack }: Props) {
               size="large"
             />
             <div>
-              <Title level={3} className="!mb-1">Đơn hàng #{order.order_id}</Title>
-              <Text type="secondary" className="flex items-center gap-2">
-                <CalendarOutlined />
-                Đặt hàng: {new Date(order.order_date).toLocaleDateString('vi-VN', {
-                  year: 'numeric',
-                  month: 'long', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Text>
+              <Title level={3} className="!mb-1">Đơn hàng #{order.order_code || order.order_id}</Title>
+              <div className="space-y-1">
+                <Text type="secondary" className="flex items-center gap-2">
+                  <CalendarOutlined />
+                  Đặt hàng: {new Date(order.order_date).toLocaleDateString('vi-VN', {
+                    year: 'numeric',
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </Text>
+                {order.shipped_at && (
+                  <Text type="secondary" className="flex items-center gap-2 text-xs">
+                    Đã giao cho vận chuyển: {new Date(order.shipped_at).toLocaleDateString('vi-VN', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Text>
+                )}
+                {order.delivered_at && (
+                  <Text type="secondary" className="flex items-center gap-2 text-xs">
+                    Đã giao thành công: {new Date(order.delivered_at).toLocaleDateString('vi-VN', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Text>
+                )}
+                {order.cancelled_at && (
+                  <Text type="secondary" className="flex items-center gap-2 text-xs">
+                    Đã hủy: {new Date(order.cancelled_at).toLocaleDateString('vi-VN', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Text>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -163,6 +233,12 @@ export default function OrderDetail({ order, onBack }: Props) {
                 <Text type="secondary">{order.notes}</Text>
               </div>
             )}
+            {order.cancel_reason && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <Text strong className="text-red-600">Lý do hủy:</Text><br/>
+                <Text type="secondary" className="text-red-700">{order.cancel_reason}</Text>
+              </div>
+            )}
           </Space>
         </Card>
       </div>
@@ -208,14 +284,43 @@ export default function OrderDetail({ order, onBack }: Props) {
                 
                 {isDelivered && (
                   <div className="mt-3">
-                    <Button 
-                      size="small"
-                      type="primary"
-                      onClick={() => handleOpenReview(item.product_id)}
-                      className="!bg-blue-500 hover:!bg-blue-600"
-                    >
-                      Đánh giá sản phẩm
-                    </Button>
+                    {(() => {
+                      const r = itemReviews[item.product_id];
+                      if (!r) {
+                        return (
+                          <Button 
+                            size="small"
+                            type="primary"
+                            onClick={() => handleOpenReview(item.product_id)}
+                            className="!bg-blue-500 hover:!bg-blue-600"
+                          >
+                            Đánh giá sản phẩm
+                          </Button>
+                        );
+                      }
+                      const isFirstEditAllowed = r.created_at === r.updated_at;
+                      if (isFirstEditAllowed) {
+                        return (
+                          <Button 
+                            size="small"
+                            type="default"
+                            onClick={() => handleOpenEdit(item.product_id)}
+                            className="!text-blue-600"
+                          >
+                            Sửa đánh giá
+                          </Button>
+                        );
+                      }
+                      return (
+                        <Button 
+                          size="small"
+                          type="default"
+                          onClick={() => setViewModal({ rating: r.rating, comment: r.comment })}
+                        >
+                          Xem đánh giá
+                        </Button>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -233,12 +338,31 @@ export default function OrderDetail({ order, onBack }: Props) {
           }}
           onSuccess={handleReviewSuccess}
           productId={selectedProduct.productId}
+          editMode={selectedProduct.editMode}
+          reviewId={selectedProduct.reviewId}
+          initialData={selectedProduct.initialData || { order_id: selectedProduct.orderId as number, rating: 5, comment: '' }}
           userOrders={[{
             order_id: order.order_id,
             order_date: order.order_date
           }]}
         />
       )}
+
+      <Modal
+        open={!!viewModal}
+        onCancel={() => setViewModal(null)}
+        footer={[
+          <Button key="close" onClick={() => setViewModal(null)}>Đóng</Button>
+        ]}
+        title="Đánh giá của bạn"
+      >
+        {viewModal && (
+          <div className="space-y-3">
+            <Rate value={viewModal.rating} disabled />
+            <Typography.Paragraph>{viewModal.comment}</Typography.Paragraph>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

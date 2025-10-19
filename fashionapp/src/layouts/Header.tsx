@@ -19,7 +19,9 @@ interface Category {
     category_id: number;
     category_name: string;
     slug: string;
+    parent_id: number | null;
     description?: string;
+    children?: Category[];
 }
 
 const UserDropDown = () => {
@@ -102,7 +104,7 @@ export default function Header() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const data = await categoryService.getCategories();
+                const data = await categoryService.getCategoryTree();
                 setCategories(data);
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -135,10 +137,23 @@ export default function Header() {
                 {openCategories ? (
                   <div className="flex flex-col pl-6 gap-2 transition">
                     {categories.map(category => (
-                      <div key={category.category_id} className="py-1 text-lg font-semibold">
-                        <Link to={`/collection/${category.slug}`}>
-                          {category.category_name}
-                        </Link>
+                      <div key={category.category_id} className="flex flex-col gap-2">
+                        <div className="py-1 text-lg font-semibold">
+                          <Link to={`/collection/${category.slug}`}>
+                            {category.category_name}
+                          </Link>
+                        </div>
+                        {category.children && category.children.length > 0 && (
+                          <div className="pl-4 flex flex-col gap-1">
+                            {category.children.map(child => (
+                              <div key={child.category_id} className="py-1 text-base text-gray-600">
+                                <Link to={`/collection/${child.slug}`}>
+                                  → {child.category_name}
+                                </Link>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -186,44 +201,34 @@ export default function Header() {
                   <img src="/dress1.jpg" alt="Categories" className="rounded-lg object-cover" />
                 </div>
                 <div className="col-span-3">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <ul className="space-y-3 text-sm">
-                        <li>
+                  <div className="grid grid-cols-2 gap-8">
+                    {categories.map(category => (
+                      <div key={category.category_id} className="space-y-3">
+                        <div className="font-bold text-base border-b pb-2">
                           <Link 
-                            to="/products" 
-                            className="text-gray-700 hover:text-black transition-colors"
+                            to={`/collection/${category.slug}`}
+                            className="text-black hover:text-blue-600 transition-colors"
                           >
-                            Tất cả sản phẩm
+                            {category.category_name}
                           </Link>
-                        </li>
-                        {categories.slice(0, Math.ceil(categories.length / 2)).map(category => (
-                          <li key={category.category_id}>
-                            <Link 
-                              to={`/collection/${category.slug}`}
-                              className="text-gray-700 hover:text-black transition-colors"
-                            >
-                              {category.category_name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="font-bold mb-4 text-lg opacity-0">.</h3>
-                      <ul className="space-y-3 text-sm">
-                        {categories.slice(Math.ceil(categories.length / 2)).map(category => (
-                          <li key={category.category_id}>
-                            <Link 
-                              to={`/collection/${category.slug}`}
-                              className="text-gray-700 hover:text-black transition-colors"
-                            >
-                              {category.category_name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                        </div>
+                        {category.children && category.children.length > 0 && (
+                          <ul className="space-y-2 pl-3">
+                            {category.children.map(child => (
+                              <li key={child.category_id}>
+                                <Link 
+                                  to={`/collection/${child.slug}`}
+                                  className="text-sm text-gray-600 hover:text-black transition-colors flex items-center gap-2"
+                                >
+                                  <span className="text-gray-400">→</span>
+                                  {child.category_name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div className="col-span-1">

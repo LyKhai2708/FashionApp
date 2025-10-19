@@ -17,7 +17,6 @@ export default function Login() {
             console.log("err ", values);
             await login(values)
             message.success('Đăng nhập thành công!')
-            console.log('Đăng nhập thành công!', values)
             navigate('/')
         } catch (error: any) {
             message.error(error.message || 'Đăng nhập thất bại!')

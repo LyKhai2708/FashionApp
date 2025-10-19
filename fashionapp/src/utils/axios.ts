@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig} from 'axios';
-import { accessTokenStorage, clearAuthStorage } from './storage';
+import { accessTokenStorage, clearAdminStorage, clearAuthStorage } from './storage';
+import authService from '../services/authService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -36,7 +37,11 @@ const processQueue = (error: any, token: string | null = null ) => {
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = accessTokenStorage.get();
+
+        const isAdminRoute = config.url?.includes('/admin');
+        const token = isAdminRoute 
+            ? authService.getAdminToken()     
+            : authService.getAccessToken();
 
         if(token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -53,13 +58,15 @@ apiClient.interceptors.response.use(
         return response;
     },
     async (error) => {
+        
         const originalRequest = error.config;
         
-        if(error.response.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/login')) {
-            console.log('🔄 AXIOS - 401 Error, attempting refresh...');
+        // Không retry nếu là login endpoint (user hoặc admin)
+        const isLoginEndpoint = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/admin/login');
+        
+        if(error.response.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
             
             if(isRefreshing) {
-                console.log('🔄 AXIOS - Already refreshing, adding to queue...');
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 }).then((token) => {
@@ -73,37 +80,44 @@ apiClient.interceptors.response.use(
             isRefreshing = true;
             
             try {
-                console.log('🔄 AXIOS - Calling refresh endpoint...');
-                const response = await axios.post(
-                    `${API_URL}/api/v1/auth/refresh`,
-                    {},
-                    {withCredentials: true}
-                )
-
-                const {token} = response.data.data;
-                console.log('✅ AXIOS - Refresh successful, new token received');
                 
-                //luu token moi
-                accessTokenStorage.save(token);
+                const isAdminRoute = originalRequest.url?.includes('/admin');
+                
+                let newToken: string;
+                
+                if (isAdminRoute) {
+                    newToken = await authService.adminRefreshToken();
+                } else {
+                    const response = await axios.post(
+                        `${API_URL}/api/v1/auth/refresh`,
+                        {},
+                        { withCredentials: true }
+                    );
+                    newToken = response.data.data.token;
+                    accessTokenStorage.save(newToken);
+                }
                 
                 //process queue
-                processQueue(null, token);
+                processQueue(null, newToken);
                 
                 //retry original request
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return apiClient(originalRequest);
 
             }catch(refreshError: any){
-                console.log('❌ AXIOS - Refresh failed:', refreshError.response?.status, refreshError.message);
-                
+
                 processQueue(refreshError, null);
+                const isAdminRoute = originalRequest.url?.includes('/admin');
                 
-                clearAuthStorage();
-                
-                window.dispatchEvent(new CustomEvent('auth:logout'));
-                
-                console.log('❌ AXIOS - Redirecting to login...');
-                window.location.href = '/login';
+                if (isAdminRoute) {
+                    clearAdminStorage();
+                    window.dispatchEvent(new Event('admin:logout'));
+                    window.location.href = '/admin/login';
+                } else {
+                    clearAuthStorage();
+                    window.dispatchEvent(new Event('auth:logout'));
+                    window.location.href = '/login';
+                }
                 return Promise.reject(refreshError);
             }finally{
                 isRefreshing = false;

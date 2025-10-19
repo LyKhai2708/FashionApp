@@ -1,13 +1,18 @@
 
 import './App.css'
-import { BrowserRouter, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { generateRoutes } from './routes'
-import { message, notification, Spin } from 'antd'
+import { notification, Spin } from 'antd'
 import { useState, createContext, useContext } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import { CartProvider } from './contexts/CartContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { useToast } from './contexts/ToastContext';
+import { AdminAuthProvider } from './contexts/admin/AdminAuthContext';
+import AdminRoutes from './routes/admin/AdminRoutes';
+
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -24,14 +29,9 @@ export const useLoading = () => {
 };
 
 
-const MessageContext = createContext<ReturnType<typeof message.useMessage>[0] | undefined>(undefined);
-export const useMessage = () => {
-  const context = useContext(MessageContext);
-  if (!context) {
-    throw new Error('useMessage must be used within a MessageProvider');
-  }
-  return context;
-};
+
+
+export const useMessage = useToast;
 
 const NotificationContext = createContext<ReturnType<typeof notification.useNotification>[0] | undefined>(undefined);
 export const useNotification = () => {
@@ -42,40 +42,52 @@ export const useNotification = () => {
   return context;
 };
 
-function AppContent() {
+function UserAppContent() {
   const { isAuthenticated } = useAuth();
   const { isLoading } = useLoading();
   
   return (
     <>
       <Spin fullscreen spinning={isLoading} size="large" />
-      <BrowserRouter>
         <ScrollToTop />
         <Routes>{generateRoutes(isAuthenticated)}</Routes>
-      </BrowserRouter>
     </>
   );
 }
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const [antMessage, messageContextHolder] = message.useMessage();
   const [antNotification, notificationContextHolder] = notification.useNotification();
   
   return (
-    <MessageContext.Provider value={antMessage}>
+    <ToastProvider>
       <NotificationContext.Provider value={antNotification}>
-        {messageContextHolder}
         {notificationContextHolder}
         <LoadingContext.Provider  value={{ isLoading, setIsLoading }}>
-          <AuthProvider>
-            <CartProvider>
-              <AppContent />
-            </CartProvider>
-          </AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/*" element={
+                <AuthProvider>
+                  <CartProvider>
+                    <UserAppContent />
+                  </CartProvider>
+                </AuthProvider>
+              } />
+              <Route
+                path="/admin/*"
+                element={
+                  <AdminAuthProvider>
+                    <AdminRoutes />
+                  </AdminAuthProvider>
+                }
+              />
+            </Routes>
+
+          </BrowserRouter>
+          
         </LoadingContext.Provider>
       </NotificationContext.Provider>
-    </MessageContext.Provider>
+    </ToastProvider>
   )
 }
 
