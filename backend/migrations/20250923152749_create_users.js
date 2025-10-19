@@ -12,8 +12,7 @@ exports.up = function(knex) {
     table.text("address");
     table.enum("role", ["customer", "admin"]).defaultTo("customer");
     table.timestamp("created_at").defaultTo(knex.fn.now());
-    table.boolean("del_flag").nullable(); // tinyint -> boolean trong Knex
-  });
+    table.boolean("is_active").nullable().defaultTo(1);
 };
 
 /**

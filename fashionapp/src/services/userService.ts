@@ -6,6 +6,7 @@ export interface User {
     email: string;
     phone?: string;
     role: string;
+    is_active?: number;
     created_at: string;
 }
 
@@ -32,6 +33,40 @@ class UserService {
             return response.data.data.user;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể cập nhật thông tin');
+        }
+    }
+
+    async getAllUsers(params?: {
+        page?: number;
+        limit?: number;
+        name?: string;
+        email?: string;
+        phone?: string;
+        role?: string;
+        is_active?: number;
+    }): Promise<{ users: User[]; metadata: any }> {
+        try {
+            const response = await api.get<any>('/api/v1/users', { params });
+            return response.data.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể tải danh sách người dùng');
+        }
+    }
+
+    async toggleUserStatus(userId: number, is_active: number): Promise<User> {
+        try {
+            const response = await api.patch<any>(`/api/v1/users/${userId}`, { is_active });
+            return response.data.data.user;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể cập nhật trạng thái');
+        }
+    }
+
+    async disableUser(userId: number): Promise<void> {
+        try {
+            await api.delete<any>(`/api/v1/users/${userId}`);
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể vô hiệu hóa người dùng');
         }
     }
 }

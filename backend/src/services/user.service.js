@@ -24,12 +24,12 @@ async function getUserById(id) {
 }
 
 async function getManyUsers(query){
-    const { page = 1, limit = 10, name, email, phone, role, del_flag} = query
+    const { page = 1, limit = 10, name, email, phone, role, is_active} = query
     const paginator = new Paginator(page, limit);
     let results = await usersRepository()
         .where((builder) => {
             if (name) {
-                builder.where('name', 'like', `%${name}%`);
+                builder.where('username', 'like', `%${name}%`);
             }
             if (email) {
                 builder.where('email', 'like', `%${email}%`);
@@ -40,8 +40,8 @@ async function getManyUsers(query){
             if (role) {
                 builder.where('role', role);
             }
-            if (del_flag) {
-                builder.where('del_flag', del_flag);
+            if (is_active !== undefined) {
+                builder.where('is_active', is_active);
             }
         })
         .select(
@@ -51,7 +51,8 @@ async function getManyUsers(query){
             'email',
             'phone',
             'role',
-            'del_flag'
+            'is_active',
+            'created_at'
         )
         .limit(paginator.limit)
         .offset(paginator.offset);
@@ -84,8 +85,7 @@ async function deleteUser(id) {
     const existingUser = await getUserById(id);
     if (!existingUser) return null;
   
-    // soft delete
-    await usersRepository().where({ user_id: id }).update({ del_flag: 1 });
+    await usersRepository().where({ user_id: id }).update({ is_active: 0 });
   
     return existingUser;
 }
@@ -94,7 +94,7 @@ async function changePassword(id, currentPassword, newPassword) {
     
     const user = await usersRepository()
         .where('user_id', id)
-        .where('del_flag', 0)
+        .where('is_active', 1)
         .first();
     
     if (!user) {

@@ -7,6 +7,7 @@ import AdminLayout from '../../layouts/admin/AdminLayout';
 import Dashboard from '../../pages/admin/Dashboard';
 import Orders from '../../pages/admin/Orders';
 import OrderDetail from '../../pages/admin/OrderDetail';
+import Users from '../../pages/admin/Users';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -40,7 +41,7 @@ const AdminRoutes: React.FC = () => {
                 <Route path="products" element={<div>Products</div>} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
-                <Route path="users" element={<div>Users</div>} />
+                <Route path="users" element={<Users />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

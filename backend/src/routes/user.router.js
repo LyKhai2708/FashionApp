@@ -43,9 +43,9 @@ module.exports.setup = (app) => {
      *         schema:
      *           type: string
      *           enum: [customer, admin]
-     *       - name: del_flag
+     *       - name: is_active
      *         in: query
-     *         description: Filter by deletion status
+     *         description: Filter by active status
      *         required: false
      *         schema:
      *           type: boolean
@@ -232,8 +232,8 @@ module.exports.setup = (app) => {
      * @swagger
      * /api/v1/users/{id}:
      *   delete:
-     *     summary: Delete a user by id (soft delete)
-     *     description: Delete a user by id using soft delete (sets del_flag to 1)
+     *     summary: Disable a user by id
+     *     description: Disable a user by id (sets is_active to 0)
      *     parameters:
      *       - name: id
      *         in: path
