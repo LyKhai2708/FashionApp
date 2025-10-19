@@ -6,17 +6,21 @@ function imagesRepository() {
 }
 
 async function getManyImages(query) {
-    const {product_color_id, page = 1, limit = 5} = query;
+    const {product_id, color_id, page = 1, limit = 5} = query;
     const paginator = new Paginator(page, limit);
 
     let result = await imagesRepository().where((builder) => {
-        if (product_color_id) {
-            builder.where('product_color_id', product_color_id);
+        if (product_id) {
+            builder.where('product_id', product_id);
+        }
+        if (color_id) {
+            builder.where('color_id', color_id);
         }
     }).select(
         knex.raw('count(image_id) OVER() AS recordCount'),
         'image_id',
-        'product_color_id',
+        'product_id',
+        'color_id',
         'image_url'
     ).limit(paginator.limit)
     .offset(paginator.offset);
@@ -34,21 +38,38 @@ async function getManyImages(query) {
 }
 
 async function addImage(payload) {
-    const { product_color_id, image_url } = payload;
+    const { product_id, color_id, image_url, is_primary, display_order } = payload;
     if (!image_url) throw new Error('image_url is required');
-    if (!product_color_id) throw new Error('product_color_id is required');
+    if (!product_id) throw new Error('product_id is required');
+    if (!color_id) throw new Error('color_id is required');
     
-    // Verify product_color exists
-    const productColorExists = await knex('product_colors')
-        .where('product_color_id', product_color_id)
+
+    const productExists = await knex('products')
+        .where('product_id', product_id)
         .first();
     
-    if (!productColorExists) {
-        throw new Error('Product color not found');
+    if (!productExists) {
+        throw new Error('Product not found');
+    }
+
+    const colorExists = await knex('colors')
+        .where('color_id', color_id)
+        .first();
+    
+    if (!colorExists) {
+        throw new Error('Color not found');
     }
     
-    const [image_id] = await imagesRepository().insert({ product_color_id, image_url });
-    return { image_id, product_color_id, image_url };
+    const imageData = {
+        product_id,
+        color_id,
+        image_url,
+        is_primary: is_primary || false,
+        display_order: display_order || 0
+    };
+    
+    const [image_id] = await imagesRepository().insert(imageData);
+    return { image_id, ...imageData };
 }
 
 async function removeImage(image_id) {

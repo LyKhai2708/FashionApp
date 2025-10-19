@@ -71,23 +71,32 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}, role = null) {
     let totalRecords = favorites[0].recordCount;
     const productIds = favorites.map(item => item.product_id);
     
-    const productColors = await knex('product_colors as pc')
-        .join('colors as c', 'pc.color_id', 'c.color_id')
-        .leftJoin('images as img', function() {
-            this.on('img.product_color_id', '=', 'pc.product_color_id')
-                .andOn('img.is_primary', '=', knex.raw('TRUE'));
-        })
-        .whereIn('pc.product_id', productIds)
+
+    const productColors = await knex('product_variants as pv')
+        .join('colors as c', 'pv.color_id', 'c.color_id')
+        .whereIn('pv.product_id', productIds)
         .select(
-            'pc.product_id',
+            'pv.product_id',
             'c.color_id',
             'c.name as color_name',
-            'c.hex_code',
-            'pc.display_order',
-            'img.image_url as primary_image'
+            'c.hex_code'
         )
-        .orderBy('pc.display_order')
-        .orderBy('c.name');
+        .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
+        .orderBy('c.color_id');
+    
+    // Lấy primary images
+    const primaryImages = await knex('images')
+        .whereIn('product_id', productIds)
+        .where('is_primary', true)
+        .select('product_id', 'color_id', 'image_url');
+    
+    const primaryImageMap = {};
+    for (const img of primaryImages) {
+        const key = `${img.product_id}_${img.color_id}`;
+        if (!primaryImageMap[key]) {
+            primaryImageMap[key] = img.image_url;
+        }
+    }
 
     let queryVariant = knex('product_variants as pv')
         .join('sizes as s', 'pv.size_id', 's.size_id')
@@ -133,7 +142,7 @@ async function getFavorites(user_id, {page = 1, limit = 10} = {}, role = null) {
             color_id: color.color_id,
             name: color.color_name,
             hex_code: color.hex_code,
-            primary_image: color.primary_image,
+            primary_image: primaryImageMap[key] || null,
             sizes: sizesByProductColor[key] || []
         });
         return acc;

@@ -11,12 +11,9 @@ async function getCart(userId) {
         .join('products as p', 'pv.product_id', 'p.product_id')
         .join('colors as col', 'pv.color_id', 'col.color_id')
         .join('sizes as s', 'pv.size_id', 's.size_id')
-        .leftJoin('product_colors as pc', function() {
-            this.on('pc.product_id', '=', 'p.product_id')
-                .andOn('pc.color_id', '=', 'col.color_id');
-        })
         .leftJoin('images as img', function() {
-            this.on('img.product_color_id', '=', 'pc.product_color_id')
+            this.on('img.product_id', '=', 'p.product_id')
+                .andOn('img.color_id', '=', 'col.color_id')
                 .andOn('img.is_primary', '=', knex.raw('TRUE'));
         })
         .leftJoin(knex.raw(`

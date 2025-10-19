@@ -1,6 +1,22 @@
 const knex = require('../database/knex');
 const slugify = require('./slugify');
 const Paginator = require('./paginator');
+const { unlink } = require('fs');
+
+async function getAllChildCategoryIds(parentCategoryId) {
+    const childCategories = await knex('categories')
+        .where('parent_id', parentCategoryId)
+        .select('category_id');
+    
+    let allChildIds = [parentCategoryId]; 
+    
+    for (const child of childCategories) {
+        const grandChildIds = await getAllChildCategoryIds(child.category_id);
+        allChildIds = allChildIds.concat(grandChildIds);
+    }
+    
+    return allChildIds;
+}
 
 function productsRepository() {
     return knex('products');
@@ -40,58 +56,45 @@ async function createProduct(payload) {
         const product = readProduct(payload);
         const [product_id] = await trx("products").insert(product);
         
-        const colorInserts = [];
-        const colorMap = new Map(); 
-        
-        if (payload.colors && payload.colors.length > 0) {
-            payload.colors.forEach((color, index) => {
-                colorInserts.push({
-                    product_id: product_id,
-                    color_id: color.color_id,
-                    display_order: color.display_order || index + 1
-                });
-            });
-            
-            const productColorIds = await trx("product_colors").insert(colorInserts);
-            
-            payload.colors.forEach((color, index) => {
-                const productColorId = productColorIds[0] + index;
-                colorMap.set(color.color_id, productColorId);
-            });
-        }
-        
-        if (payload.colors && payload.colors.length > 0) {
-            for (const color of payload.colors) {
-                if (color.images && color.images.length > 0) {
-                    const productColorId = colorMap.get(color.color_id);
-                    const imageInserts = color.images.map((image, index) => ({
-                        product_color_id: productColorId,
-                        image_url: image.url,
-                        is_primary: image.is_primary || index === 0, // Ảnh đầu tiên là primary
-                        display_order: image.display_order || index + 1
-                    }));
-                    
-                    await trx("images").insert(imageInserts);
-                }
-            }
-        }
-        
         if (payload.variants && payload.variants.length > 0) {
             const variantInserts = payload.variants.map(variant => ({
                 product_id: product_id,
                 color_id: variant.color_id,
                 size_id: variant.size_id,
                 stock_quantity: variant.stock_quantity || 0,
-                additional_price: variant.additional_price || 0,
                 active: variant.active !== undefined ? variant.active : 1
             }));
             
             await trx("product_variants").insert(variantInserts);
         }
+        
+        if (payload.variants && payload.variants.length > 0) {
+            const imagesByColor = new Map();
+            
+            payload.variants.forEach(variant => {
+                if (variant.images && variant.images.length > 0) {
+                    if (!imagesByColor.has(variant.color_id)) {
+                        imagesByColor.set(variant.color_id, variant.images);
+                    }
+                }
+            });
+            
+            for (const [color_id, images] of imagesByColor) {
+                const imageInserts = images.map((image, index) => ({
+                    product_id: product_id,
+                    color_id: color_id,
+                    image_url: image.url || image.image_url,
+                    is_primary: image.is_primary || index === 0,
+                    display_order: image.display_order || index + 1
+                }));
+                
+                await trx("images").insert(imageInserts);
+            }
+        }
+        
         return { 
             ...product, 
             product_id,
-            colors_added: payload.colors?.length || 0,
             variants_added: payload.variants?.length || 0
         };
     });
@@ -181,17 +184,16 @@ async function getProductById(id, user_id = null) {
 
 
         const colorIds = variants.length > 0 ? [...new Set(variants.map(v => v.color_id))] : [];
-        const images = colorIds.length > 0 ? await knex('images as img')
-            .join('product_colors as pc', 'img.product_color_id', 'pc.product_color_id')
-            .where('pc.product_id', id)
-            .whereIn('pc.color_id', colorIds)
+        const images = colorIds.length > 0 ? await knex('images')
+            .where('product_id', id)
+            .whereIn('color_id', colorIds)
             .select(
-                'pc.color_id',
-                'img.image_url', 
-                'img.is_primary', 
-                'img.display_order'
+                'color_id',
+                'image_url', 
+                'is_primary', 
+                'display_order'
             )
-            .orderBy('img.display_order') : [];
+            .orderBy('display_order') : [];
 
         const imagesByColor = {};
         for (const img of images) {
@@ -218,7 +220,10 @@ async function getProductById(id, user_id = null) {
                 name: variant.size_name
             },
             stock_quantity: variant.stock_quantity,
-            final_price: parseFloat(product.base_price),
+            final_price: (function() {
+                const baseOrDiscounted = parseFloat(product.discounted_price ?? product.base_price);
+                return parseFloat((baseOrDiscounted).toFixed(2));
+            })(),
             active: variant.active
         }));
 
@@ -249,7 +254,7 @@ async function updateProduct(id, payload) {
     await productsRepository().where("product_id", id).update(update);
     if(update.thumbnail &&
         updatedProduct.thumbnail &&
-        update.thumbnail !== updateProduct.thumbnail
+        update.thumbnail !== updatedProduct.thumbnail
         && updatedProduct.thumbnail.startsWith('/public/uploads/'))
     {
         unlink(`.${updatedProduct.thumbnail}`, (err) => {});
@@ -263,12 +268,25 @@ async function getManyProducts(query, role = null) {
     const { search, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10, sort, user_id } = query;
 
     const paginator = new Paginator(page, limit);
+    
+    let categoryIds = null;
+    if (category_id) {
+        categoryIds = await getAllChildCategoryIds(category_id);
+    } else if (category_slug) {
+        const category = await knex('categories')
+            .where('slug', category_slug)
+            .first();
+        if (category) {
+            categoryIds = await getAllChildCategoryIds(category.category_id);
+        }
+    }
 
     function applyFilters(builder) {
         if (search) builder.where('p.name', 'like', `%${search}%`);
         if (brand_id) builder.where('p.brand_id', brand_id);
-        if (category_id) builder.where('p.category_id', category_id);
-        if (category_slug) builder.where('cat.slug', category_slug);
+        if (categoryIds) {
+            builder.whereIn('p.category_id', categoryIds);
+        }
         if (del_flag !== undefined) {
             builder.where('p.del_flag', del_flag == '1' || del_flag == 'true' ? 1 : 0);
         } else {
@@ -337,14 +355,10 @@ async function getManyProducts(query, role = null) {
             query = query.join('product_variants as pv', 'p.product_id', 'pv.product_id');
         }
         
-        if (category_slug) {
-            query = query.join('categories as cat', 'p.category_id', 'cat.category_id');
-        }
 
         return query;
     }
 
-    // Main query để lấy products
     let productsQuery = buildBaseQuery()
         .where(applyFilters)
         .select(
@@ -412,44 +426,43 @@ async function getManyProducts(query, role = null) {
     if (products.length > 0) {
         const productIds = products.map(p => p.product_id);
         
+        const colors = await knex('product_variants as pv')
+            .join('colors as c', 'pv.color_id', 'c.color_id')
+            .whereIn('pv.product_id', productIds)
+            .select('pv.product_id', 'c.color_id', 'c.name as color_name', 'c.hex_code')
+            .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
+            .orderBy('c.color_id');
 
-        const colors = await knex('product_colors as pc')
-            .join('colors as c', 'pc.color_id', 'c.color_id')
-            .whereIn('pc.product_id', productIds)
-            .select('pc.product_id', 'pc.product_color_id', 'c.color_id', 'c.name as color_name', 'c.hex_code', 'pc.display_order')
-            .orderBy('pc.display_order');
-
-        const productColorIdsForImages = colors.map(c => c.product_color_id);
         const images = await knex('images')
-            .whereIn('product_color_id', productColorIdsForImages)
-            .select('product_color_id', 'image_url', 'is_primary', 'display_order')
+            .whereIn('product_id', productIds)
+            .select('product_id', 'color_id', 'image_url', 'is_primary', 'display_order')
             .orderBy('display_order');
 
 
-        const imagesByProductColor = {};
+        const imagesByProductAndColor = {};
         for (const img of images) {
-            if (!imagesByProductColor[img.product_color_id]) {
-                imagesByProductColor[img.product_color_id] = [];
+            const key = `${img.product_id}_${img.color_id}`;
+            if (!imagesByProductAndColor[key]) {
+                imagesByProductAndColor[key] = [];
             }
-            imagesByProductColor[img.product_color_id].push({
+            imagesByProductAndColor[key].push({
                 image_url: img.image_url,
                 is_primary: img.is_primary,
                 display_order: img.display_order
             });
         }
 
-        //color by product and images
         const colorsByProduct = {};
         for (const color of colors) {
             if (!colorsByProduct[color.product_id]) {
                 colorsByProduct[color.product_id] = [];
             }
+            const key = `${color.product_id}_${color.color_id}`;
             colorsByProduct[color.product_id].push({
                 color_id: color.color_id,
-                product_color_id: color.product_color_id,
                 name: color.color_name,
                 hex_code: color.hex_code,
-                images: imagesByProductColor[color.product_color_id] || []
+                images: imagesByProductAndColor[key] || []
             });
         }
 
@@ -490,7 +503,6 @@ async function getManyProducts(query, role = null) {
             for (const color of colorsByProduct[productId]) {
                 const key = `${productId}_${color.color_id}`;
                 color.sizes = variantsByProductAndColor[key] || [];
-                delete color.product_color_id;
             }
         }
 
@@ -539,20 +551,16 @@ async function deleteProduct(id) {
 async function hardDeleteProduct(id) {
     return await knex.transaction(async (trx) => {
 
-        const images = await trx('images as img')
-            .join('product_colors as pc', 'img.product_color_id', 'pc.product_color_id')
-            .where('pc.product_id', id)
-            .select('img.image_url');
+        const images = await trx('images')
+            .where('product_id', id)
+            .select('image_url');
         
 
-        await trx('images').whereIn('product_color_id', 
-            trx('product_colors').where('product_id', id).select('product_color_id')
-        ).del();
+        await trx('images').where('product_id', id).del();
         await trx('product_variants').where('product_id', id).del();
-        await trx('product_colors').where('product_id', id).del();
         await trx('products').where('product_id', id).del();
         
-        // 3. Xóa files
+
         for (const img of images) {
             if (img.image_url?.startsWith('/public/uploads/')) {
                 unlink(`.${img.image_url}`, (err) => {

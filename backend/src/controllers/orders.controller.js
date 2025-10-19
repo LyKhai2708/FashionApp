@@ -110,7 +110,8 @@ class OrdersController {
         throw new ApiError(400, 'Trạng thái đơn hàng không được để trống');
       }
 
-      const updated = await orderService.updateOrderStatus(id, order_status);
+      const adminId = req.user?.user_id || null;
+      const updated = await orderService.updateOrderStatus(id, order_status, adminId);
       
       if (!updated) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
@@ -151,29 +152,34 @@ class OrdersController {
 
   async cancelOrder(req, res, next) {
     try {
-      const { id } = req.params;
       
-      // Lấy thông tin đơn hàng
+      
+      const userId = req.user?.user_id;
+      if (!userId) {
+        return next(new ApiError(401, 'Bạn cần đăng nhập để hủy đơn'));
+      }
+      const { id } = req.params;
+      const { cancel_reason } = req.body;
+
+      if (!cancel_reason || !String(cancel_reason).trim()) {
+        return next(new ApiError(400, 'Vui lòng nhập lý do hủy đơn hàng'));
+      }
+
       const order = await orderService.getOrderById(id);
       
       if (!order) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      // Kiểm tra quyền hủy đơn hàng
       if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
         return next(new ApiError(403, 'Bạn không có quyền hủy đơn hàng này'));
       }
 
-      // Chỉ cho phép hủy đơn hàng ở trạng thái pending
-      if (order.order_status !== 'pending') {
-        return next(new ApiError(400, 'Chỉ có thể hủy đơn hàng đang ở trạng thái chờ xử lý'));
-      }
-
-      const cancelled = await orderService.cancelOrder(id);
+    
+      const cancelled = await orderService.cancelOrder(Number(id), order.user_id, cancel_reason);
       
       if (!cancelled) {
-        return next(new ApiError(400, 'Không thể hủy đơn hàng'));
+        return next(new ApiError(400, 'Không thể hủy đơn hàng chỉ hủy được khi trạng thái là pending'));
       }
 
       return res.json(JSend.success({ message: 'Hủy đơn hàng thành công' }));

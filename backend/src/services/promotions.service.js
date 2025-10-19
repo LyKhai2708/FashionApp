@@ -6,7 +6,6 @@ function promotionRepository() {
 
 function readPromotion(payload) {
     const promotion = {
-        promo_id: payload.promo_id,
         name: payload.name,
         discount_percent: payload.discount_percent,
         start_date: payload.start_date,
@@ -176,24 +175,29 @@ async function getManyProductInPromotion(payload, role = null){
     let totalRecords = products[0].recordCount;
     
     const productIds = products.map(item => item.product_id);
-    const colors = await knex('product_colors as pc')
-        .join('colors as c', 'pc.color_id', 'c.color_id')
-        .whereIn('pc.product_id', productIds)
-        .select('pc.product_id', 'pc.product_color_id', 'c.color_id', 'c.name as color_name', 'c.hex_code', 'pc.display_order')
-        .orderBy('pc.display_order');
+    
+    // Lấy colors từ product_variants
+    const colors = await knex('product_variants as pv')
+        .join('colors as c', 'pv.color_id', 'c.color_id')
+        .whereIn('pv.product_id', productIds)
+        .select('pv.product_id', 'c.color_id', 'c.name as color_name', 'c.hex_code')
+        .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
+        .orderBy('c.color_id');
 
-    const productColorIdsForImages = colors.map(c => c.product_color_id);
+    // Lấy images trực tiếp
     const images = await knex('images')
-        .whereIn('product_color_id', productColorIdsForImages)
-        .select('product_color_id', 'image_url', 'is_primary', 'display_order')
+        .whereIn('product_id', productIds)
+        .select('product_id', 'color_id', 'image_url', 'is_primary', 'display_order')
         .orderBy('display_order');
 
-    const imagesByProductColor = {};
+    // Group images by product_id and color_id
+    const imagesByProductAndColor = {};
     for (const img of images) {
-        if (!imagesByProductColor[img.product_color_id]) {
-            imagesByProductColor[img.product_color_id] = [];
+        const key = `${img.product_id}_${img.color_id}`;
+        if (!imagesByProductAndColor[key]) {
+            imagesByProductAndColor[key] = [];
         }
-        imagesByProductColor[img.product_color_id].push({
+        imagesByProductAndColor[key].push({
             image_url: img.image_url,
             is_primary: img.is_primary,
             display_order: img.display_order
@@ -247,7 +251,7 @@ async function getManyProductInPromotion(payload, role = null){
             color_id: color.color_id,
             name: color.color_name,
             hex_code: color.hex_code,
-            images: imagesByProductColor[color.product_color_id] || [],
+            images: imagesByProductAndColor[key] || [],
             sizes: variantsByProductAndColor[key] || []
         });
     }
@@ -325,6 +329,13 @@ async function getPromotionById(promoId) {
         product_count: parseInt(productCount.count) || 0
     };
 }
+async function autoDeactivateExpiredPromotions() {
+  await knex('promotions')
+    .where('active', true)
+    .whereRaw('end_date < CURDATE()')
+    .update({ active: false });
+}
+
 
 
 module.exports = {
@@ -335,4 +346,5 @@ module.exports = {
     getManyProductInPromotion,
     deactivatePromotion,
     getPromotionById,
+    autoDeactivateExpiredPromotions
 };

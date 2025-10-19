@@ -14,30 +14,11 @@ function readVariant(payload) {
         active: payload.active !== undefined ? payload.active : 1
     };
 }
-//variants
+
 async function addVariant(product_id, payload) {
     return await knex.transaction(async (trx) => {
         const variant = readVariant({ ...payload, product_id });
-        
-        // Kiểm tra xem product_color đã tồn tại chưa
-        let productColor = await trx('product_colors')
-            .where({
-                product_id: product_id,
-                color_id: variant.color_id
-            })
-            .first();
-        
-        // Nếu chưa có thì tạo mới product_color
-        if (!productColor) {
-            const [productColorId] = await trx('product_colors').insert({
-                product_id: product_id,
-                color_id: variant.color_id,
-                display_order: 0
-            });
-            productColor = { product_color_id: productColorId };
-        }
-        
-        // Thêm variant
+
         const [variant_id] = await trx('product_variants').insert(variant);
         
         return { ...variant, product_variants_id: variant_id };
@@ -61,7 +42,6 @@ async function removeVariant(variantId) {
 }
 
 async function restoreVariant(variantId) {
-    // Khôi phục variant
     const updated = await variantRepository()
         .where("product_variants_id", variantId)
         .update({active: 1});
@@ -97,24 +77,6 @@ async function updateVariant(variantId, payload) {
         }
         
         const variant = readVariant(payload);
-        
-        if (variant.color_id && variant.color_id !== existingVariant.color_id) {
-
-            let productColor = await trx('product_colors')
-                .where({
-                    product_id: existingVariant.product_id,
-                    color_id: variant.color_id
-                })
-                .first();
-
-            if (!productColor) {
-                await trx('product_colors').insert({
-                    product_id: existingVariant.product_id,
-                    color_id: variant.color_id,
-                    display_order: 0
-                });
-            }
-        }
         
         const updated = await trx('product_variants')
             .where("product_variants_id", variantId)

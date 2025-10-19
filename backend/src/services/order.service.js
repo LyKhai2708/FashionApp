@@ -1,9 +1,23 @@
 const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
-/**
- * phí ship dựa vào tổng đơn hàng
- */
+
+
+async function generateOrderCode(prefix = 'DL') {
+  const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,''); 
+  const last = await knex('orders')
+    .where('order_code', 'like', `${prefix}${dateStr}%`)
+    .orderBy('order_id', 'desc')
+    .first();
+
+  let seq = 1;
+  if (last?.order_code) {
+    seq = parseInt(last.order_code.slice(-3), 10) + 1;
+  }
+  return `${prefix}${dateStr}${String(seq).padStart(3, '0')}`;
+}
+
+
 function calculateShippingFee(subTotal) {
   const FREE_SHIP_THRESHOLD = 200000; // 200k
   const STANDARD_SHIPPING_FEE = 30000; // 30k
@@ -13,6 +27,7 @@ function calculateShippingFee(subTotal) {
 
 
 async function createOrder(orderData, items) {
+  const order_code = await generateOrderCode();
   const orderResult = await knex.transaction(async (trx) => {
     // Tính toán tổng tiền
     const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -20,6 +35,11 @@ async function createOrder(orderData, items) {
     const shipping_fee = calculateShippingFee(sub_total);
     const total_amount = sub_total + shipping_fee;
 
+    const fullAddress = [
+      orderData.shipping_detail_address,
+      orderData.shipping_ward,
+      orderData.shipping_province
+    ].filter(Boolean).join(', ');
     // Tạo đơn hàng
     const [orderId] = await trx('orders').insert({
       user_id: orderData.user_id,
@@ -29,7 +49,7 @@ async function createOrder(orderData, items) {
       total_amount: total_amount,
       payment_method: orderData.payment_method || 'cash_on_delivery',
       payment_status: 'unpaid',
-      notes: orderData.notes,
+      notes: orderData.notes ?? null,
       receiver_name: orderData.receiver_name,
       receiver_phone: orderData.receiver_phone,
       receiver_email: orderData.receiver_email,
@@ -38,6 +58,8 @@ async function createOrder(orderData, items) {
       shipping_detail_address: orderData.shipping_detail_address,
       shipping_province_code: orderData.shipping_province_code,
       shipping_ward_code: orderData.shipping_ward_code,
+      shipping_full_address: fullAddress,
+      order_code: order_code,
     });
 
     // Thêm chi tiết đơn hàng
@@ -53,24 +75,38 @@ async function createOrder(orderData, items) {
 
     // Cập nhật số lượng tồn kho
     for (const item of items) {
-      await trx('product_variants')
+      const qty = Number(item.quantity) || 0;
+      if (qty <= 0) {
+        throw new Error('Số lượng sản phẩm không hợp lệ');
+      }
+
+   
+      const updated = await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
-        .decrement('stock_quantity', item.quantity);
-      
+        .andWhere('stock_quantity', '>=', qty)
+        .decrement('stock_quantity', qty);
+
+
+      const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
+      if (affectedRows === 0) {
+        throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
+      }
+
       const variant = await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
         .select('product_id')
         .first();
-      
+
       if (variant) {
         await trx('products')
           .where('product_id', variant.product_id)
-          .increment('sold', item.quantity);
+          .increment('sold', qty);
       }
     }
 
     return { 
-      order_id: orderId, 
+      order_id: orderId,
+      order_code,
       sub_total,
       shipping_fee,
       total_amount,
@@ -83,7 +119,7 @@ async function createOrder(orderData, items) {
 
   sendOrderConfirmationEmail(
     orderResult.order_id, 
-    orderData, 
+    { ...orderData, order_code },
     items, 
     orderResult.sub_total, 
     orderResult.shipping_fee, 
@@ -96,6 +132,11 @@ async function createOrder(orderData, items) {
 }
 
 async function sendOrderConfirmationEmail(orderId, orderData, items, subTotal, shippingFee, totalAmount) {
+  if (!orderData.receiver_email) {
+    console.warn('No receiver_email provided. Skipping email.');
+    return;
+  } 
+  
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.warn('Email credentials not configured. Skipping email.');
     return;
@@ -150,7 +191,7 @@ async function sendOrderConfirmationEmail(orderId, orderData, items, subTotal, s
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: orderData.receiver_email,
-      subject: `Xác nhận đơn hàng #${orderId} - DELULU Fashion`,
+      subject: `Xác nhận đơn hàng #${orderData.order_code} - DELULU Fashion`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #f8f8f8; padding: 20px; text-align: center;">
@@ -159,7 +200,7 @@ async function sendOrderConfirmationEmail(orderId, orderData, items, subTotal, s
           
           <div style="padding: 20px;">
             <h2>Xin chào ${orderData.receiver_name}!</h2>
-            <p>Cảm ơn bạn đã đặt hàng tại DELULU Fashion. Đơn hàng <strong>#${orderId}</strong> của bạn đã được đặt thành công và đang trong quá trình xử lý.</p>
+            <p>Cảm ơn bạn đã đặt hàng tại DELULU Fashion. Đơn hàng <strong>#${orderData.order_code}</strong> của bạn đã được đặt thành công và đang trong quá trình xử lý.</p>
             
             <h3>Chi tiết đơn hàng:</h3>
             <table style="width: 100%; border-collapse: collapse;">
@@ -340,16 +381,37 @@ async function getOrderById(orderId) {
 }
 
 
-async function updateOrderStatus(orderId, order_status) {
-  const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+async function updateOrderStatus(orderId, order_status, adminId = null, cancelReason = null) {
+  const validStatuses = ['pending', 'processing', 'shipped', 'delivered'];
   
   if (!validStatuses.includes(order_status)) {
     throw new Error('Trạng thái đơn hàng không hợp lệ');
   }
+  const order = await knex('orders').where({ order_id: orderId }).first();
+  if (!order) throw new Error('Order not found');
+
+  const patch = {
+    order_status,
+    updated_at: knex.fn.now(),
+  };
+
+  if (adminId) {
+    patch.updated_by = adminId;
+  }
+
+  if (order_status === 'shipped') {
+    if (!order.shipped_at) patch.shipped_at = knex.fn.now();
+  }
+  if (order_status === 'delivered') {
+    if (!order.shipped_at) {
+      throw new Error('Không thể đánh dấu delivered khi chưa shipped');
+    }
+    if (!order.delivered_at) patch.delivered_at = knex.fn.now();
+  }
 
   const [updated] = await knex('orders')
     .where('order_id', orderId)
-    .update({ order_status });
+    .update(patch);
 
   return updated > 0;
 }
@@ -370,13 +432,32 @@ async function updatePaymentStatus(orderId, payment_status) {
 }
 
 
-async function cancelOrder(orderId) {
+async function cancelOrder(orderId, userId, cancelReason = null) {
   return await knex.transaction(async (trx) => {
 
+    const order = await trx('orders')
+      .where({ order_id: orderId })
+      .first();
+
+    if (!order) return false;
+
+    if (order.user_id !== userId) {
+      throw new Error('Bạn không có quyền hủy đơn hàng này');
+    }
+
+    if (order.order_status !== 'pending') {
+      throw new Error('Đơn hàng không thể hủy khi không ở trạng thái pending');
+    }
     const updated = await trx('orders')
-    .update({order_status: 'cancelled'})
-    .where('order_id', orderId)
-    .andWhere('order_status', 'pending');
+      .where({ order_id: orderId })
+      .andWhere('order_status', 'pending')
+      .update({
+        order_status: 'cancelled',
+        cancelled_at: trx.fn.now(),
+        cancel_reason: cancelReason ?? null,
+        updated_at: trx.fn.now(),
+        updated_by: null
+      });
 
     if (updated === 0) return false;
 
@@ -433,5 +514,6 @@ module.exports = {
   updateOrderStatus,
   updatePaymentStatus,
   cancelOrder,
-  getEligibleOrdersForReview
+  getEligibleOrdersForReview,
+  generateOrderCode
 };
