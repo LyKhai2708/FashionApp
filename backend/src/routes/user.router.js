@@ -88,7 +88,7 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error fetching users"
      */
-    router.get('/', usersController.getUsers);
+    router.get('/', authMiddleware, usersController.getUsers);
     
     /**
      * @swagger
@@ -154,7 +154,7 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error fetching user"
      */
-    router.get('/:id', usersController.getUser);
+    router.get('/:id', authMiddleware, usersController.getUser);
     
     /**
      * @swagger
@@ -226,7 +226,7 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error updating user"
      */
-    router.patch('/:id', usersController.updateUser);
+    router.patch('/:id', authMiddleware, usersController.updateUser);
     
     /**
      * @swagger
@@ -292,6 +292,6 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error deleting user"
      */
-    router.delete('/:id', usersController.deleteUser);
+    router.delete('/:id', authMiddleware, usersController.deleteUser);
     router.all('/', methodNotAllowed);
 }

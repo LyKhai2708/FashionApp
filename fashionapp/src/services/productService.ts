@@ -51,8 +51,12 @@ class ProductService{
                     query.append('size_id', params.size_id.toString());
                 }
             }
+            
             if(params.sort){
                 query.append('sort', params.sort);
+            }
+            if(params.del_flag){
+                query.append('del_flag', params.del_flag.toString());
             }
             if(user_id){
                 query.append('user_id', user_id.toString());
@@ -70,6 +74,10 @@ class ProductService{
         
     }
 
+    async deleteProduct (productId: number) {
+        const response = await api.delete(`/api/v1/products/${productId}`);
+        return response.data;
+    };
     async getProductById(id: number, user_id?: number): Promise<ProductDetail> {
         try{
             const query = new URLSearchParams();
@@ -103,6 +111,8 @@ class ProductService{
             ...params
         }, user_id);
     }
+
+    
 }
 
 export const productService = new ProductService();

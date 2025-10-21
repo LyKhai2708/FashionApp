@@ -24,7 +24,15 @@ async function createCategory(req, res, next) {
     return (next(new ApiError(500, 'An error occurred while creating category')));
   }
 }
-
+async function toggleCategoryStatus(req, res, next) {
+  try {
+    const toggled = await categoryService.toggleCategoryStatus(req.params.id);
+    if (!toggled) return next(new ApiError(404, 'Category not found'));
+    return res.json(JSend.success({ category: toggled }));
+  } catch (err) {
+    next(new ApiError(500, 'Error toggling category status'));
+  }
+}
 async function getCategoriesbyFilter(req, res, next) {
     let result = {
       metadata: {
@@ -37,7 +45,11 @@ async function getCategoriesbyFilter(req, res, next) {
       categories: []
     };
   try {
-    result = await categoryService.getAllCategories(req.query);
+    if ( req.query.include_inactive === 'true') {
+      result = await categoryService.getAllCategoriesIncludeInactive(req.query);
+    } else {
+      result = await categoryService.getAllCategories(req.query);
+    }
 
   } catch (error) {
     console.log(error);
@@ -93,6 +105,7 @@ async function updateCategory(req, res, next) {
 module.exports = {
   createCategory,
   getCategoriesbyFilter,
+  toggleCategoryStatus,
   updateCategory,
   deleteCategory,
   getCategory,

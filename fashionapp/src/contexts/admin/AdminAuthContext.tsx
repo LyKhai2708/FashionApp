@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { LoginRequest } from '../../types/auth';
 import type { User } from '../../types/auth';
@@ -130,7 +130,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         }
     };
 
-    const refreshToken = async (): Promise<void> => {
+    const refreshToken = useCallback(async (): Promise<void> => {
         try {
             const newToken = await authService.adminRefreshToken();
             dispatch({ type: 'ADMIN_REFRESH_TOKEN_SUCCESS', payload: { token: newToken } });
@@ -138,7 +138,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             dispatch({ type: 'ADMIN_LOGOUT' });
             throw error;
         }
-    };
+    }, []);
 
     const clearError = (): void => {
         dispatch({ type: 'ADMIN_CLEAR_ERROR' });
@@ -150,6 +150,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         if (state.isAuthenticated) {
             intervalId = setInterval(async () => {
                 if (authService.getCurrentAdmin()) {
+                    console.log(authService.getCurrentAdmin());
                     try {
                         console.log('start auto-refresh');
                         await refreshToken();
@@ -160,7 +161,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
                     console.log('Admin not authenticated');
                     if (intervalId) clearInterval(intervalId);
                 }
-            }, 600000);
+            }, 720000);
         } else {
             if (intervalId) clearInterval(intervalId);
         }
@@ -168,9 +169,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
-    }, [state.isAuthenticated]);
+    }, [state.isAuthenticated, refreshToken]);
 
-    // Initialize from storage
     useEffect(() => {
         const admin = authService.getCurrentAdmin();
         const token = authService.getAdminToken();

@@ -15,9 +15,7 @@ export interface ColorsResponse {
 
 class ColorService {
   
-  /**
-   * Lấy tất cả màu sắc
-   */
+
   async getColors(): Promise<Color[]> {
     try {
       const response = await api.get<ColorsResponse>('/api/v1/colors');
@@ -29,9 +27,7 @@ class ColorService {
     }
   }
 
-  /**
-   * Lấy màu theo ID
-   */
+
   async getColorById(id: number): Promise<Color | null> {
     try {
       const colors = await this.getColors();
@@ -43,9 +39,7 @@ class ColorService {
     }
   }
 
-  /**
-   * Tìm kiếm màu theo tên
-   */
+
   async searchColors(searchTerm: string): Promise<Color[]> {
     try {
       const colors = await this.getColors();
@@ -58,6 +52,16 @@ class ColorService {
       throw new Error(error.response?.data?.message || 'Không thể tìm kiếm màu sắc');
     }
   }
+
+  async deleteColor(id: number): Promise<void> {
+    try {
+      await api.delete(`/api/v1/colors/${id}`);
+    } catch (error: any) {
+      console.error('Delete color error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể xóa màu sắc');
+    }
+  }
+
 }
 
 export const colorService = new ColorService();

@@ -49,6 +49,8 @@ export interface Product {
     price_info: PriceInfo;
     average_rating?: number;
     review_count?: number;
+    del_flag?: number;
+    total_stock?: number;
 }
 
 // Variant cho product detail
@@ -101,6 +103,7 @@ export interface ProductDetail {
     promotion_id?: number;
     min_price?: number;
     max_price?: number;
+    del_flag?: number;
     color_id?: number | number[]; // Support single or multiple colors
     size_id?: number | number[];  // Support single or multiple sizes
     sort?: 'price_asc' | 'price_desc' | 'newest' | 'sold';

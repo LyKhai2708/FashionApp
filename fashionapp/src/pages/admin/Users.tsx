@@ -243,7 +243,8 @@ const Users: React.FC = () => {
                                                 {formatDate(user.created_at)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                <button
+                                                {user.role == 'admin' ? (null) : (
+                                                    <button
                                                     onClick={() => handleToggleStatus(user.user_id, user.is_active || 0)}
                                                     className={`px-3 py-1 rounded-md text-white ${
                                                         user.is_active === 1
@@ -253,6 +254,8 @@ const Users: React.FC = () => {
                                                 >
                                                     {user.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
                                                 </button>
+                                                )}
+                                                
                                             </td>
                                         </tr>
                                     ))}

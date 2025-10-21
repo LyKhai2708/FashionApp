@@ -37,7 +37,6 @@ const processQueue = (error: any, token: string | null = null ) => {
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        // Check context: đang ở admin panel hay user site
         const isAdminContext = window.location.pathname.startsWith('/admin');
         const token = isAdminContext 
             ? authService.getAdminToken()     
@@ -79,7 +78,7 @@ apiClient.interceptors.response.use(
             isRefreshing = true;
             
             try {
-                // Check context: đang ở admin panel hay user site
+
                 const isAdminContext = window.location.pathname.startsWith('/admin');
                 
                 let newToken: string;
@@ -106,7 +105,7 @@ apiClient.interceptors.response.use(
             }catch(refreshError: any){
 
                 processQueue(refreshError, null);
-                // Check context: đang ở admin panel hay user site
+
                 const isAdminContext = window.location.pathname.startsWith('/admin');
                 
                 if (isAdminContext) {

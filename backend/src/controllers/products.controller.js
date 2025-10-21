@@ -60,6 +60,9 @@ async function getProducts(req, res, next) {
   try {
     const query = { ...req.query };
     const role = req.user?.role || null;
+
+    
+
     if (query.brand_id) {
       query.brand_id = parseInt(query.brand_id);
     }

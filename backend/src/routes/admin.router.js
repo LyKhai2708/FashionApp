@@ -10,6 +10,7 @@ const requireAdmin = [
 module.exports.setup = (app) => {
     app.use('/api/v1/admin', router);
     router.post('/login', authController.adminLogin);
+    router.post('/logout', authController.adminLogout);
     router.get('/dashboard/stats', requireAdmin, adminController.getDashboardStast);
     router.get('/dashboard/revenue-chart', requireAdmin, adminController.getRevenueChart);
 }

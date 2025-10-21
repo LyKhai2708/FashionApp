@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect} from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type {LoginRequest, RegisterRequest } from '../types/auth';
 import type { AuthContextType } from '../types/auth';
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         }
     };
 
-    const refreshToken = async (): Promise<void> => {
+    const refreshToken = useCallback(async (): Promise<void> => {
         try{
             const newToken = await authService.refreshToken();
             
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
             dispatch({ type: LOGOUT });
             throw error;
         }
-    };
+    }, []);
 
     const clearError = (): void => {
         dispatch({ type: CLEAR_ERROR });
@@ -104,6 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
           intervalId = setInterval(async () => {
             if (authService.getCurrentUser()) {
               try {
+                console.log('start refresh');
                 await refreshToken();
               } catch (error: any) {
                 console.log(' Auto-refresh failed:', error.message);
@@ -111,14 +112,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
             } else {
               if (intervalId) clearInterval(intervalId);
             }
-          }, 600000);
+          }, 720000); 
         } else {
           if (intervalId) clearInterval(intervalId);
         }
         return () => {
           if (intervalId) clearInterval(intervalId);
         };
-      }, [state.isAuthenticated]);
+      }, [state.isAuthenticated, refreshToken]);
 
     useEffect(() => {
         const user = authService.getCurrentUser();

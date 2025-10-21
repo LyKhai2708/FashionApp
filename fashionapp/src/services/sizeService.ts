@@ -104,6 +104,15 @@ class SizeService {
       throw new Error(error.response?.data?.message || 'Không thể tìm kiếm kích cỡ');
     }
   }
+
+  async deleteSize(id: number): Promise<void> {
+    try {
+      await api.delete(`/api/v1/sizes/${id}`);
+    } catch (error: any) {
+      console.error('Delete size error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể xóa size');
+    }
+  }
 }
 
 export const sizeService = new SizeService();

@@ -81,12 +81,10 @@ class CategoryService {
     const categoryMap = new Map<number, Category>();
     const rootCategories: Category[] = [];
 
-    // Tạo map và khởi tạo children array
     categories.forEach(cat => {
       categoryMap.set(cat.category_id, { ...cat, children: [] });
     });
 
-    // Xây dựng cây
     categories.forEach(cat => {
       const category = categoryMap.get(cat.category_id)!;
       
@@ -119,6 +117,26 @@ class CategoryService {
   async getAll(): Promise<Category[]> {
     return this.getCategories();
   }
+
+  async toggleCategoryStatus(id: number): Promise<Category> {
+  try {
+    const response = await api.patch(`/api/v1/categories/${id}/toggle`);
+    return response.data.data.category;
+  } catch (error: any) {
+    console.error('Toggle category status error:', error);
+    throw new Error(error.response?.data?.message || 'Không thể thay đổi trạng thái danh mục');
+  }
+}
+
+async getAllCategoriesIncludeInactive(): Promise<Category[]> {
+  try {
+    const response = await api.get('/api/v1/categories?include_inactive=true');
+    return response.data.data.categories;
+  } catch (error: any) {
+    console.error('Get all categories error:', error);
+    throw new Error(error.response?.data?.message || 'Không thể tải danh mục');
+  }
+}
 }
 
 export const categoryService = new CategoryService();

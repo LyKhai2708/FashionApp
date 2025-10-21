@@ -289,8 +289,9 @@ async function getManyProducts(query, role = null) {
         }
         if (del_flag !== undefined) {
             builder.where('p.del_flag', del_flag == '1' || del_flag == 'true' ? 1 : 0);
-        } else {
+        } else if(del_flag === undefined && role !== 'admin') {
             builder.where('p.del_flag', 0);
+        } else if( del_flag === undefined && role === 'admin'){
         }
         if (min_price) {
             builder.whereRaw(`
@@ -371,6 +372,7 @@ async function getManyProducts(query, role = null) {
             'p.brand_id',
             'p.category_id',
             'p.created_at',
+            'p.del_flag',
             'p.sold',
             'b.name as brand_name',
             'c.category_name',
@@ -396,7 +398,13 @@ async function getManyProducts(query, role = null) {
                     ELSE false 
                 END as is_favorite
             `),
-            'f.favorite_id'
+            'f.favorite_id',
+            knex.raw(`(
+                SELECT COALESCE(SUM(pv.stock_quantity), 0)
+                FROM product_variants pv
+                WHERE pv.product_id = p.product_id
+            ) as total_stock`)
+                        
         )
         .distinct('p.product_id')
         .limit(paginator.limit)

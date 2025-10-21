@@ -29,7 +29,6 @@ function calculateShippingFee(subTotal) {
 async function createOrder(orderData, items) {
   const order_code = await generateOrderCode();
   const orderResult = await knex.transaction(async (trx) => {
-    // Tính toán tổng tiền
     const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     const shipping_fee = calculateShippingFee(sub_total);
@@ -47,7 +46,7 @@ async function createOrder(orderData, items) {
       sub_total: sub_total,
       shipping_fee: shipping_fee,
       total_amount: total_amount,
-      payment_method: orderData.payment_method || 'cash_on_delivery',
+      payment_method: orderData.payment_method || 'cod',
       payment_status: 'unpaid',
       notes: orderData.notes ?? null,
       receiver_name: orderData.receiver_name,
@@ -73,31 +72,36 @@ async function createOrder(orderData, items) {
 
     await trx('orderdetails').insert(orderItems);
 
-    // Cập nhật số lượng tồn kho
+    const paymentMethod = orderData.payment_method || 'cod';
+    
     for (const item of items) {
       const qty = Number(item.quantity) || 0;
       if (qty <= 0) {
         throw new Error('Số lượng sản phẩm không hợp lệ');
       }
 
-   
-      const updated = await trx('product_variants')
+      // Kiểm tra tồn kho
+      const variant = await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
-        .andWhere('stock_quantity', '>=', qty)
-        .decrement('stock_quantity', qty);
+        .select('stock_quantity', 'product_id')
+        .first();
 
-
-      const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
-      if (affectedRows === 0) {
+      if (!variant || variant.stock_quantity < qty) {
         throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
       }
 
-      const variant = await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .select('product_id')
-        .first();
+  
+      if (paymentMethod === 'cod') {
+        const updated = await trx('product_variants')
+          .where('product_variants_id', item.product_variant_id)
+          .andWhere('stock_quantity', '>=', qty)
+          .decrement('stock_quantity', qty);
 
-      if (variant) {
+        const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
+        if (affectedRows === 0) {
+          throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
+        }
+
         await trx('products')
           .where('product_id', variant.product_id)
           .increment('sold', qty);

@@ -6,14 +6,14 @@ const authMiddleware = (req, res, next) => {
     return next(new ApiError(401, 'Unauthorized'));
   }
 
-  const token = authHeader.split(' ')[1]; // Lấy token từ "Bearer <token>"
+  const token = authHeader.split(' ')[1]; 
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    req.user = decoded; // Lưu thông tin user vào req
+    req.user = decoded; 
     next();
   } catch (err) {
-    next(new ApiError(403, 'Invalid token'));
+    next(new ApiError(401, 'Invalid or expired token'));
   }
 };
 
@@ -26,4 +26,24 @@ function authorizeRoles(roles) {
     };
   }
 
-module.exports = { authMiddleware, authorizeRoles };
+const optionalAuthMiddleware = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        req.user = null;
+        return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        req.user = null;
+        next();
+    }
+};
+
+module.exports = { authMiddleware, authorizeRoles, optionalAuthMiddleware };

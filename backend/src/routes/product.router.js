@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const productController = require("../controllers/products.controller");
 const { methodNotAllowed } = require("../controllers/errors.controller");
-const {authMiddleware, authorizeRoles} = require('../middleware/auth.middleware');
+const {authMiddleware, authorizeRoles, optionalAuthMiddleware} = require('../middleware/auth.middleware');
 const { uploadSingle, uploadMultiple } = require("../middleware/upload_image.middleware");
 
 /**
@@ -112,7 +112,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.get("/", productController.getProducts);
+    router.get("/", optionalAuthMiddleware, productController.getProducts);
 
     /**
      * @swagger

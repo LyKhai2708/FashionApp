@@ -142,7 +142,7 @@ class AuthService {
 
   async adminLogout(): Promise<void> {
         try {
-            await api.post('/api/v1/auth/logout');
+            await api.post('/api/v1/admin/logout');
         } catch (error) {
             console.error('Admin logout API error:', error);
         } finally {

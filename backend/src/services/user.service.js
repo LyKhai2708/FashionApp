@@ -6,14 +6,24 @@ function usersRepository() {
 }
 
 function readUser(payload) {
-    return {
+    const user = {
         user_id: payload.user_id,
         username: payload.username,
         password: payload.password,
         email: payload.email,
         phone: payload.phone,
         role: payload.role,
+        is_active: payload.is_active,
     };
+    
+    // Remove undefined fields
+    Object.keys(user).forEach(key => {
+        if (user[key] === undefined) {
+            delete user[key];
+        }
+    });
+    
+    return user;
 }
 
 async function getUserById(id) {

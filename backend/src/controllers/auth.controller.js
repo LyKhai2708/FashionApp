@@ -114,7 +114,8 @@ async function adminLogin(req, res, next) {
         if(user.role !== 'admin') {
             return next(new ApiError(403, 'Access denied. Admin privileges required.'));
         }
-        res.cookie('refreshToken', refreshToken, 
+
+        res.cookie('adminRefreshToken', refreshToken, 
             { httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
@@ -136,7 +137,11 @@ async function adminLogin(req, res, next) {
 
 
 async function refresh(req, res, next) {
-    const refreshToken = req.cookies.refreshToken;
+    const userRefreshToken = req.cookies.refreshToken;
+    const adminRefreshToken = req.cookies.adminRefreshToken;
+    
+    const refreshToken = adminRefreshToken || userRefreshToken;
+    
     if (!refreshToken) return next(new ApiError(401, 'No refresh token'));
   
     try {
@@ -152,7 +157,7 @@ async function refresh(req, res, next) {
         },
       });
     } catch (err) {
-      return next(new ApiError(403, 'Invalid refresh token'));
+      return next(new ApiError(401, 'Invalid or expired refresh token'));
     }
 }
 
@@ -160,11 +165,17 @@ function logout(req, res) {
   res.clearCookie("refreshToken");
   return res.json({ status: "success", message: "Logged out" });
 }
+
+function adminLogout(req, res) {
+  res.clearCookie("adminRefreshToken");
+  return res.json({ status: "success", message: "Admin logged out" });
+}
   
 
 
 module.exports = {
   adminLogin,
+  adminLogout,
   register,
   login,
   refresh,

@@ -374,5 +374,6 @@ module.exports.setup = (app) => {
      *                   example: "Error fetching category"
      */
     router.get('/:id', categoryController.getCategory);
+    router.patch('/:id/toggle', categoryController.toggleCategoryStatus);
     router.all('/:id', methodNotAllowed);
 }

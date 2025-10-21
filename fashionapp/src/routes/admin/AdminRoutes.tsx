@@ -8,6 +8,10 @@ import Dashboard from '../../pages/admin/Dashboard';
 import Orders from '../../pages/admin/Orders';
 import OrderDetail from '../../pages/admin/OrderDetail';
 import Users from '../../pages/admin/Users';
+import Products from '../../pages/admin/Products';
+import Colors from '../../pages/admin/Colors';
+import Sizes from '../../pages/admin/Sizes';
+import Categories from '../../pages/admin/Categories';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -37,11 +41,13 @@ const AdminRoutes: React.FC = () => {
             >
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                
-                <Route path="products" element={<div>Products</div>} />
+                <Route path="products" element={<Products />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="users" element={<Users />} />
+                <Route path="colors" element={<Colors />} />
+                <Route path="sizes" element={<Sizes />} />
+                <Route path="categories" element={<Categories />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
