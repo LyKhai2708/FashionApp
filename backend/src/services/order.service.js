@@ -46,8 +46,6 @@ async function createOrder(orderData, items) {
       sub_total: sub_total,
       shipping_fee: shipping_fee,
       total_amount: total_amount,
-      payment_method: orderData.payment_method || 'cod',
-      payment_status: 'unpaid',
       notes: orderData.notes ?? null,
       receiver_name: orderData.receiver_name,
       receiver_phone: orderData.receiver_phone,
@@ -61,6 +59,13 @@ async function createOrder(orderData, items) {
       order_code: order_code,
     });
 
+
+    await trx('payments').insert({
+      order_id: orderId,
+      payment_method: orderData.payment_method || 'cod',
+      payment_status: 'pending',
+      amount: total_amount
+    });
     // Thêm chi tiết đơn hàng
     const orderItems = items.map(item => ({
       order_id: orderId,
@@ -114,8 +119,7 @@ async function createOrder(orderData, items) {
       sub_total,
       shipping_fee,
       total_amount,
-      payment_method: orderData.payment_method || 'cash_on_delivery',
-      payment_status: 'unpaid',
+      payment_method: orderData.payment_method || 'cod',
       order_status: 'pending',
       ...orderData 
     };
@@ -270,11 +274,15 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
   
   const query = knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
+    .leftJoin('payments', 'orders.order_id', 'payments.order_id')
     .leftJoin('orderdetails', 'orders.order_id', 'orderdetails.order_id')
     .select([
       'orders.*',
       'users.username as customer_name',
       'users.email as customer_email',
+      'payments.payment_method',
+      'payments.payment_status',
+      'payments.paid_at',
       knex.raw('COUNT(orderdetails.order_id) as items_count')
     ])
     .groupBy('orders.order_id')
@@ -290,11 +298,11 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
   }
 
   if (filters.payment_status) {
-    query.where('orders.payment_status', filters.payment_status);
+    query.where('payments.payment_status', filters.payment_status);
   }
 
   if (filters.payment_method) {
-    query.where('orders.payment_method', filters.payment_method);
+    query.where('payments.payment_method', filters.payment_method);
   }
 
   if (filters.start_date && filters.end_date) {
@@ -310,10 +318,10 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
         builder.where('order_status', filters.order_status);
       }
       if (filters.payment_status) {
-        builder.where('payment_status', filters.payment_status);
+        builder.where('payments.payment_status', filters.payment_status);
       }
       if (filters.payment_method) {
-        builder.where('payment_method', filters.payment_method);
+        builder.where('payments.payment_method', filters.payment_method);
       }
       if (filters.start_date && filters.end_date) {
         builder.whereBetween('order_date', [filters.start_date, filters.end_date]);
@@ -349,11 +357,18 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
 async function getOrderById(orderId) {
   const order = await knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
+    .leftJoin('payments', 'orders.order_id', 'payments.order_id')
     .select([
       'orders.*',
       'users.username as customer_name',
       'users.email as customer_email',
-      'users.phone as customer_phone'
+      'users.phone as customer_phone',
+      'payments.payment_method',
+      'payments.payment_status',
+      'payments.paid_at',
+      'payments.payos_order_code',
+      'payments.payos_transaction_id',
+
     ])
     .where('orders.order_id', orderId)
     .first();
@@ -421,19 +436,7 @@ async function updateOrderStatus(orderId, order_status, adminId = null, cancelRe
 }
 
 
-async function updatePaymentStatus(orderId, payment_status) {
-  const validStatuses = ['unpaid', 'paid', 'pending_refund', 'refunded'];
-  
-  if (!validStatuses.includes(payment_status)) {
-    throw new Error('Trạng thái thanh toán không hợp lệ');
-  }
 
-  const updated = await knex('orders')
-    .where('order_id', orderId)
-    .update({ payment_status });
-
-  return updated > 0;
-}
 
 
 async function cancelOrder(orderId, cancelReason = null) {
@@ -450,9 +453,16 @@ async function cancelOrder(orderId, cancelReason = null) {
       throw new Error('Chỉ có thể hủy đơn hàng đang chờ xử lý');
     }
 
-    let newPaymentStatus = order.payment_status;
-    if (order.payment_status === 'paid') {
-      newPaymentStatus = 'pending_refund';
+    const payments = await trx('payments')
+      .where({ order_id: orderId })
+      .first();
+
+
+    let newPaymentStatus = payments?.payment_status || 'unpaid';
+    if (payments?.payment_status === 'paid') {
+      newPaymentStatus = 'refunded';
+    } else {
+      newPaymentStatus = 'cancelled';
     }
 
     const updated = await trx('orders')
@@ -469,7 +479,12 @@ async function cancelOrder(orderId, cancelReason = null) {
 
     if (updated === 0) return false;
 
-  
+    await trx('payments')
+        .where('order_id', orderId)
+        .update({
+          payment_status: newPaymentStatus,
+          updated_at: trx.fn.now()
+    });
     const orderItems = await trx('orderdetails')
       .where('order_id', orderId)
       .select('product_variant_id', 'quantity');

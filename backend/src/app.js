@@ -24,7 +24,7 @@ const otpRouter = require('./routes/otp.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
-
+const paymentRouter = require('./routes/payments.router');
 const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000')
   .split(',')
   .map(s => s.trim());
@@ -64,6 +64,7 @@ reviewsRouter.setup(app);
 addressRouter.setup(app);
 adminRouter.setup(app);
 otpRouter.setup(app);
+paymentRouter.setup(app);
 cron.schedule('0 0 * * *', () => {
   promotionService.autoDeactivateExpiredPromotions();
 });

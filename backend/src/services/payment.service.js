@@ -14,178 +14,178 @@ const cache = new NodeCache({ checkperiod: 120, deleteOnExpire: true });
 
 
 const paymentCallback = async (key, value) => {
+  const data = value;
   try {
-    const data = value;
     const paymentInfo = await payOS.getPaymentLinkInformation(data.orderCode);
-    
     if (paymentInfo.status === 'PAID') {
-      await processSuccessfulPayment(data, paymentInfo);
+      await handlePaymentSuccess(data.orderId, paymentInfo.id);
     } else if (paymentInfo.status === 'CANCELLED') {
-      await processCancelledPayment(data);
+      await handlePaymentFailed(data.orderId);
     }
   } catch (error) {
     console.error('Payment callback error:', error);
   }
 };
 
-// Đăng ký event expired
 cache.on('expired', paymentCallback);
 
-/**
- * Xử lý payment thành công
- */
-async function processSuccessfulPayment(paymentData, paymentInfo) {
-  const trx = await knex.transaction();
-  
-  try {
-    // Cập nhật trạng thái đơn hàng
-    await trx('orders')
-      .where('order_id', paymentData.orderId)
+
+async function handlePaymentSuccess(orderId, transactionId) {
+  await knex.transaction(async (trx) => {
+    await trx('payments')
+      .where('order_id', orderId)
       .update({
-        order_status: 'confirmed',
         payment_status: 'paid',
-        updated_at: new Date()
+        payos_transaction_id: transactionId,
+        paid_at: knex.fn.now(),
+        updated_at: knex.fn.now()
       });
 
-    // Tạo bản ghi payment
-    await trx('payments').insert({
-      order_id: paymentData.orderId,
-      payment_method: 'payos',
-      payment_status: 'completed',
-      amount: paymentInfo.amount,
-      transaction_id: paymentData.orderCode.toString(),
-      payment_date: new Date(),
-      created_at: new Date(),
-      updated_at: new Date()
-    });
+    await trx('orders')
+      .where('order_id', orderId)
+      .update({
+        order_status: 'processing',
+        updated_at: knex.fn.now()
+      });
 
-    // Giảm stock cho các sản phẩm trong đơn hàng
-    const orderDetails = await trx('orderdetails')
-      .where('order_id', paymentData.orderId);
+    const orderItems = await trx('orderdetails')
+      .where('order_id', orderId)
+      .select('product_variant_id', 'quantity');
 
-    for (const detail of orderDetails) {
-      await trx('product_variants')
-        .where('variant_id', detail.variant_id)
-        .decrement('stock_quantity', detail.quantity);
+    for (const item of orderItems) {
+      const qty = Number(item.quantity) || 0;
+      
+      const updated = await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .andWhere('stock_quantity', '>=', qty)
+        .decrement('stock_quantity', qty);
+
+      const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
+      if (affectedRows === 0) {
+        console.error(`Không đủ stock cho variant ${item.product_variant_id}, quantity: ${qty}`);
+      }
+      
+      const variant = await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .select('product_id')
+        .first();
+      
+      if (variant) {
+        await trx('products')
+          .where('product_id', variant.product_id)
+          .increment('sold', qty);
+      }
     }
-
-    await trx.commit();
-    console.log(`Payment processed successfully for order ${paymentData.orderId}`);
-    
-  } catch (error) {
-    await trx.rollback();
-    console.error('Error processing successful payment:', error);
-    throw error;
-  }
+  });
 }
 
-/**
- * Xử lý payment bị hủy
- */
-async function processCancelledPayment(paymentData) {
+
+async function handlePaymentFailed(orderId) {
   try {
-    // Cập nhật trạng thái đơn hàng thành cancelled
-    await knex('orders')
-      .where('order_id', paymentData.orderId)
+    await knex('payments')
+      .where('order_id', orderId)
       .update({
-        order_status: 'cancelled',
         payment_status: 'failed',
-        updated_at: new Date()
+        failed_at: knex.fn.now(),
+        updated_at: knex.fn.now()
       });
 
-    console.log(`Payment cancelled for order ${paymentData.orderId}`);
+    await knex('orders')
+    .where('order_id', orderId)
+    .update({
+      order_status: 'cancelled',
+      cancelled_at: knex.fn.now(),
+      updated_at: knex.fn.now()
+    });
+    console.log(`Payment failed for order ${orderId}`);
   } catch (error) {
     console.error('Error processing cancelled payment:', error);
     throw error;
   }
 }
 
-/**
- * Tạo payment link cho đơn hàng
- */
-async function createPaymentLink(request) {
+async function createPaymentLink(orderId, returnUrl, cancelUrl) {
   try {
-    // Lấy thông tin đơn hàng
-    const order = await knex('orders')
-      .select('orders.*', 'users.full_name', 'users.email')
-      .leftJoin('users', 'orders.user_id', 'users.user_id')
-      .where('orders.order_id', request.orderId)
-      .first();
+    const orderData = await knex('orders')
+    .leftJoin('users', 'orders.user_id', 'users.user_id')
+    .leftJoin('payments', 'orders.order_id', 'payments.order_id')
+    .select([
+      'orders.*',
+      'users.username',
+      'payments.payment_id',
+      'payments.payment_status',
+      'payments.payment_method'
+    ])
+    .where('orders.order_id', orderId)
+    .first();
 
-    if (!order) {
-      throw new Error('Order not found');
+    if (!orderData) {
+      throw new Error('Đơn hàng không tồn tại');
     }
 
-    if (order.payment_status === 'paid') {
-      throw new Error('Order already paid');
+    if (orderData.payment_status === 'paid') {
+      throw new Error('Đơn hàng đã được thanh toán');
+    }
+
+    if (orderData.payment_method === 'cod') {
+      throw new Error('Đơn hàng COD không cần tạo payment link');
     }
 
     const orderDetails = await knex('orderdetails')
       .select(
-        'orderdetails.*',
-        'products.product_name',
-        'colors.color_name',
-        'sizes.size_name'
+        'products.name as product_name',
+        'sizes.name as size_name',
+        'colors.name as color_name',
+        'orderdetails.quantity',
+        'orderdetails.price'
       )
-      .leftJoin('product_variants', 'orderdetails.variant_id', 'product_variants.variant_id')
+      .leftJoin('product_variants', 'orderdetails.product_variant_id', 'product_variants.product_variants_id')
       .leftJoin('products', 'product_variants.product_id', 'products.product_id')
       .leftJoin('colors', 'product_variants.color_id', 'colors.color_id')
       .leftJoin('sizes', 'product_variants.size_id', 'sizes.size_id')
-      .where('orderdetails.order_id', request.orderId);
+      .where('orderdetails.order_id', orderId);
 
     const orderCode = Math.floor(100000000 + Math.random() * 900000000);
 
-    // Tạo items cho PayOS
-    const items = orderDetails.map(detail => ({
-      name: `${detail.product_name} - ${detail.color_name} - ${detail.size_name}`,
-      quantity: detail.quantity,
-      price: Math.floor(detail.price) 
+    const items = orderDetails.map(item => ({
+      name: `${item.product_name} - ${item.size_name || 'N/A'} - ${item.color_name || 'N/A'}`,
+      quantity: item.quantity,
+      price: Math.floor(item.price) 
     }));
 
-    // Thêm phí ship nếu có
-    if (order.shipping_fee > 0) {
-      items.push({
-        name: 'Phí vận chuyển',
-        quantity: 1,
-        price: Math.floor(order.shipping_fee)
-      });
-    }
-
-    const description = `Thanh toán đơn hàng ${order.order_code}`;
+    const description = `Thanh toán đơn hàng ${orderData.order_code} - ${orderData.username}`;
 
     const body = {
       orderCode,
-      amount: Math.floor(order.total_amount),
+      amount: Math.floor(orderData.total_amount),
       description,
       items,
-      cancelUrl: request.cancelUrl || `${process.env.FRONTEND_URL}/orders/${order.order_id}`,
-      returnUrl: request.returnUrl || `${process.env.FRONTEND_URL}/payment/success/${order.order_id}`
+      cancelUrl: cancelUrl || `${process.env.FRONTEND_URL}/orders/${orderId}?status=cancelled`,
+      returnUrl: returnUrl || `${process.env.FRONTEND_URL}/orders/${orderId}?status=success`
     };
 
     const createPayment = await payOS.createPaymentLink(body);
 
-    // Lưu thông tin vào cache với TTL 15 phút
-    const paymentData = {
-      orderId: request.orderId,
-      orderCode,
-      userId: order.user_id,
-      amount: order.total_amount
-    };
+    await knex('payments')
+    .where('order_id', orderId)
+    .update({
+      payos_order_code: orderCode,
+      payos_checkout_url: createPayment.checkoutUrl,
+      updated_at: knex.fn.now()
+    });
 
-    cache.set(`payment_${request.orderId}`, paymentData, 900); // 15 phút
+    cache.set(`payment_${orderId}`, {
+    orderId,
+    orderCode: orderCode
+    }, 900);
 
-    // Cập nhật order với payment info
-    await knex('orders')
-      .where('order_id', request.orderId)
-      .update({
-        payment_status: 'pending',
-        updated_at: new Date()
-      });
+    
 
     return {
       checkoutUrl: createPayment.checkoutUrl,
       orderCode,
-      qrCode: createPayment.qrCode
+      amount: orderData.total_amount,
+      orderId
     };
 
   } catch (error) {
@@ -194,134 +194,115 @@ async function createPaymentLink(request) {
   }
 }
 
-/**
- * Kiểm tra trạng thái payment
- */
-async function checkPaymentStatus(orderId) {
-  try {
-    const paymentData = cache.get(`payment_${orderId}`);
+
+async function checkPayment(orderId) {
+    const payment = await knex('payments')
+    .where('order_id', orderId)
+    .first();
     
-    if (!paymentData) {
-      const order = await knex('orders')
-        .where('order_id', orderId)
-        .first();
-      
-      if (!order) {
-        throw new Error('Order not found');
-      }
-      
-      return {
-        status: order.payment_status,
-        orderStatus: order.order_status
-      };
+    if (!payment) {
+      throw new Error('Payment not found');
     }
 
-    const paymentInfo = await payOS.getPaymentLinkInformation(paymentData.orderCode);
-    
-    if (paymentInfo.status === 'PAID') {
-      await processSuccessfulPayment(paymentData, paymentInfo);
-      cache.del(`payment_${orderId}`);
-      
-      return {
-        status: 'paid',
-        orderStatus: 'confirmed',
-        transactionId: paymentData.orderCode,
-        amount: paymentInfo.amount
-      };
-    } else if (paymentInfo.status === 'CANCELLED') {
-      await processCancelledPayment(paymentData);
-      cache.del(`payment_${orderId}`);
-      
-      return {
-        status: 'cancelled',
-        orderStatus: 'cancelled'
-      };
+    if (payment.payment_status === 'paid') {
+      return { status: 'PAID', message: 'Đã thanh toán thành công' };
     }
-
-    return {
-      status: 'pending',
-      orderStatus: 'pending'
-    };
-
-  } catch (error) {
-    console.error('Check payment status error:', error);
-    throw error;
-  }
-}
-
-/**
- * Hủy payment link
- */
-async function cancelPaymentLink(orderId) {
-  try {
-    const paymentData = cache.get(`payment_${orderId}`);
-    
-    if (paymentData) {
-      await payOS.cancelPaymentLink(paymentData.orderCode);
-      cache.del(`payment_${orderId}`);
-    }
-
-    // Cập nhật trạng thái đơn hàng
-    await knex('orders')
-      .where('order_id', orderId)
-      .update({
-        order_status: 'cancelled',
-        payment_status: 'cancelled',
-        updated_at: new Date()
-      });
-
-    return { success: true };
-
-  } catch (error) {
-    console.error('Cancel payment link error:', error);
-    throw error;
-  }
-}
-
-/**
- * Webhook handler cho PayOS
- */
-async function handleWebhook(webhookData) {
-  try {
-    // Verify webhook signature nếu cần
-    const { orderCode, status, amount } = webhookData;
-    
-    // Tìm payment data trong cache
-    const cacheKeys = cache.keys();
-    let paymentData = null;
-    
-    for (const key of cacheKeys) {
-      const data = cache.get(key);
-      if (data && data.orderCode === orderCode) {
-        paymentData = data;
-        break;
+    if (payment.payos_order_code) {
+      try {
+        const paymentInfo = await payOS.getPaymentLinkInformation(payment.payos_order_code);
+        
+        if (paymentInfo.status === 'PAID') {
+          await handlePaymentSuccess(orderId, paymentInfo.id);
+          cache.del(`payment_${orderId}`);
+          return { status: 'PAID', message: 'Thanh toán thành công' };
+        } else if (paymentInfo.status === 'CANCELLED') {
+          await handlePaymentFailed(orderId);
+          cache.del(`payment_${orderId}`);
+          return { status: 'CANCELLED', message: 'Thanh toán đã bị hủy' };
+        }
+        
+        return { status: paymentInfo.status, message: 'Đang xử lý thanh toán' };
+      } catch (error) {
+        console.error('Check payment error:', error);
+        throw new Error('Không thể kiểm tra trạng thái thanh toán');
       }
     }
-
-    if (!paymentData) {
-      console.log('Payment data not found in cache for orderCode:', orderCode);
-      return;
-    }
-
-    if (status === 'PAID') {
-      await processSuccessfulPayment(paymentData, { amount, status });
-      cache.del(`payment_${paymentData.orderId}`);
-    } else if (status === 'CANCELLED') {
-      await processCancelledPayment(paymentData);
-      cache.del(`payment_${paymentData.orderId}`);
-    }
-
-    return { success: true };
-
-  } catch (error) {
-    console.error('Webhook handler error:', error);
-    throw error;
-  }
+  return { status: 'PENDING', message: 'Chờ thanh toán' };
 }
 
+
+async function cancelPayment(orderId) {
+  const payment = await knex('payments')
+    .where('order_id', orderId)
+    .first();
+
+  if (!payment) {
+    throw new Error('Không tìm thấy thông tin thanh toán');
+  }
+
+  if (payment.payment_status === 'paid') {
+    throw new Error('Không thể hủy thanh toán đã hoàn thành');
+  }
+
+  if (payment.payos_order_code) {
+    try {
+      await payOS.cancelPaymentLink(payment.payos_order_code);
+    } catch (error) {
+      console.error('Cancel PayOS payment error:', error);
+    }
+  }
+
+  await knex('payments')
+    .where('order_id', orderId)
+    .update({
+      payment_status: 'cancelled',
+      updated_at: knex.fn.now()
+    });
+
+  cache.del(`payment_${orderId}`);
+
+  return { message: 'Đã hủy thanh toán thành công' };
+}
+
+const updatePaymentStatus = async (orderId, status, transactionId = null) => {
+  const validStatuses = ['pending', 'paid', 'failed', 'cancelled', 'refunded'];
+  
+  if (!validStatuses.includes(status)) {
+    throw new Error('Trạng thái thanh toán không hợp lệ');
+  }
+
+  const updateData = {
+    payment_status: status,
+    updated_at: knex.fn.now()
+  };
+
+  if (status === 'paid') {
+    updateData.paid_at = knex.fn.now();
+    if (transactionId) {
+      updateData.payos_transaction_id = transactionId;
+    }
+  } else if (status === 'failed') {
+    updateData.failed_at = knex.fn.now();
+  }
+
+  const updated = await knex('payments')
+    .where('order_id', orderId)
+    .update(updateData);
+
+  return updated > 0;
+};
+
+const getPaymentByOrderId = async (orderId) => {
+  return await knex('payments')
+    .where('order_id', orderId)
+    .first();
+};
 module.exports = {
   createPaymentLink,
-  checkPaymentStatus,
-  cancelPaymentLink,
-  handleWebhook
+  checkPayment,
+  cancelPayment,
+  updatePaymentStatus,
+  getPaymentByOrderId,
+  handlePaymentSuccess,
+  handlePaymentFailed
 };

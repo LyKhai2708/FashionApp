@@ -9,11 +9,12 @@ async function getTodayRevenue() {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const result = await knex('orders')
-    .whereBetween('order_date', [today, tomorrow])
-    .where('order_status', 'delivered')
-    .where('payment_status', 'paid')
-    .sum('total_amount as revenue')
-    .count('order_id as order_count')
+    .join('payments', 'orders.order_id', 'payments.order_id')
+    .whereBetween('orders.order_date', [today, tomorrow])
+    .where('orders.order_status', 'delivered')
+    .where('payments.payment_status', 'paid')
+    .sum('orders.total_amount as revenue')
+    .count('orders.order_id as order_count')
     .first();
 
     return {
@@ -33,13 +34,13 @@ async function getRevenueByDays(days) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
-    console.log(startDate,endDate)
     const result = await knex('orders')
-        .whereBetween('order_date', [startDate, endDate])
-        .where('order_status', 'delivered')
-        .where('payment_status', 'paid')
-        .sum('total_amount as revenue')
-        .count('order_id as order_count')
+        .join('payments', 'orders.order_id', 'payments.order_id')
+        .whereBetween('orders.order_date', [startDate, endDate])
+        .where('orders.order_status', 'delivered')
+        .where('payments.payment_status', 'paid')
+        .sum('orders.total_amount as revenue')
+        .count('orders.order_id as order_count')
         .first();
     return {
         revenue: result.revenue || 0,
@@ -59,11 +60,12 @@ async function getMonthRevenue() {
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
 
     const result = await knex('orders')
-        .whereBetween('order_date', [startOfMonth, endOfMonth])
-        .where('order_status', 'delivered')
-        .where('payment_status', 'paid')
-        .sum('total_amount as revenue')
-        .count('order_id as order_count')
+        .join('payments', 'orders.order_id', 'payments.order_id')
+        .whereBetween('orders.order_date', [startOfMonth, endOfMonth])
+        .where('orders.order_status', 'delivered')
+        .where('payments.payment_status', 'paid')
+        .sum('orders.total_amount as revenue')
+        .count('orders.order_id as order_count')
         .first();
     console.log(result);
     return {
@@ -87,9 +89,10 @@ async function getDailyRevenue(days) {
     startDate.setUTCHours(0, 0, 0, 0);
 
     const results = await knex('orders')
-        .whereBetween('order_date', [startDate, endDate])
-        .where('order_status', 'delivered')
-        .where('payment_status', 'paid')
+        .join('payments', 'orders.order_id', 'payments.order_id')
+        .whereBetween('orders.order_date', [startDate, endDate])
+        .where('orders.order_status', 'delivered')
+        .where('payments.payment_status', 'paid')
         .select(
             knex.raw("DATE_FORMAT(CONVERT_TZ(order_date, '+00:00', '+07:00'), '%Y-%m-%d') as date"),
             knex.raw('SUM(total_amount) as revenue'),
@@ -154,10 +157,11 @@ async function getRevenueComparison() {
     todayStart.setHours(0, 0, 0, 0);
 
     const yesterdayRevenue = await knex('orders')
-        .whereBetween('order_date', [yesterday, todayStart])
-        .where('order_status', 'delivered')
-        .where('payment_status', 'paid')
-        .sum('total_amount as revenue')
+        .join('payments', 'orders.order_id', 'payments.order_id')
+        .whereBetween('orders.order_date', [yesterday, todayStart])
+        .where('orders.order_status', 'delivered')
+        .where('payments.payment_status', 'paid')
+        .sum('orders.total_amount as revenue')
         .first();
 
     const yesterdayAmount = yesterdayRevenue.revenue || 0;
@@ -171,10 +175,11 @@ async function getRevenueComparison() {
     const lastMonthEnd = new Date(month.startDate);
 
     const lastMonthRevenue = await knex('orders')
-        .whereBetween('order_date', [lastMonthStart, lastMonthEnd])
-        .where('order_status', 'delivered')
-        .where('payment_status', 'paid')
-        .sum('total_amount as revenue')
+        .join('payments', 'orders.order_id', 'payments.order_id')
+        .whereBetween('orders.order_date', [lastMonthStart, lastMonthEnd])
+        .where('orders.order_status', 'delivered')
+        .where('payments.payment_status', 'paid')
+        .sum('orders.total_amount as revenue')
         .first();
 
     const lastMonthAmount = lastMonthRevenue.revenue || 0;

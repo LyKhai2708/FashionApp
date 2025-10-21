@@ -1,4 +1,4 @@
-// src/pages/admin/Sizes.tsx
+
 import { useState, useEffect } from 'react';
 import { useMessage } from '../../App';
 import sizeService from '../../services/sizeService';

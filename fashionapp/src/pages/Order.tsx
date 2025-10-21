@@ -7,6 +7,7 @@ import { message } from "antd";
 import addressService from "../services/addressService";
 import orderService from "../services/orderService";
 import type { CreateOrderPayload } from "../services/orderService";
+import paymentService from "../services/paymentService";
 
 const {Title} = Typography;
 
@@ -84,7 +85,7 @@ export default function Order() {
     }, [isAuthenticated, form]);
 
     const [showBankInfo, setShowBankInfo] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank'>('cod');
+    const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank_transfer' | 'payos'>('cod');
 
     const handlePaymentChange = (e: any) => {
         const value = e.target.value;
@@ -143,8 +144,24 @@ export default function Order() {
             const order = await orderService.createOrder(orderPayload);
             message.success('Đặt hàng thành công!');
 
+        if (values.payment === 'payos') {
+            try {
+                const paymentLink = await paymentService.createPaymentLink({
+                    orderId: order.order_id,
+                    returnUrl: `${window.location.origin}/payment/success/${order.order_id}`,
+                    cancelUrl: `${window.location.origin}/payment/cancel/${order.order_id}`
+                });
+                
+                window.location.href = paymentLink.checkoutUrl;
+            } catch (paymentError: any) {
+                message.error(paymentError.message || 'Không thể tạo link thanh toán');
+                await clearCart();
+                navigate(`/order/success/${order.order_id}`);
+            }
+        } else {
             await clearCart();
             navigate(`/order/success/${order.order_id}`);
+        }
         } catch (error: any) {
             message.error(error.message || 'Đặt hàng thất bại');
         } finally {
@@ -284,22 +301,28 @@ export default function Order() {
 
                             <Form.Item name="payment" rules={[{ required: true, message: "Chọn phương thức thanh toán" }]}>
                                 <Radio.Group className="w-2/3" onChange={handlePaymentChange} value={paymentMethod}>
-                                <div className=" flex flex-col items-start justify-center border border-gray-200 p-4 rounded-md shadow-lg">
-
-                                    <Radio value="cod">
-                                        <div className="flex items-center gap-2">
-                                            <img className="w-8 h-8" src="/COD.jpg"/>
-                                            <span className="text-lg">Thanh toán khi giao hàng (COD)</span>
-                                        </div>
-                                    </Radio>
-                                    <Divider/>
-                                    <Radio value="bank_transfer">
-                                        <div className="flex items-center gap-2">
-                                            <img className="w-8 h-8" src="/bank-transfer.png"/>
-                                            <span className="text-lg">Thanh toán qua ngân hàng</span>
-                                        </div>
-                                    </Radio>
-                                </div>
+                                    <div className="flex flex-col items-start justify-center border border-gray-200 p-4 rounded-md shadow-lg">
+                                        <Radio value="cod">
+                                            <div className="flex items-center gap-2">
+                                                <img className="w-8 h-8" src="/COD.jpg"/>
+                                                <span className="text-lg">Thanh toán khi giao hàng (COD)</span>
+                                            </div>
+                                        </Radio>
+                                        <Divider/>
+                                        <Radio value="payos">
+                                            <div className="flex items-center gap-2">
+                                                <img className="w-8 h-8" src="/payos-logo.png"/>
+                                                <span className="text-lg">Thanh toán online (PayOS)</span>
+                                            </div>
+                                        </Radio>
+                                        <Divider/>
+                                        <Radio value="bank_transfer">
+                                            <div className="flex items-center gap-2">
+                                                <img className="w-8 h-8" src="/bank-transfer.png"/>
+                                                <span className="text-lg">Thanh toán qua ngân hàng</span>
+                                            </div>
+                                        </Radio>
+                                    </div>
                                 </Radio.Group>
                             </Form.Item>
                             <div

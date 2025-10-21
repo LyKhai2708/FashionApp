@@ -136,31 +136,6 @@ class OrdersController {
     }
   }
 
-  async updatePaymentStatus(req, res, next) {
-    try {
-      if (req.user.role !== 'admin') {
-        return next(new ApiError(403, 'Chỉ admin mới có quyền thực hiện thao tác này'));
-      }
-
-      const { id } = req.params;
-      const { payment_status } = req.body;
-
-      if (!payment_status) {
-        throw new ApiError(400, 'Trạng thái thanh toán không được để trống');
-      }
-
-      const updated = await orderService.updatePaymentStatus(id, payment_status);
-      
-      if (!updated) {
-        return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
-      }
-
-      return res.json(JSend.success({ message: 'Cập nhật trạng thái thanh toán thành công' }));
-    } catch (error) {
-      console.error('Error updating payment status:', error);
-      return next(new ApiError(500, error.message || 'Lỗi khi cập nhật trạng thái thanh toán'));
-    }
-  }
 
   async cancelOrder(req, res, next) {
     try {
