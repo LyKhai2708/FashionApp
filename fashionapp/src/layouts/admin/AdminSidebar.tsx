@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../../contexts/admin/SidebarContext';
+import { Package, Shirt, Tag, User } from 'lucide-react';
 
 type NavItem = {
   name: string;
@@ -21,40 +22,35 @@ const navItems: NavItem[] = [
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/>
-      </svg>
+      <Shirt/>
     ),
     name: "Products",
     subItems: [
       { name: "All Products", path: "/admin/products" },
       { name: "Add Product", path: "/admin/products/add" },
       { name: "Categories", path: "/admin/categories" },
+      { name: "Brands", path: "/admin/brands" },
+      { name: "Colors", path: "/admin/colors" },
+      { name: "Sizes", path: "/admin/sizes" },
     ],
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z" fill="currentColor"/>
-      </svg>
+      <Package/>
     ),
     name: "Orders",
     path: "/admin/orders",
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
-      </svg>
+      <User/>
     ),
     name: "Users",
     path: "/admin/users",
   },
   {
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
-      </svg>
+      <Tag/>
     ),
     name: "Promotions",
     path: "/admin/promotions",
@@ -156,7 +152,6 @@ const AdminSidebar: React.FC = () => {
                       )}
                     </button>
 
-                    {/* Submenu */}
                     {item.subItems && (isExpanded || isHovered || isMobileOpen) && (
                       <div
                         className={`overflow-hidden transition-all duration-300 ${
