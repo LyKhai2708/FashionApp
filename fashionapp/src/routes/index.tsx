@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 import DefaultLayout from '../layouts/DefaultLayout';
+import PaymentCancel from '../pages/PaymentCancel';
 
 type RouteType = {
   path: string;
@@ -40,6 +41,7 @@ const publicRoutes: RouteType[] = [
 const privateRoutes: RouteType[] = [
   { path: '/order', component: Order },
   { path: '/order/success/:orderId', component: OrderSuccess },
+  { path: '/payment/cancel/:orderId', component: PaymentCancel },
   { path: '/profile', component: ProfilePage },
   { path: '/favorites', component: FavoritesPage },
 ];

@@ -285,7 +285,14 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
       'payments.paid_at',
       knex.raw('COUNT(orderdetails.order_id) as items_count')
     ])
-    .groupBy('orders.order_id')
+    .groupBy(
+      'orders.order_id',
+      'users.username',
+      'users.email',
+      'payments.payment_method',
+      'payments.payment_status',
+      'payments.paid_at'
+    )
     .orderBy('orders.order_date', 'desc');
 
 
@@ -535,7 +542,6 @@ module.exports = {
   calculateShippingFee,
   getOrderById,
   updateOrderStatus,
-  updatePaymentStatus,
   cancelOrder,
   getEligibleOrdersForReview,
   generateOrderCode

@@ -148,7 +148,7 @@ export default function Order() {
             try {
                 const paymentLink = await paymentService.createPaymentLink({
                     orderId: order.order_id,
-                    returnUrl: `${window.location.origin}/payment/success/${order.order_id}`,
+                    returnUrl: `${window.location.origin}/order/success/${order.order_id}?payment=payos`,
                     cancelUrl: `${window.location.origin}/payment/cancel/${order.order_id}`
                 });
                 

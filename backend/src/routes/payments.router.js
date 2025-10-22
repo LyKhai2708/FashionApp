@@ -166,5 +166,5 @@ module.exports.setup = (app) => {
     paymentsController.updatePaymentStatus
   );
 
-  router.all('*', methodNotAllowed);
+  router.use(methodNotAllowed);
 };

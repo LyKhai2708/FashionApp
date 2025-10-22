@@ -5,7 +5,9 @@ import { formatVNDPrice } from '../utils/priceFormatter';
 import { useEffect, useState } from "react";
 import ReviewForm from "./review/ReviewForm";
 import reviewService from "../services/reviewService";
-
+import { useRetryPayment } from '../hooks/useRetryPayment';
+import { PaymentCountdown } from '../components/PaymentCountdown';
+import { RetryPaymentButton } from '../components/RetryPaymentButton';
 const { Title, Text } = Typography;
 type Props = {
   order: Order | null;
@@ -52,6 +54,18 @@ const getPaymentStatusText = (status: string) => {
 
 
 export default function OrderDetail({ order, onBack }: Props) {
+
+  const showRetryButton = 
+  order.order_status === 'pending' && 
+  order.payment_method === 'payos' &&
+  (order.payment_status === 'failed' || order.payment_status === 'pending');
+
+const { 
+  retryPayment, 
+  loading: retryLoading, 
+  canRetry, 
+  timeLeft 
+} = useRetryPayment(order.order_id);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{
     productId: number;
@@ -242,6 +256,34 @@ export default function OrderDetail({ order, onBack }: Props) {
           </Space>
         </Card>
       </div>
+
+      {/* Retry Payment Section */}
+      {showRetryButton && (
+        <Card className="shadow-sm border-orange-200">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-orange-700">
+              <FileTextOutlined />
+              <span className="font-semibold text-lg">Đơn hàng chưa thanh toán</span>
+            </div>
+            
+            <div className="p-4 bg-orange-50 rounded-lg">
+              <Text className="text-orange-800">
+                Đơn hàng của bạn chưa được thanh toán. Vui lòng hoàn tất thanh toán để đơn hàng được xử lý.
+              </Text>
+            </div>
+
+            <PaymentCountdown timeLeft={timeLeft} size="default" />
+            
+            <RetryPaymentButton
+              onRetry={retryPayment}
+              loading={retryLoading}
+              disabled={!canRetry}
+              size="large"
+              block
+            />
+          </div>
+        </Card>
+      )}
 
       {/* Order Items */}
       <Card 

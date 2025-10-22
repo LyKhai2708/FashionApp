@@ -1,5 +1,4 @@
-const PayOS = require('@payos/node');
-const NodeCache = require('node-cache');
+const { PayOS } = require('@payos/node');
 const knex = require('../database/knex');
 const dotenv = require('dotenv');
 
@@ -9,25 +8,6 @@ const clientId = process.env.PAYOS_CLIENT_ID || '';
 const apiKey = process.env.PAYOS_API_KEY || '';
 const checksumKey = process.env.PAYOS_CHECKSUM_KEY || '';
 const payOS = new PayOS(clientId, apiKey, checksumKey);
-
-const cache = new NodeCache({ checkperiod: 120, deleteOnExpire: true });
-
-
-const paymentCallback = async (key, value) => {
-  const data = value;
-  try {
-    const paymentInfo = await payOS.getPaymentLinkInformation(data.orderCode);
-    if (paymentInfo.status === 'PAID') {
-      await handlePaymentSuccess(data.orderId, paymentInfo.id);
-    } else if (paymentInfo.status === 'CANCELLED') {
-      await handlePaymentFailed(data.orderId);
-    }
-  } catch (error) {
-    console.error('Payment callback error:', error);
-  }
-};
-
-cache.on('expired', paymentCallback);
 
 
 async function handlePaymentSuccess(orderId, transactionId) {
@@ -51,6 +31,9 @@ async function handlePaymentSuccess(orderId, transactionId) {
     const orderItems = await trx('orderdetails')
       .where('order_id', orderId)
       .select('product_variant_id', 'quantity');
+      
+      
+      
 
     for (const item of orderItems) {
       const qty = Number(item.quantity) || 0;
@@ -89,15 +72,9 @@ async function handlePaymentFailed(orderId) {
         failed_at: knex.fn.now(),
         updated_at: knex.fn.now()
       });
-
-    await knex('orders')
-    .where('order_id', orderId)
-    .update({
-      order_status: 'cancelled',
-      cancelled_at: knex.fn.now(),
-      updated_at: knex.fn.now()
-    });
-    console.log(`Payment failed for order ${orderId}`);
+    
+    
+    console.log(`Payment failed for order ${orderId} can retry until timeout`);
   } catch (error) {
     console.error('Error processing cancelled payment:', error);
     throw error;
@@ -106,6 +83,33 @@ async function handlePaymentFailed(orderId) {
 
 async function createPaymentLink(orderId, returnUrl, cancelUrl) {
   try {
+    const order = await knex('orders').where('order_id', orderId).first();
+    if (!order) {
+      throw new Error('Đơn hàng không tồn tại');
+    }
+
+    if (order.order_status === 'cancelled') {
+      throw new Error('Đơn hàng đã bị hủy');
+    }
+
+    const existingPayment = await knex('payments')
+      .where('order_id', orderId)
+      .first();
+
+    let expireAt;
+    //kiem tra thoi gian het han thanh toan
+    if (existingPayment && existingPayment.expire_at) {
+      expireAt = existingPayment.expire_at;
+
+      const now = new Date();
+      const expireTime = new Date(expireAt);
+      
+      if (now > expireTime) {
+        throw new Error('Thời gian thanh toán đã hết hạn. Vui lòng đặt hàng lại.');
+      }
+    } else {
+      expireAt = new Date(Date.now() + 30 * 60 * 1000);
+    }
     const orderData = await knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
     .leftJoin('payments', 'orders.order_id', 'payments.order_id')
@@ -119,9 +123,6 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
     .where('orders.order_id', orderId)
     .first();
 
-    if (!orderData) {
-      throw new Error('Đơn hàng không tồn tại');
-    }
 
     if (orderData.payment_status === 'paid') {
       throw new Error('Đơn hàng đã được thanh toán');
@@ -153,7 +154,8 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
       price: Math.floor(item.price) 
     }));
 
-    const description = `Thanh toán đơn hàng ${orderData.order_code} - ${orderData.username}`;
+    // PayOS yêu cầu description tối đa 25 ký tự
+    const description = `DH ${orderData.order_code}`.substring(0, 25);
 
     const body = {
       orderCode,
@@ -164,28 +166,23 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
       returnUrl: returnUrl || `${process.env.FRONTEND_URL}/orders/${orderId}?status=success`
     };
 
-    const createPayment = await payOS.createPaymentLink(body);
+    const createPayment = await payOS.paymentRequests.create(body);
 
     await knex('payments')
     .where('order_id', orderId)
     .update({
       payos_order_code: orderCode,
       payos_checkout_url: createPayment.checkoutUrl,
+      expire_at: expireAt,
       updated_at: knex.fn.now()
     });
-
-    cache.set(`payment_${orderId}`, {
-    orderId,
-    orderCode: orderCode
-    }, 900);
-
-    
 
     return {
       checkoutUrl: createPayment.checkoutUrl,
       orderCode,
       amount: orderData.total_amount,
-      orderId
+      orderId,
+      expireAt
     };
 
   } catch (error) {
@@ -209,15 +206,13 @@ async function checkPayment(orderId) {
     }
     if (payment.payos_order_code) {
       try {
-        const paymentInfo = await payOS.getPaymentLinkInformation(payment.payos_order_code);
+        const paymentInfo = await payOS.paymentRequests.get(payment.payos_order_code);
         
         if (paymentInfo.status === 'PAID') {
           await handlePaymentSuccess(orderId, paymentInfo.id);
-          cache.del(`payment_${orderId}`);
           return { status: 'PAID', message: 'Thanh toán thành công' };
         } else if (paymentInfo.status === 'CANCELLED') {
           await handlePaymentFailed(orderId);
-          cache.del(`payment_${orderId}`);
           return { status: 'CANCELLED', message: 'Thanh toán đã bị hủy' };
         }
         
@@ -246,7 +241,7 @@ async function cancelPayment(orderId) {
 
   if (payment.payos_order_code) {
     try {
-      await payOS.cancelPaymentLink(payment.payos_order_code);
+      await payOS.paymentRequests.cancel(payment.payos_order_code);
     } catch (error) {
       console.error('Cancel PayOS payment error:', error);
     }
@@ -258,8 +253,6 @@ async function cancelPayment(orderId) {
       payment_status: 'cancelled',
       updated_at: knex.fn.now()
     });
-
-  cache.del(`payment_${orderId}`);
 
   return { message: 'Đã hủy thanh toán thành công' };
 }
@@ -297,6 +290,83 @@ const getPaymentByOrderId = async (orderId) => {
     .where('order_id', orderId)
     .first();
 };
+
+async function checkPendingPayments() {
+  try {
+    const pendingPayments = await knex('payments')
+      .where('payment_status', 'pending')
+      .where('payment_method', 'payos')
+      .whereNotNull('payos_order_code')
+      .whereNotNull('expire_at')
+      .where('expire_at', '>', knex.fn.now())
+      .select('order_id', 'payos_order_code');
+
+    console.log(`[CRON] Checking ${pendingPayments.length} pending PayOS payments`);
+
+    for (const payment of pendingPayments) {
+      try {
+        const paymentInfo = await payOS.paymentRequests.get(payment.payos_order_code);
+        
+        if (paymentInfo.status === 'PAID') {
+          await handlePaymentSuccess(payment.order_id, paymentInfo.id);
+          console.log(`payment ${payment.order_id} marked as PAID`);
+        } else if (paymentInfo.status === 'CANCELLED') {
+          await handlePaymentFailed(payment.order_id);
+          console.log(`payment ${payment.order_id} marked as CANCELLED`);
+        }
+      } catch (error) {
+        console.error(`Error checking payment ${payment.order_id}:`, error.message);
+      }
+    }
+
+    return { checked: pendingPayments.length };
+  } catch (error) {
+    console.error('Error in checkPendingPayments:', error);
+    throw error;
+  }
+}
+
+async function cancelExpiredPayments() {
+  try {
+    const expiredPayments = await knex('payments')
+      .join('orders', 'payments.order_id', 'orders.order_id')
+      .where('orders.order_status', 'pending')
+      .whereIn('payments.payment_status', ['pending', 'failed'])
+      .whereNotNull('payments.expire_at')
+      .where('payments.expire_at', '<', knex.fn.now())
+      .select('orders.order_id', 'payments.payment_id');
+
+    console.log(`Found ${expiredPayments.length} expired payments`);
+
+    for (const payment of expiredPayments) {
+      await knex.transaction(async (trx) => {
+        await trx('orders')
+          .where('order_id', payment.order_id)
+          .update({
+            order_status: 'cancelled',
+            cancelled_at: knex.fn.now(),
+            cancel_reason: 'Payment timeout',
+            updated_at: knex.fn.now()
+          });
+
+        await trx('payments')
+          .where('order_id', payment.order_id)
+          .update({
+            payment_status: 'cancelled',
+            updated_at: knex.fn.now()
+          });
+
+        console.log(`Auto-cancelled expired order ${payment.order_id}`);
+      });
+    }
+
+    return { cancelled: expiredPayments.length };
+  } catch (error) {
+    console.error('Error in cancelExpiredPayments:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   createPaymentLink,
   checkPayment,
@@ -304,5 +374,7 @@ module.exports = {
   updatePaymentStatus,
   getPaymentByOrderId,
   handlePaymentSuccess,
-  handlePaymentFailed
+  handlePaymentFailed,
+  checkPendingPayments,
+  cancelExpiredPayments
 };

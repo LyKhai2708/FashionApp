@@ -444,65 +444,6 @@ module.exports.setup = (app) => {
   
   /**
    * @swagger
-   * /api/v1/orders/{id}/payment-status:
-   *   patch:
-   *     summary: Update payment status (Admin only)
-   *     description: Update the payment status of an order. Only administrators can perform this action.
-   *     tags: [Orders]
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - $ref: '#/components/parameters/orderIdParam'
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - payment_status
-   *             properties:
-   *               payment_status:
-   *                 type: string
-   *                 enum: [unpaid, paid, refund]
-   *                 description: New payment status
-   *           example:
-   *             payment_status: paid
-   *     responses:
-   *       200:
-   *         description: Payment status updated successfully
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 status:
-   *                   type: string
-   *                   enum: [success]
-   *                 data:
-   *                   type: object
-   *                   properties:
-   *                     message:
-   *                       type: string
-   *             example:
-   *               status: success
-   *               data:
-   *                 message: "Cập nhật trạng thái thanh toán thành công"
-   *       400:
-   *         description: Bad request - Invalid payment status or missing data
-   *       401:
-   *         $ref: '#/components/responses/Unauthorized'
-   *       403:
-   *         $ref: '#/components/responses/Forbidden'
-   *       404:
-   *         description: Order not found
-   *       500:
-   *         $ref: '#/components/responses/ServerError'
-   */
-  router.patch('/:id/payment-status', authMiddleware, authorizeRoles(['admin']), ordersController.updatePaymentStatus);
-  
-  /**
-   * @swagger
    * /api/v1/orders/{id}:
    *   delete:
    *     summary: Cancel an order
@@ -586,5 +527,4 @@ module.exports.setup = (app) => {
   router.all('/', methodNotAllowed);
   router.all('/:id', methodNotAllowed);
   router.all('/:id/status', methodNotAllowed);
-  router.all('/:id/payment-status', methodNotAllowed);
 };
