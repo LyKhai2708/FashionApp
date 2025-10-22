@@ -13,7 +13,7 @@ const {Title} = Typography;
 
 export default function Order() {
     const navigate = useNavigate();
-    const { items, totalPrice, loading: cartLoading, clearCart } = useCart();
+    const { items, totalPrice, loading: cartLoading, clearCart, appliedVoucher, removeVoucher, getOrderSummary } = useCart();
     const { isAuthenticated, user } = useAuth();
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
@@ -28,11 +28,9 @@ export default function Order() {
           .then(data => setProvinces(data));
     }, []);
     const formatCurrency = (value: number) => value.toLocaleString("vi-VN");
-    
+
+    const orderSummary = getOrderSummary();
     const FREE_SHIP_THRESHOLD = 200000;
-    const STANDARD_SHIPPING_FEE = 30000;
-    const shippingFee = totalPrice >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
-    const total = totalPrice + shippingFee;
 
 
     useEffect(() => {
@@ -124,8 +122,8 @@ export default function Order() {
         setSubmitting(true);
         try {
             const orderPayload: CreateOrderPayload = {
-                receiver_name: values.fullName,        
-                receiver_phone: values.phone,       
+                receiver_name: values.fullName,
+                receiver_phone: values.phone,
                 receiver_email: values.email,
                 payment_method: values.payment,
                 shipping_province: provinceName,
@@ -134,6 +132,7 @@ export default function Order() {
                 shipping_ward_code: values.ward,
                 shipping_detail_address: values.address,
                 notes: values.note,
+                voucher_code: appliedVoucher?.voucher?.code || null,
                 items: items.map(item => ({
                     product_variant_id: item.variant.variant_id,
                     quantity: item.quantity,
@@ -338,7 +337,7 @@ export default function Order() {
                                         <p><strong>Chủ tài khoản:</strong> LY PHUONG KHAI</p>
                                         <p><strong>Nội dung chuyển khoản:</strong> [SĐT]-[Mã đơn hàng]-[Nội dung muốn thêm nếu có]</p>
                                         <p className="text-sm text-gray-600 mt-2">
-                                            Vui lòng chuyển khoản đúng số tiền {formatCurrency(total)}₫ và ghi rõ nội dung. Sau khi chuyển khoản, vui lòng gọi hotline: 0896670687 để nhân viên sẽ xác nhận và xử lý đơn hàng.
+                                            Vui lòng chuyển khoản đúng số tiền {formatCurrency(orderSummary.total)}₫ và ghi rõ nội dung. Sau khi chuyển khoản, vui lòng gọi hotline: 0896670687 để nhân viên sẽ xác nhận và xử lý đơn hàng.
                                         </p>
                                     </div>
                                 )}
@@ -376,8 +375,14 @@ export default function Order() {
                             </div>
                             <div className="flex justify-between text-sm mb-2">
                                 <span>Phí vận chuyển</span>
-                                <span>{shippingFee > 0 ? `${formatCurrency(shippingFee)}₫` : "Miễn phí"}</span>
+                                <span>{orderSummary.shippingFee > 0 ? `${formatCurrency(orderSummary.shippingFee)}₫` : "Miễn phí"}</span>
                             </div>
+                            {orderSummary.voucherDiscount > 0 && (
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span>Voucher</span>
+                                    <span className="text-red-500">-{formatCurrency(orderSummary.voucherDiscount)}₫</span>
+                                </div>
+                            )}
                             {totalPrice < FREE_SHIP_THRESHOLD && totalPrice > 0 && (
                                 <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded mb-2">
                                     Mua thêm {formatCurrency(FREE_SHIP_THRESHOLD - totalPrice)}₫ để được miễn phí ship!
@@ -386,8 +391,30 @@ export default function Order() {
                             <Divider />
                             <div className="flex justify-between font-semibold text-lg mb-4">
                                 <span>Tổng cộng</span>
-                                <span className="text-red-500">{formatCurrency(total)}₫</span>
+                                <span className="text-red-500">{formatCurrency(orderSummary.total)}₫</span>
                             </div>
+
+                            {/* Applied Voucher Display */}
+                            {appliedVoucher && (
+                                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="font-medium text-green-800">Voucher đã áp dụng:</span>
+                                        <button
+                                            onClick={removeVoucher}
+                                            className="text-red-600 hover:text-red-800 text-sm"
+                                        >
+                                            Xóa
+                                        </button>
+                                    </div>
+                                    <div className="text-sm text-green-700">
+                                        <div className="font-medium">{appliedVoucher.voucher.code}</div>
+                                        <div>{appliedVoucher.voucher.name}</div>
+                                        {appliedVoucher.voucher.description && (
+                                            <div className="text-xs mt-1">{appliedVoucher.voucher.description}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                             
                             <button
                                 type="submit"

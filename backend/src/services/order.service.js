@@ -21,8 +21,34 @@ async function generateOrderCode(prefix = 'DL') {
 function calculateShippingFee(subTotal) {
   const FREE_SHIP_THRESHOLD = 200000; // 200k
   const STANDARD_SHIPPING_FEE = 30000; // 30k
-  
+
   return subTotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
+}
+
+function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
+  let discountAmount = 0;
+
+  switch (voucher.discount_type) {
+    case 'percentage':
+      discountAmount = orderAmount * (voucher.discount_value / 100);
+      if (voucher.max_discount_amount && discountAmount > voucher.max_discount_amount) {
+        discountAmount = voucher.max_discount_amount;
+      }
+      break;
+
+    case 'fixed_amount':
+      discountAmount = voucher.discount_value;
+      if (discountAmount > orderAmount) {
+        discountAmount = orderAmount;
+      }
+      break;
+
+    case 'free_shipping':
+      discountAmount = shippingFee;
+      break;
+  }
+
+  return Math.round(discountAmount);
 }
 
 
@@ -30,9 +56,57 @@ async function createOrder(orderData, items) {
   const order_code = await generateOrderCode();
   const orderResult = await knex.transaction(async (trx) => {
     const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
+    let voucher_discount_amount = 0;
+    let voucher_id = null;
+
+    // Handle voucher if provided
+    if (orderData.voucher_code) {
+      try {
+        // Validate voucher
+        const voucher = await trx('vouchers')
+          .where('code', orderData.voucher_code.toUpperCase())
+          .andWhere('active', true)
+          .first();
+
+        if (!voucher) {
+          throw new Error('Voucher không hợp lệ hoặc đã hết hiệu lực');
+        }
+
+        // Check validity
+        const now = new Date();
+        const startDate = new Date(voucher.start_date);
+        const endDate = new Date(voucher.end_date);
+        endDate.setHours(23, 59, 59, 999);
+
+        if (now < startDate || now > endDate) {
+          throw new Error('Voucher không nằm trong thời gian hiệu lực');
+        }
+
+        if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
+          throw new Error('Voucher đã hết lượt sử dụng');
+        }
+
+        if (sub_total < voucher.min_order_amount) {
+          throw new Error(`Đơn hàng tối thiểu phải đạt ${voucher.min_order_amount} VNĐ để sử dụng voucher này`);
+        }
+
+        // Calculate discount
+        voucher_discount_amount = calculateVoucherDiscount(voucher, sub_total);
+        voucher_id = voucher.voucher_id;
+
+        // Update voucher usage count
+        await trx('vouchers')
+          .where('voucher_id', voucher.voucher_id)
+          .increment('used_count', 1);
+
+      } catch (error) {
+        throw new Error(`Voucher error: ${error.message}`);
+      }
+    }
+
     const shipping_fee = calculateShippingFee(sub_total);
-    const total_amount = sub_total + shipping_fee;
+    const total_amount = sub_total + shipping_fee - voucher_discount_amount;
 
     const fullAddress = [
       orderData.shipping_detail_address,
@@ -46,6 +120,8 @@ async function createOrder(orderData, items) {
       sub_total: sub_total,
       shipping_fee: shipping_fee,
       total_amount: total_amount,
+      voucher_id: voucher_id,
+      voucher_discount_amount: voucher_discount_amount,
       notes: orderData.notes ?? null,
       receiver_name: orderData.receiver_name,
       receiver_phone: orderData.receiver_phone,
@@ -76,6 +152,15 @@ async function createOrder(orderData, items) {
     }));
 
     await trx('orderdetails').insert(orderItems);
+
+    // Add to order_vouchers table if voucher was used
+    if (voucher_id) {
+      await trx('order_vouchers').insert({
+        order_id: orderId,
+        voucher_id: voucher_id,
+        discount_amount: voucher_discount_amount
+      });
+    }
 
     const paymentMethod = orderData.payment_method || 'cod';
     

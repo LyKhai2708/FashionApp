@@ -5,6 +5,7 @@ import { useState } from "react";
 import { message } from "antd";
 import Breadcrumb from '../components/Breadcrumb';
 import RecentlyViewedSection from "../components/RecentlyViewedSection";
+import VoucherInput from "../components/voucher/VoucherInput";
 
 export default function Cart() {
     const navigate = useNavigate()
@@ -14,6 +15,10 @@ export default function Cart() {
         loading, 
         removeItem, 
         updateItemQuantity,
+        appliedVoucher,
+        applyVoucher,
+        removeVoucher,
+        getOrderSummary,
     } = useCart()
 
     const [updatingItems, setUpdatingItems] = useState<Set<number>>(new Set());
@@ -64,10 +69,8 @@ export default function Cart() {
         }
     };
     
+    const orderSummary = getOrderSummary();
     const FREE_SHIP_THRESHOLD = 200000;
-    const STANDARD_SHIPPING_FEE = 30000;
-    const shipping = totalPrice >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
-    const grandTotal = totalPrice + shipping;
 
     const isEmpty = items.length === 0;
 
@@ -202,8 +205,14 @@ export default function Cart() {
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Phí vận chuyển</span>
-                            <span className="font-medium">{shipping === 0 ? 'Miễn phí' : `${formatCurrency(shipping)}₫`}</span>
+                            <span className="font-medium">{orderSummary.shippingFee === 0 ? 'Miễn phí' : `${formatCurrency(orderSummary.shippingFee)}₫`}</span>
                         </div>
+                        {orderSummary.voucherDiscount > 0 && (
+                            <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Voucher</span>
+                                <span className="font-medium text-red-500">-{formatCurrency(orderSummary.voucherDiscount)}₫</span>
+                            </div>
+                        )}
                         {totalPrice < FREE_SHIP_THRESHOLD && totalPrice > 0 && (
                             <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
                                 Mua thêm {formatCurrency(FREE_SHIP_THRESHOLD - totalPrice)}₫ để được miễn phí ship!
@@ -211,13 +220,23 @@ export default function Cart() {
                         )}
                         <div className="border-t pt-3 flex items-center justify-between">
                             <span className="text-base font-semibold">Tổng cộng</span>
-                            <span className="text-base font-bold text-red-500">{formatCurrency(grandTotal)}₫</span>
+                            <span className="text-base font-bold text-red-500">{formatCurrency(orderSummary.total)}₫</span>
                         </div>
                     </div>
+                    
+                    <VoucherInput
+                        onVoucherApplied={applyVoucher}
+                        onVoucherRemoved={removeVoucher}
+                        orderAmount={totalPrice}
+                        shippingFee={orderSummary.shippingFee}
+                        appliedVoucher={appliedVoucher}
+                        loading={updatingItems.size > 0 || deletingItems.size > 0}
+                    />
+
                     <button 
                         onClick={() => navigate('/order')} 
                         disabled={isEmpty || updatingItems.size > 0 || deletingItems.size > 0}
-                        className="w-full mt-6 bg-black text-white py-3 rounded-md hover:bg-white hover:text-black hover:border-black border transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full mt-4 bg-black text-white py-3 rounded-md hover:bg-white hover:text-black hover:border-black border transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         TIẾN HÀNH THANH TOÁN
                     </button>

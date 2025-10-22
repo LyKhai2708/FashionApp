@@ -7,8 +7,8 @@ export interface OrderItem {
 }
 
 export interface CreateOrderPayload {
-    receiver_name: string;        
-    receiver_phone: string;       
+    receiver_name: string;
+    receiver_phone: string;
     receiver_email: string;
     payment_method: string;
     shipping_province: string;
@@ -17,6 +17,7 @@ export interface CreateOrderPayload {
     shipping_ward_code: number;
     shipping_detail_address: string;
     notes?: string;
+    voucher_code?: string | null;
     items: OrderItem[];
 }
 

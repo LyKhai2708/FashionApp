@@ -55,17 +55,17 @@ const getPaymentStatusText = (status: string) => {
 
 export default function OrderDetail({ order, onBack }: Props) {
 
-  const showRetryButton = 
-  order.order_status === 'pending' && 
-  order.payment_method === 'payos' &&
-  (order.payment_status === 'failed' || order.payment_status === 'pending');
+  const showRetryButton =
+  order?.order_status === 'pending' &&
+  order?.payment_method === 'payos' &&
+  (order?.payment_status === 'failed' || order?.payment_status === 'pending');
 
-const { 
-  retryPayment, 
-  loading: retryLoading, 
-  canRetry, 
-  timeLeft 
-} = useRetryPayment(order.order_id);
+const {
+  retryPayment,
+  loading: retryLoading,
+  canRetry,
+  timeLeft
+} = useRetryPayment(order?.order_id || 0);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{
     productId: number;

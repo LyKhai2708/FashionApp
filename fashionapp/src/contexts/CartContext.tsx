@@ -5,6 +5,7 @@ import type { CartItem, AddToCartPayload } from '../services/cartService';
 import { useAuth } from './AuthContext';
 import { useMessage, useNotification } from '../App';
 import { formatVNDPrice } from '../utils/priceFormatter';
+import { type VoucherValidationResponse } from '../services/voucherService';
 
 interface CartState {
     items: CartItem[];
@@ -12,6 +13,7 @@ interface CartState {
     totalPrice: number;
     loading: boolean;
     error: string | null;
+    appliedVoucher: VoucherValidationResponse | null;
 }
 
 interface CartContextType extends CartState {
@@ -20,6 +22,15 @@ interface CartContextType extends CartState {
     updateItemQuantity: (itemId: number, quantity: number) => Promise<void>;
     removeItem: (itemId: number) => Promise<void>;
     clearCart: () => Promise<void>;
+    applyVoucher: (voucherData: VoucherValidationResponse) => void;
+    removeVoucher: () => void;
+    calculateShippingFee: (subtotal: number) => number;
+    getOrderSummary: () => {
+        subtotal: number;
+        shippingFee: number;
+        voucherDiscount: number;
+        total: number;
+    };
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -43,6 +54,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         totalPrice: 0,
         loading: true, // Set true để tránh redirect sớm khi page load
         error: null,
+        appliedVoucher: null,
     });
     const [hasMerged, setHasMerged] = useState(false);
 
@@ -193,11 +205,53 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
     const clearCart = async () => {
         try {
           await cartService.clearCart();
-          setCartState({ items: [], totalItems: 0, totalPrice: 0, loading: false, error: null });
+          setCartState({ 
+            items: [], 
+            totalItems: 0, 
+            totalPrice: 0, 
+            loading: false, 
+            error: null,
+            appliedVoucher: null 
+          });
           message.success('Đã xóa giỏ hàng');
         } catch (error: any) {
           message.error(error.message || 'Không thể xóa giỏ hàng');
         }
+    };
+
+    const applyVoucher = (voucherData: VoucherValidationResponse) => {
+        setCartState(prev => ({
+            ...prev,
+            appliedVoucher: voucherData
+        }));
+    };
+
+    const removeVoucher = () => {
+        setCartState(prev => ({
+            ...prev,
+            appliedVoucher: null
+        }));
+    };
+
+    const calculateShippingFee = (subtotal: number): number => {
+        const FREE_SHIP_THRESHOLD = 200000; // 200k
+        const STANDARD_SHIPPING_FEE = 30000; // 30k
+        
+        return subtotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
+    };
+
+    const getOrderSummary = () => {
+        const subtotal = cartState.totalPrice;
+        const shippingFee = calculateShippingFee(subtotal);
+        const voucherDiscount = cartState.appliedVoucher ? cartState.appliedVoucher.order_summary.discount_amount : 0;
+        const total = Math.max(0, subtotal + shippingFee - voucherDiscount);
+
+        return {
+            subtotal,
+            shippingFee,
+            voucherDiscount,
+            total
+        };
     };
     const value = {
         ...cartState,
@@ -205,7 +259,11 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         addToCart,
         updateItemQuantity,
         removeItem,
-        clearCart
+        clearCart,
+        applyVoucher,
+        removeVoucher,
+        calculateShippingFee,
+        getOrderSummary
     };
 
     

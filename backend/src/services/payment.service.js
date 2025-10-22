@@ -97,19 +97,8 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
       .first();
 
     let expireAt;
-    //kiem tra thoi gian het han thanh toan
-    if (existingPayment && existingPayment.expire_at) {
-      expireAt = existingPayment.expire_at;
-
-      const now = new Date();
-      const expireTime = new Date(expireAt);
-      
-      if (now > expireTime) {
-        throw new Error('Thời gian thanh toán đã hết hạn. Vui lòng đặt hàng lại.');
-      }
-    } else {
-      expireAt = new Date(Date.now() + 30 * 60 * 1000);
-    }
+    // Always create new payment window for PayOS
+    expireAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
     const orderData = await knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
     .leftJoin('payments', 'orders.order_id', 'payments.order_id')
