@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import cartService from '../services/cartService';
+import { getImageUrl } from '../utils/imageHelper';
 import type { CartItem, AddToCartPayload } from '../services/cartService';
 import { useAuth } from './AuthContext';
 import { useMessage, useNotification } from '../App';
@@ -104,7 +104,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
                 
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <img 
-                        src={productDetails.thumbnail} 
+                        src={getImageUrl(productDetails.thumbnail)} 
                         alt={productDetails.product_name}
                         style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
                     />

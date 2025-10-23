@@ -1,9 +1,9 @@
-import {Form, Input, Select, Radio, Divider, Typography } from "antd";
+import {Form, Input, Select, Radio, Divider, Typography, message } from "antd";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../contexts/CartContext";
-import { useAuth } from "../contexts/AuthContext";
-import { message } from "antd";
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import { getImageUrl } from '../utils/imageHelper';
 import addressService from "../services/addressService";
 import orderService from "../services/orderService";
 import type { CreateOrderPayload } from "../services/orderService";
@@ -353,7 +353,7 @@ export default function Order() {
                             {items.map((item) => (
                             <div key={item.cart_item_id} className="flex gap-3 items-center mb-4">
                                 <div className="relative">
-                                    <img src={item.thumbnail} alt={item.product_name} className="w-16 h-16 object-cover rounded" />
+                                    <img src={getImageUrl(item.thumbnail)} alt={item.product_name} className="w-16 h-16 object-cover rounded" />
                                     <span className="absolute -top-2 -right-2 bg-gray-800 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                         {item.quantity}
                                     </span>

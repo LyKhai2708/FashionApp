@@ -1,7 +1,9 @@
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useCart } from "../contexts/CartContext";
+import { useCart } from '../contexts/CartContext';
+import { formatVNDPrice } from '../utils/priceFormatter';
 import { useState } from "react";
+import { getImageUrl } from '../utils/imageHelper';
 import { message } from "antd";
 import Breadcrumb from '../components/Breadcrumb';
 import RecentlyViewedSection from "../components/RecentlyViewedSection";
@@ -131,7 +133,7 @@ export default function Cart() {
                                     key={item.cart_item_id}
                                 >
                                     <div className="col-span-2 flex items-center gap-5">
-                                        <img src={item.thumbnail} alt={item.product_name} className="w-20 h-20 rounded object-cover"  />
+                                        <img src={getImageUrl(item.thumbnail)} alt={item.product_name} className="w-20 h-20 rounded object-cover"  />
                                         <div className="flex flex-col gap-1">
                                             <h2 className="font-bold text-lg">{item.product_name}</h2>
                                             <span className="text-gray-500 text-sm">{item.variant.size.name} {item.variant.color ? `/ ${item.variant.color.name}` : ''}</span>

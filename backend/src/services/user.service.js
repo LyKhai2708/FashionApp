@@ -16,7 +16,6 @@ function readUser(payload) {
         is_active: payload.is_active,
     };
     
-    // Remove undefined fields
     Object.keys(user).forEach(key => {
         if (user[key] === undefined) {
             delete user[key];

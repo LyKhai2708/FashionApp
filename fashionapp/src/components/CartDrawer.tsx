@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react'
 import { Link } from "react-router-dom"
 import { useCart } from '../contexts/CartContext';
 import type { CartItem } from '../services/cartService';
+import { getImageUrl } from '../utils/imageHelper';
 
 export interface CartDrawerProps {
     open: boolean
@@ -10,8 +11,6 @@ export interface CartDrawerProps {
 }
 
 const formatCurrency = (value: number) => value.toLocaleString('vi-VN')
-
-
 
 export default function CartDrawer(props: CartDrawerProps) {
     const { 
@@ -42,7 +41,7 @@ export default function CartDrawer(props: CartDrawerProps) {
                 <div className="flex flex-col gap-4">
                     {cartItems.map(item => (
                         <div className="flex gap-3" key={item.cart_item_id}>
-                            <img src={item.thumbnail} alt={item.product_name} className="w-20 h-24 object-cover rounded" />
+                            <img src={getImageUrl(item.thumbnail)} alt={item.product_name} className="w-16 h-16 object-cover rounded" />
                             <div className="flex-1">
                                 <div className="font-semibold leading-5 line-clamp-2">{item.product_name}</div>
                                 <div className="text-xs text-gray-500 mt-1">{item.variant.size.name} {item.variant.color ? `/ ${item.variant.color.name}` : ''}</div>

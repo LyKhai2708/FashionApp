@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useMessage } from '../App';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { getImageUrl } from '../utils/imageHelper';
 
 interface ProductCardProps {
     product: Product;
@@ -132,14 +133,14 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
         >
             <div className="relative overflow-hidden">
                 <img 
-                    src={selectedColor?.images[0]?.image_url || product.thumbnail || '/placeholder-image.jpg'} 
+                    src={getImageUrl(selectedColor?.images[0]?.image_url || product.thumbnail)} 
                     alt={product.name || 'Product Image'} 
                     className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform duration-300" 
                 />
                 
                 {!compact && showQuickAdd && hasColors && (
                     <div 
-                        className="absolute bottom-0 left-0 right-0 h-1/2 backdrop-blur-md bg-white/90 flex flex-col items-center justify-center p-4 transition-all duration-200 border-t border-gray-200/50"
+                        className="absolute bottom-0 left-0 right-0 h-1/2 backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center p-4 transition-all duration-200 border-t border-gray-200/50"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();

@@ -3,7 +3,6 @@ import {
     Table, 
     Button, 
     Space, 
-    Typography, 
     Tag, 
     Modal, 
     Form, 
@@ -28,10 +27,9 @@ import {
     DollarOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import voucherService, { Voucher, VoucherCreateRequest, VoucherUpdateRequest } from '../../services/voucherService';
+import voucherService, { type Voucher, type VoucherCreateRequest, type VoucherUpdateRequest } from '../../services/voucherService';
 import dayjs from 'dayjs';
 
-const { Title } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -114,17 +112,25 @@ export default function Vouchers() {
 
     const handleSubmit = async (values: any) => {
         try {
-            const payload = {
-                ...values,
+            const payload: any = {
                 start_date: values.dateRange[0].format('YYYY-MM-DD'),
-                end_date: values.dateRange[1].format('YYYY-MM-DD')
+                end_date: values.dateRange[1].format('YYYY-MM-DD'),
+                name: values.name,
+                description: values.description || null,
+                discount_type: values.discount_type,
+                discount_value: Number(values.discount_value),
+                min_order_amount: values.min_order_amount ? Number(values.min_order_amount) : 0,
+                max_discount_amount: values.max_discount_amount ? Number(values.max_discount_amount) : null,
+                usage_limit: values.usage_limit ? Number(values.usage_limit) : null,
+                user_limit: values.user_limit ? Number(values.user_limit) : 1,
+                active: values.active !== undefined ? values.active : true
             };
-            delete payload.dateRange;
 
             if (editingVoucher) {
                 await voucherService.updateVoucher(editingVoucher.voucher_id, payload);
                 message.success('Cập nhật voucher thành công');
             } else {
+                payload.code = values.code;
                 await voucherService.createVoucher(payload);
                 message.success('Tạo voucher thành công');
             }
@@ -193,8 +199,9 @@ export default function Vouchers() {
             title: 'Giảm giá',
             dataIndex: 'discount_value',
             key: 'discount_value',
+            width: 180,
             render: (value, record) => (
-                <Space>
+                <Space direction="vertical" size="small">
                     <Tag color={getDiscountTypeColor(record.discount_type)}>
                         {record.discount_type === 'percentage' ? `${value}%` : `${value.toLocaleString('vi-VN')} VNĐ`}
                     </Tag>
@@ -277,53 +284,52 @@ export default function Vouchers() {
     const usedVouchers = vouchers.filter(v => v.used_count > 0).length;
 
     return (
-        <div className="p-6">
-            <div className="mb-6">
-                <Row gutter={16} className="mb-4">
-                    <Col span={8}>
-                        <Card>
-                            <Statistic
-                                title="Tổng voucher"
-                                value={totalVouchers}
-                                prefix={<GiftOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col span={8}>
-                        <Card>
-                            <Statistic
-                                title="Đang hoạt động"
-                                value={activeVouchers}
-                                prefix={<DollarOutlined />}
-                                valueStyle={{ color: '#3f8600' }}
-                            />
-                        </Card>
-                    </Col>
-                    <Col span={8}>
-                        <Card>
-                            <Statistic
-                                title="Đã sử dụng"
-                                value={usedVouchers}
-                                prefix={<EditOutlined />}
-                                valueStyle={{ color: '#1890ff' }}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-
-                <div className="flex items-center justify-between">
-                    <Title level={2} className="!mb-0">
-                        Quản lý Voucher
-                    </Title>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleCreate}
-                    >
-                        Tạo voucher mới
-                    </Button>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Quản lý Voucher</h1>
+                    <p className="text-gray-600 mt-1">Tổng số: {paginate.totalRecords} voucher</p>
                 </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleCreate}
+                >
+                    Tạo voucher mới
+                </Button>
             </div>
+
+            <Row gutter={16}>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Tổng voucher"
+                            value={totalVouchers}
+                            prefix={<GiftOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Đang hoạt động"
+                            value={activeVouchers}
+                            prefix={<DollarOutlined />}
+                            valueStyle={{ color: '#3f8600' }}
+                        />
+                    </Card>
+                </Col>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Đã sử dụng"
+                            value={usedVouchers}
+                            prefix={<EditOutlined />}
+                            valueStyle={{ color: '#1890ff' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
             <Table
                 columns={columns}
@@ -344,7 +350,6 @@ export default function Vouchers() {
                 }}
             />
 
-            {/* Create/Edit Modal */}
             <Modal
                 title={editingVoucher ? 'Cập nhật voucher' : 'Tạo voucher mới'}
                 open={modalVisible}
@@ -366,8 +371,17 @@ export default function Vouchers() {
                             { min: 3, max: 50, message: 'Mã voucher từ 3-50 ký tự' }
                         ]}
                     >
-                        <Input placeholder="VD: SUMMER20" style={{ textTransform: 'uppercase' }} />
+                        <Input 
+                            placeholder="VD: SUMMER20" 
+                            style={{ textTransform: 'uppercase' }}
+                            disabled={!!editingVoucher}
+                        />
                     </Form.Item>
+                    {editingVoucher && (
+                        <div className="text-xs text-gray-500 -mt-4 mb-4">
+                            * Mã voucher không thể thay đổi sau khi tạo
+                        </div>
+                    )}
 
                     <Form.Item
                         name="name"
@@ -397,18 +411,38 @@ export default function Vouchers() {
                     </Form.Item>
 
                     <Form.Item
-                        name="discount_value"
-                        label="Giá trị giảm giá"
-                        rules={[{ required: true, message: 'Vui lòng nhập giá trị giảm giá' }]}
+                        noStyle
+                        shouldUpdate={(prevValues, currentValues) => prevValues.discount_type !== currentValues.discount_type}
                     >
-                        <InputNumber
-                            style={{ width: '100%' }}
-                            placeholder="Nhập giá trị"
-                            min={0}
-                            max={100}
-                            formatter={(value) => `${value}%`}
-                            parser={(value) => value!.replace('%', '')}
-                        />
+                        {({ getFieldValue }) => {
+                            const discountType = getFieldValue('discount_type');
+                            return (
+                                <Form.Item
+                                    name="discount_value"
+                                    label="Giá trị giảm giá"
+                                    rules={[{ required: true, message: 'Vui lòng nhập giá trị giảm giá' }]}
+                                >
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        placeholder={discountType === 'percentage' ? 'Nhập % (0-100)' : 'Nhập số tiền'}
+                                        min={0}
+                                        max={discountType === 'percentage' ? 100 : undefined}
+                                        formatter={(value) => {
+                                            if (discountType === 'percentage') {
+                                                return `${value}%`;
+                                            }
+                                            return `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                        }}
+                                        parser={(value) => {
+                                            if (discountType === 'percentage') {
+                                                return value!.replace('%', '');
+                                            }
+                                            return value!.replace(/\$\s?|(,*)/g, '');
+                                        }}
+                                    />
+                                </Form.Item>
+                            );
+                        }}
                     </Form.Item>
 
                     <Form.Item
@@ -509,9 +543,9 @@ export default function Vouchers() {
                         </div>
                         
                         <div>
-                            <Title level={5}>{viewingVoucher.name}</Title>
+                            <h3 className="text-lg font-semibold text-gray-900">{viewingVoucher.name}</h3>
                             {viewingVoucher.description && (
-                                <p className="text-gray-600">{viewingVoucher.description}</p>
+                                <p className="text-gray-600 mt-1">{viewingVoucher.description}</p>
                             )}
                         </div>
 

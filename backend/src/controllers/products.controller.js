@@ -6,12 +6,10 @@ async function createProduct(req, res, next) {
   try {
     const payload = { ...req.body };
     if (req.files && req.files.length > 0) {
-
       const imagePaths = req.files.map(file => `/public/uploads/${file.filename}`);
-
+      
       payload.thumbnail = imagePaths[0];
       
-
       if (typeof payload.variants === 'string') {
         try {
           payload.variants = JSON.parse(payload.variants);
@@ -20,21 +18,34 @@ async function createProduct(req, res, next) {
         }
       }
       
-     
-      if (payload.variants && Array.isArray(payload.variants)) {
-        let imageIndex = 1; 
-        
-        payload.variants.forEach((variant, variantIndex) => {
-  variant.images = [];
-  const imagesPerVariant = variant.imageCount || 0;
-
-  for (let i = 0; i < imagesPerVariant && imageIndex < imagePaths.length; i++) {
-    variant.images.push(imagePaths[imageIndex]);
-    imageIndex++;
-  }
-});
+      let imageColors = [];
+      if (payload.image_colors) {
+        if (typeof payload.image_colors === 'string') {
+          imageColors = [parseInt(payload.image_colors)];
+        } else if (Array.isArray(payload.image_colors)) {
+          imageColors = payload.image_colors.map(c => parseInt(c));
+        }
       }
-
+      
+      const colorImages = {};
+      imagePaths.slice(1).forEach((imagePath, index) => {
+        const colorId = imageColors[index];
+        if (colorId) {
+          if (!colorImages[colorId]) {
+            colorImages[colorId] = [];
+          }
+          colorImages[colorId].push(imagePath);
+        }
+      });
+      
+      if (payload.variants && Array.isArray(payload.variants)) {
+        payload.variants.forEach(variant => {
+          const colorId = variant.color_id;
+          variant.images = colorImages[colorId] || [];
+        });
+      }
+      
+      payload.colorImages = colorImages;
       payload.uploadedImages = imagePaths;
     }
     

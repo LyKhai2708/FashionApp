@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../../utils/imageHelper';
 import { productService } from '../../services/productService';
 import type { Product } from '../../types/product';
 import { useMessage } from '../../App';
@@ -367,7 +368,7 @@ export default function Products() {
                                                 <div className="flex items-center">
                                                     <div className="h-16 w-16 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden mr-4">
                                                         <img
-                                                            src={product.thumbnail || '/placeholder.png'}
+                                                            src={getImageUrl(product.thumbnail)}
                                                             alt={product.name}
                                                             className="h-full w-full object-cover"
                                                             onError={(e) => {

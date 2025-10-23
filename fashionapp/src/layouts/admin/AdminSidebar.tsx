@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../../contexts/admin/SidebarContext';
-import { Package, Shirt, Tag, User } from 'lucide-react';
+import { Package, Shirt, Tag, User, Ticket } from 'lucide-react';
 
 type NavItem = {
   name: string;
@@ -54,6 +54,13 @@ const navItems: NavItem[] = [
     ),
     name: "Promotions",
     path: "/admin/promotions",
+  },
+  {
+    icon: (
+      <Ticket/>
+    ),
+    name: "Vouchers",
+    path: "/admin/vouchers",
   },
 ];
 

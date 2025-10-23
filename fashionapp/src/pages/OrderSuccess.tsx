@@ -4,8 +4,8 @@ import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Spin, message, Alert, Button } from 'antd';
 import orderService from '../services/orderService';
 import paymentService from '../services/paymentService';
-import type { Order } from '../services/orderService';
 import { formatVNDPrice } from '../utils/priceFormatter';
+import { getImageUrl } from '../utils/imageHelper';
 import { useRetryPayment } from '../hooks/useRetryPayment';
 import { RetryPaymentButton } from '../components/RetryPaymentButton';
 
@@ -242,7 +242,7 @@ export default function OrderSuccess() {
                             order.items.map((item, index) => (
                                 <div key={index} className="flex items-center gap-4 py-3">
                                     <img 
-                                        src={item.image_url} 
+                                        src={getImageUrl(item.image_url)} 
                                         alt={item.product_name}
                                         className="w-16 h-16 object-cover rounded"
                                     />

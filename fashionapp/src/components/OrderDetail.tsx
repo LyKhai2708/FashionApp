@@ -1,7 +1,9 @@
 import { Button, Divider, Tag, Card, Typography, Space, Modal, Rate } from "antd";
 import { ArrowLeftOutlined, UserOutlined, PhoneOutlined, MailOutlined, HomeOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
+import { useAuth } from '../contexts/AuthContext';
 import type { Order } from "../services/orderService";
 import { formatVNDPrice } from '../utils/priceFormatter';
+import { getImageUrl } from '../utils/imageHelper';
 import { useEffect, useState } from "react";
 import ReviewForm from "./review/ReviewForm";
 import reviewService from "../services/reviewService";
@@ -306,7 +308,7 @@ const {
             <div key={idx} className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow">
               <div className="relative">
                 <img 
-                  src={item.image_url || "https://via.placeholder.com/80"} 
+                  src={getImageUrl(item.image_url)} 
                   alt={item.product_name} 
                   className="w-20 h-20 object-cover rounded-lg" 
                 />

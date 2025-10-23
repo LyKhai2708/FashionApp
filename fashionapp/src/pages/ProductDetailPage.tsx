@@ -1,9 +1,10 @@
 import { Minus, Plus, Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import ProductSlider from '../components/ProductSlider';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useProductDetail } from '../hooks/useProductDetail';
 import { formatVNDPrice } from '../utils/priceFormatter';
+import { getImageUrl } from '../utils/imageHelper';
 import Breadcrumb from '../components/Breadcrumb';
 import { extractProductIdFromSlug } from '../utils/slugUtils';
 import { useCart } from '../contexts/CartContext';
@@ -46,6 +47,10 @@ export default function ProductDetailPage() {
     } = useRelatedProducts(product?.category_id, 8);
 
     const relatedProducts = relatedProductsRaw.filter(p => p.product_id !== productId);
+
+    useEffect(() => {
+        setSelectedImageIndex(0);
+    }, [selectedColor]);
 
     //them vao danh sach xem qua
     useEffect(() => {
@@ -157,29 +162,70 @@ export default function ProductDetailPage() {
             <Breadcrumb items={breadcrumbs} />
             
             <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Product Images Section */}
-                <div>
-                    <img
-                        className='w-full rounded-lg shadow object-cover h-96'
-                        src={mainImage}
-                        alt={product.name}
-                    />
-                    <div className='flex gap-2 mt-4'>
+                <div className="flex gap-3">
+                    <div className="flex flex-col gap-3 overflow-y-auto max-h-[700px] pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db #f3f4f6' }}>
                         {currentImages.map((image, index) => (
-                            <img 
+                            <div
                                 key={index}
-                                src={image.image_url} 
-                                className={`w-20 h-20 object-cover cursor-pointer border-2 rounded hover:border-black transition-colors ${
-                                    index === selectedImageIndex ? 'border-black' : 'border-gray-200'
-                                }`}
                                 onClick={() => setSelectedImageIndex(index)}
-                                alt={`${product.name} - ${index + 1}`}
-                            />
+                                className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                                    index === selectedImageIndex 
+                                        ? 'border-black shadow-lg' 
+                                        : 'border-gray-200 hover:border-gray-400'
+                                }`}
+                            >
+                                <img 
+                                    src={getImageUrl(image.image_url)} 
+                                    className="w-24 h-32 object-cover"
+                                    alt={`${product.name} - ${index + 1}`}
+                                />
+                            </div>
                         ))}
+                    </div>
+
+                    <div className="flex-1">
+                        <div className="relative rounded-lg overflow-hidden shadow-lg group">
+                            <img
+                                className='w-full object-cover aspect-[3/4] block'
+                                src={getImageUrl(mainImage)}
+                                alt={product.name}
+                            />
+                            
+                            {currentImages.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={() => setSelectedImageIndex(prev => 
+                                            prev === 0 ? currentImages.length - 1 : prev - 1
+                                        )}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                        aria-label="Previous image"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setSelectedImageIndex(prev => 
+                                            prev === currentImages.length - 1 ? 0 : prev + 1
+                                        )}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                        aria-label="Next image"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </>
+                            )}
+
+                            <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium z-20 pointer-events-none">
+                                {selectedImageIndex + 1} / {currentImages.length}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Product Details Section */}
                 <div>
                     <h1 className='text-2xl font-semibold'>{product.name}</h1>
                     <div className='mt-2 flex gap-4 flex-wrap'>
@@ -194,7 +240,6 @@ export default function ProductDetailPage() {
                         </span>
                     </div>
 
-                    {/* Price */}
                     <div className='flex items-baseline gap-2 mt-4'>
                         
                         {product.price_info.has_promotion ? (
@@ -244,7 +289,6 @@ export default function ProductDetailPage() {
                         </div>
                     </div>
 
-                    {/* Size Selection */}
                     <div className='mt-6'>
                         <span className='font-semibold block'>Kích thước: <span className='text-gray-500'>{selectedSize?.name}</span></span>
                         <div className='flex gap-2 mt-2'>
@@ -264,7 +308,6 @@ export default function ProductDetailPage() {
                         </div>
                     </div>
 
-                    {/* Quantity Selector */}
                     <div className='mt-6 flex items-center gap-4'>
                         <span className='font-semibold'>Số lượng:</span>
                         <div className='inline-flex items-center border border-gray-400 rounded'>
@@ -299,7 +342,6 @@ export default function ProductDetailPage() {
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className='mt-8 flex flex-col md:flex-row gap-4'>
                         <button
                             onClick={handleAddToCart}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import orderService, { type Order } from '../../services/orderService';
+import orderService from '../../services/orderService';
+import { getImageUrl } from '../../utils/imageHelper';
 import OrderStatusBadge from '../../components/admin/OrderStatusBadge';
 import PaymentStatusBadge from '../../components/admin/PaymentStatusBadge';
 
@@ -165,7 +166,7 @@ const OrderDetail: React.FC = () => {
                                     <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                                         {item.image_url && (
                                             <img
-                                                src={item.image_url}
+                                                src={getImageUrl(item.image_url)}
                                                 alt={item.product_name}
                                                 className="w-20 h-20 object-cover rounded"
                                             />

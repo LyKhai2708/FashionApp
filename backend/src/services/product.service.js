@@ -80,13 +80,19 @@ async function createProduct(payload) {
             });
             
             for (const [color_id, images] of imagesByColor) {
-                const imageInserts = images.map((image, index) => ({
-                    product_id: product_id,
-                    color_id: color_id,
-                    image_url: image.url || image.image_url,
-                    is_primary: image.is_primary || index === 0,
-                    display_order: image.display_order || index + 1
-                }));
+                const imageInserts = images.map((image, index) => {
+                    const imageUrl = typeof image === 'string' ? image : (image.url || image.image_url);
+                    const isPrimary = typeof image === 'object' ? (image.is_primary || index === 0) : (index === 0);
+                    const displayOrder = typeof image === 'object' ? (image.display_order || index + 1) : (index + 1);
+                    
+                    return {
+                        product_id: product_id,
+                        color_id: color_id,
+                        image_url: imageUrl,
+                        is_primary: isPrimary,
+                        display_order: displayOrder
+                    };
+                });
                 
                 await trx("images").insert(imageInserts);
             }
