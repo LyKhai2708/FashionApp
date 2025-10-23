@@ -60,6 +60,12 @@ export interface Order {
     updated_at?: string;
     items?: OrderItemDetail[];
     items_count?: number;
+    voucher_id?: number;
+    voucher_code?: string;
+    voucher_name?: string;
+    voucher_discount_amount?: number;
+    voucher_discount_type?: string;
+    voucher_discount_value?: number;
 }
 
 class OrderService {
@@ -97,7 +103,7 @@ class OrderService {
 
     async updatePaymentStatus(orderId: number, paymentStatus: string): Promise<void> {
     try {
-        await api.patch(`/api/v1/orders/${orderId}/payment-status`, {
+        await api.patch(`/api/v1/payments/admin/status/${orderId}`, {
             payment_status: paymentStatus
         });
     } catch (error: any) {

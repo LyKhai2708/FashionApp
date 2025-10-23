@@ -117,9 +117,10 @@ const Orders: React.FC = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Tất cả</option>
-                            <option value="unpaid">Chưa thanh toán</option>
+                            <option value="pending">Chưa thanh toán</option>
                             <option value="paid">Đã thanh toán</option>
-                            <option value="pending_refund">Chờ hoàn tiền</option>
+                            <option value="failed">Thanh toán thất bại</option>
+                            <option value="cancelled">Đã hủy</option>
                             <option value="refunded">Đã hoàn tiền</option>
                         </select>
                     </div>

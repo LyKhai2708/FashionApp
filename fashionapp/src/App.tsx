@@ -12,6 +12,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { useToast } from './contexts/ToastContext';
 import { AdminAuthProvider } from './contexts/admin/AdminAuthContext';
 import AdminRoutes from './routes/admin/AdminRoutes';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 
 
 interface LoadingContextType {
@@ -69,7 +70,9 @@ function App() {
               <Route path="/*" element={
                 <AuthProvider>
                   <CartProvider>
-                    <UserAppContent />
+                    <FavoritesProvider>
+                      <UserAppContent />
+                    </FavoritesProvider>
                   </CartProvider>
                 </AuthProvider>
               } />

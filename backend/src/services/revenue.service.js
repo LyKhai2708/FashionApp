@@ -94,11 +94,11 @@ async function getDailyRevenue(days) {
         .where('orders.order_status', 'delivered')
         .where('payments.payment_status', 'paid')
         .select(
-            knex.raw("DATE_FORMAT(CONVERT_TZ(order_date, '+00:00', '+07:00'), '%Y-%m-%d') as date"),
-            knex.raw('SUM(total_amount) as revenue'),
-            knex.raw('COUNT(order_id) as order_count')
+            knex.raw("DATE_FORMAT(CONVERT_TZ(orders.order_date, '+00:00', '+07:00'), '%Y-%m-%d') as date"),
+            knex.raw('SUM(orders.total_amount) as revenue'),
+            knex.raw('COUNT(orders.order_id) as order_count')
         )
-        .groupBy(knex.raw("DATE_FORMAT(CONVERT_TZ(order_date, '+00:00', '+07:00'), '%Y-%m-%d')"))
+        .groupBy(knex.raw("DATE_FORMAT(CONVERT_TZ(orders.order_date, '+00:00', '+07:00'), '%Y-%m-%d')"))
         .orderBy('date', 'asc');
     
 

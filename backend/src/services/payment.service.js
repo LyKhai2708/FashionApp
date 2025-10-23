@@ -28,37 +28,6 @@ async function handlePaymentSuccess(orderId, transactionId) {
         updated_at: knex.fn.now()
       });
 
-    const orderItems = await trx('orderdetails')
-      .where('order_id', orderId)
-      .select('product_variant_id', 'quantity');
-      
-      
-      
-
-    for (const item of orderItems) {
-      const qty = Number(item.quantity) || 0;
-      
-      const updated = await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .andWhere('stock_quantity', '>=', qty)
-        .decrement('stock_quantity', qty);
-
-      const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
-      if (affectedRows === 0) {
-        console.error(`Không đủ stock cho variant ${item.product_variant_id}, quantity: ${qty}`);
-      }
-      
-      const variant = await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .select('product_id')
-        .first();
-      
-      if (variant) {
-        await trx('products')
-          .where('product_id', variant.product_id)
-          .increment('sold', qty);
-      }
-    }
   });
 }
 
@@ -97,8 +66,20 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
       .first();
 
     let expireAt;
-    // Always create new payment window for PayOS
-    expireAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+
+    if (existingPayment?.expire_at) {
+      const oldExpireAt = new Date(existingPayment.expire_at);
+      const now = new Date();
+      
+      if (oldExpireAt > now) {
+        expireAt = oldExpireAt;
+      } else {
+        expireAt = new Date(Date.now() + 15 * 60 * 1000);
+      }
+    } else {
+      // Lần đầu tạo payment link
+      expireAt = new Date(Date.now() + 15 * 60 * 1000);
+    } 
     const orderData = await knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
     .leftJoin('payments', 'orders.order_id', 'payments.order_id')
@@ -329,12 +310,33 @@ async function cancelExpiredPayments() {
 
     for (const payment of expiredPayments) {
       await knex.transaction(async (trx) => {
+        const orderItems = await trx('orderdetails')
+          .where('order_id', payment.order_id)
+          .select('product_variant_id', 'quantity');
+
+        for (const item of orderItems) {
+          await trx('product_variants')
+            .where('product_variants_id', item.product_variant_id)
+            .increment('stock_quantity', item.quantity);
+          
+          const variant = await trx('product_variants')
+            .where('product_variants_id', item.product_variant_id)
+            .select('product_id')
+            .first();
+          
+          if (variant) {
+            await trx('products')
+              .where('product_id', variant.product_id)
+              .decrement('sold', item.quantity);
+          }
+        }
+
         await trx('orders')
           .where('order_id', payment.order_id)
           .update({
             order_status: 'cancelled',
             cancelled_at: knex.fn.now(),
-            cancel_reason: 'Payment timeout',
+            cancel_reason: 'Hết thời gian thanh toán',
             updated_at: knex.fn.now()
           });
 
@@ -345,7 +347,7 @@ async function cancelExpiredPayments() {
             updated_at: knex.fn.now()
           });
 
-        console.log(`Auto-cancelled expired order ${payment.order_id}`);
+        console.log(`Auto-cancelled expired payment for order ${payment.order_id} and restored stock`);
       });
     }
 

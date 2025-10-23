@@ -5,6 +5,7 @@ import favoriteService, { type FavoriteProduct } from '../services/favoriteServi
 import ProductCard from '../components/ProductCard';
 import Breadcrumb from '../components/Breadcrumb';
 import { useMessage } from '../App';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
@@ -13,6 +14,7 @@ export default function FavoritesPage() {
   const [totalRecords, setTotalRecords] = useState(0);
   const limit = 12;
   const message = useMessage();
+  const { favorites: favoritesMap } = useFavorites();
 
   const loadFavorites = useCallback(async () => {
     try {
@@ -31,6 +33,15 @@ export default function FavoritesPage() {
   useEffect(() => {
     loadFavorites();
   }, [loadFavorites]);
+
+  // Reload khi favorites context thay đổi (khi toggle favorite)
+  useEffect(() => {
+    // Skip initial load
+    if (favoritesMap.size > 0 && !loading) {
+      loadFavorites();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favoritesMap.size]);
 
   const breadcrumbItems = [
     { label: 'Trang chủ', path: '/' },
@@ -55,7 +66,6 @@ export default function FavoritesPage() {
       <div className="flex items-center gap-3 mb-6">
         <HeartOutlined className="text-xl text-red-500" />
         <h1 className="text-xl font-semibold">Sản phẩm yêu thích</h1>
-        <span className="text-gray-500">({totalRecords} sản phẩm)</span>
       </div>
 
       {favorites.length === 0 ? (

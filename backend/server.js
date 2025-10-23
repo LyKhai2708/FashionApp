@@ -27,6 +27,6 @@ setInterval(async () => {
   } catch (error) {
     console.error('cancelExpiredPayments error:', error.message);
   }
-}, 5 * 60 * 1000);
+}, 2 * 60 * 1000);
 
 console.log('Payment cronjobs started (running every 5 minutes)');

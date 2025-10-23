@@ -7,7 +7,7 @@ interface PaymentStatusBadgeProps {
 const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status }) => {
     const getStatusConfig = (status: string) => {
         switch (status) {
-            case 'unpaid':
+            case 'pending':
                 return {
                     label: 'Chưa thanh toán',
                     className: 'bg-orange-100 text-orange-800'
@@ -17,10 +17,15 @@ const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status }) => {
                     label: 'Đã thanh toán',
                     className: 'bg-green-100 text-green-800'
                 };
-            case 'pending_refund':
+            case 'failed':
                 return {
-                    label: 'Chờ hoàn tiền',
-                    className: 'bg-yellow-100 text-yellow-800'
+                    label: 'Thanh toán thất bại',
+                    className: 'bg-red-100 text-red-800'
+                };
+            case 'cancelled':
+                return {
+                    label: 'Đã hủy',
+                    className: 'bg-gray-100 text-gray-800'
                 };
             case 'refunded':
                 return {

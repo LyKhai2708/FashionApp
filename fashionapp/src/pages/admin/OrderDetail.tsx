@@ -240,6 +240,17 @@ const OrderDetail: React.FC = () => {
                                 <span className="text-gray-600">Phí vận chuyển</span>
                                 <span className="font-medium">{formatCurrency(order.shipping_fee)}</span>
                             </div>
+                            {order.voucher_code && (
+                                <div className="flex justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">Voucher</span>
+                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                            {order.voucher_code}
+                                        </span>
+                                    </div>
+                                    <span className="font-medium text-green-600">-{formatCurrency(order.voucher_discount_amount || 0)}</span>
+                                </div>
+                            )}
                             <div className="border-t pt-3 flex justify-between">
                                 <span className="font-semibold">Tổng cộng</span>
                                 <span className="font-bold text-lg text-blue-600">
@@ -310,28 +321,17 @@ const OrderDetail: React.FC = () => {
                         )}
                     </div>
 
-                    {(order.payment_status === 'unpaid' || order.payment_status === 'pending_refund') && (
+                    {(order.payment_status === 'pending') && (
                         <div className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-lg font-semibold mb-4">Cập nhật thanh toán</h2>
                             <div className="space-y-2">
-                                {order.payment_status === 'unpaid' && (
-                                    <button
-                                        onClick={() => handleUpdatePaymentStatus('paid')}
-                                        disabled={updating}
-                                        className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Xác nhận đã thanh toán
-                                    </button>
-                                )}
-                                {order.payment_status === 'pending_refund' && (
-                                    <button
-                                        onClick={() => handleUpdatePaymentStatus('refunded')}
-                                        disabled={updating}
-                                        className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Xác nhận đã hoàn tiền
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => handleUpdatePaymentStatus('paid')}
+                                    disabled={updating}
+                                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Xác nhận đã thanh toán
+                                </button>
                             </div>
                         </div>
                     )}

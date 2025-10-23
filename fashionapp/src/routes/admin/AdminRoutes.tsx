@@ -9,6 +9,7 @@ import Orders from '../../pages/admin/Orders';
 import OrderDetail from '../../pages/admin/OrderDetail';
 import Users from '../../pages/admin/Users';
 import Products from '../../pages/admin/Products';
+import AddProduct from '../../pages/admin/AddProduct';
 import Colors from '../../pages/admin/Colors';
 import Sizes from '../../pages/admin/Sizes';
 import Categories from '../../pages/admin/Categories';
@@ -42,6 +43,7 @@ const AdminRoutes: React.FC = () => {
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
+                <Route path="products/add" element={<AddProduct />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="users" element={<Users />} />

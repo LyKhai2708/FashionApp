@@ -50,7 +50,6 @@ export default function OrderSuccess() {
                 const orderData = await orderService.getOrderById(parseInt(orderId));
                 setOrder(orderData as OrderWithItems);
                 
-                // Nếu là PayOS payment, check status
                 if (paymentMethod === 'payos') {
                     await checkPaymentStatus();
                 }

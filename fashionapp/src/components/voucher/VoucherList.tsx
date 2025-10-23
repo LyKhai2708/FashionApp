@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Empty, Spin, Button, Space, Card, Typography } from "antd";
 import { GiftOutlined, ReloadOutlined } from '@ant-design/icons';
 import VoucherCard from './VoucherCard';
-import voucherService, { Voucher, VoucherValidationResponse } from '../../services/voucherService';
+import voucherService, { type Voucher, type VoucherValidationResponse } from '../../services/voucherService';
 
 const { Title, Text } = Typography;
 

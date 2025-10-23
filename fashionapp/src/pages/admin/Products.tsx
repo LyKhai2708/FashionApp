@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/productService';
 import type { Product } from '../../types/product';
 import { useMessage } from '../../App';
 import brandService from '../../services/brandService';
 import categoryService, { type Category } from '../../services/categoryService';
-import { Edit, Eye, Trash } from 'lucide-react';
+import { Edit, Eye, Plus } from 'lucide-react';
 
 interface Paginate {
     totalRecords: number;
@@ -15,6 +16,7 @@ interface Paginate {
 }
 
 export default function Products() {
+    const navigate = useNavigate();
     const message = useMessage();
     const [products, setProducts] = useState<Product[]>([]);
     const [paginate, setPaginate] = useState<Paginate>({
@@ -170,17 +172,13 @@ export default function Products() {
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
                     <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-                    <div className="flex gap-3">
-                        <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                            📤 Export
-                        </button>
-                        <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                            📥 Load file
-                        </button>
-                        <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                            ➕ Thêm
-                        </button>
-                    </div>
+                    <button 
+                        onClick={() => navigate('/admin/products/add')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm transition-colors"
+                    >
+                        <Plus size={20} />
+                        Thêm sản phẩm
+                    </button>
                 </div>
                 <p className="text-gray-600">Quản lý tất cả sản phẩm trong hệ thống</p>
             </div>
@@ -192,9 +190,6 @@ export default function Products() {
                         <div>
                             <p className="text-blue-100 text-sm">Tổng sản phẩm</p>
                             <p className="text-3xl font-bold">{stats.total}</p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            📦
                         </div>
                     </div>
                 </div>

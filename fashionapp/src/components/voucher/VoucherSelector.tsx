@@ -2,7 +2,7 @@ import { Modal, Button, Space, Typography } from "antd";
 import { GiftOutlined } from '@ant-design/icons';
 import { useState } from "react";
 import VoucherList from './VoucherList';
-import voucherService, { Voucher, VoucherValidationResponse } from '../../services/voucherService';
+import voucherService, { type Voucher, type VoucherValidationResponse } from '../../services/voucherService';
 
 const { Title } = Typography;
 

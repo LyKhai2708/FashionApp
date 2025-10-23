@@ -1,7 +1,6 @@
 import { Card, Tag, Typography, Button, Space } from "antd";
 import { GiftOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
-import { Voucher } from '../../services/voucherService';
-import voucherService from '../../services/voucherService';
+import voucherService, { type Voucher } from '../../services/voucherService';
 
 const { Text, Title } = Typography;
 

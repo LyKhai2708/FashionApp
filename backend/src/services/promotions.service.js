@@ -70,7 +70,7 @@ async function getManyPromotion(payload){
 }
 
 async function addProductToPromotion(productId, promoId) {
-    // Kiểm tra promotion có tồn tại không
+
     const promotion = await knex('promotions')
         .where('promo_id', promoId)
         .where('active', true)
@@ -80,7 +80,6 @@ async function addProductToPromotion(productId, promoId) {
         throw new Error('Promotion không tồn tại');
     }
 
-    // Kiểm tra product đã có promotion active chưa
     const overlappingPromo = await knex('promotion_products as pp')
         .join('promotions as p', 'pp.promo_id', 'p.promo_id')
         .where('pp.product_id', productId)
@@ -103,7 +102,6 @@ async function addProductToPromotion(productId, promoId) {
         );
     }
 
-    // Thêm promotion mới
     return knex('promotion_products').insert({
         product_id: productId,
         promo_id: promoId
@@ -111,7 +109,6 @@ async function addProductToPromotion(productId, promoId) {
 }
 
 async function removeProductFromPromotion(productId) {
-    // Kiểm tra product có promotion không
     const activePromo = await knex('promotion_products as pp')
         .join('promotions as p', 'pp.promo_id', 'p.promo_id')
         .where('pp.product_id', productId)
@@ -176,7 +173,7 @@ async function getManyProductInPromotion(payload, role = null){
     
     const productIds = products.map(item => item.product_id);
     
-    // Lấy colors từ product_variants
+
     const colors = await knex('product_variants as pv')
         .join('colors as c', 'pv.color_id', 'c.color_id')
         .whereIn('pv.product_id', productIds)
@@ -184,13 +181,12 @@ async function getManyProductInPromotion(payload, role = null){
         .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
         .orderBy('c.color_id');
 
-    // Lấy images trực tiếp
+
     const images = await knex('images')
         .whereIn('product_id', productIds)
         .select('product_id', 'color_id', 'image_url', 'is_primary', 'display_order')
         .orderBy('display_order');
 
-    // Group images by product_id and color_id
     const imagesByProductAndColor = {};
     for (const img of images) {
         const key = `${img.product_id}_${img.color_id}`;

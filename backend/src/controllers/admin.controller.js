@@ -74,11 +74,12 @@ async function getDashboardStast(req,res, next){
         //don hang hien tai
         const recentOrders = await knex('orders')
             .join('users', 'orders.user_id', 'users.user_id')
+            .leftJoin('payments', 'orders.order_id', 'payments.order_id')
             .select(
                 'orders.order_id',
                 'orders.total_amount',
                 'orders.order_status',
-                'orders.payment_status',
+                'payments.payment_status',
                 'orders.order_date',
                 'users.username',
                 'orders.receiver_name'
@@ -91,9 +92,10 @@ async function getDashboardStast(req,res, next){
             .join('orders', 'orderdetails.order_id', 'orders.order_id')
             .join('product_variants', 'orderdetails.product_variant_id', 'product_variants.product_variants_id')
             .join('products', 'product_variants.product_id', 'products.product_id')
+            .join('payments', 'orders.order_id', 'payments.order_id')
             .whereBetween('orders.order_date', [startOfMonth, endOfMonth])
             .where('orders.order_status', 'delivered')
-            .where('orders.payment_status', 'paid')
+            .where('payments.payment_status', 'paid')
             .select(
                 'products.product_id',
                 'products.name as product_name',

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../services/productService';
-import { favoriteService } from '../services/favoriteService';
-import { useAuth } from '../contexts/AuthContext';
 import type { ProductDetail, ProductVariant } from '../types/product';
+import { useAuth } from '../contexts/AuthContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 interface UseProductDetailReturn {
     product: ProductDetail | null;
@@ -22,6 +22,7 @@ interface UseProductDetailReturn {
 
 export function useProductDetail(productId: number): UseProductDetailReturn {
     const { user } = useAuth();
+    const { isFavorite, getFavoriteId, toggleFavorite: contextToggleFavorite } = useFavorites();
     const [product, setProduct] = useState<ProductDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -93,7 +94,6 @@ export function useProductDetail(productId: number): UseProductDetailReturn {
     const currentPrice = selectedVariant?.final_price || product?.base_price || 0;
     const stockQuantity = selectedVariant?.stock_quantity || 0;
 
-    // Toggle favorite
     const toggleFavorite = async () => {
         if (!user || !product) {
             alert('Vui lòng đăng nhập để thêm sản phẩm yêu thích');
@@ -102,35 +102,29 @@ export function useProductDetail(productId: number): UseProductDetailReturn {
 
         try {
             setFavoriteLoading(true);
-            
-            console.log('Toggle favorite called:', {
-                product_id: product.product_id,
-                current_is_favorite: product.is_favorite,
-                current_favorite_id: product.favorite_id,
-                will_remove: product.is_favorite
-            });
-            
-            const result = await favoriteService.toggleFavorite(
-                product.product_id,
-                product.is_favorite ? product.favorite_id : undefined
-            );
-            
-            console.log('Toggle favorite result:', result);
-            
-            // Update local state with correct favorite_id
-            setProduct(prev => prev ? {
-                ...prev,
-                is_favorite: result.isLiked,
-                favorite_id: result.favoriteId || undefined
-            } : null);
-            
-        } catch (error: any) {
+            const favoriteId = getFavoriteId(product.product_id);
+            await contextToggleFavorite(product.product_id, favoriteId);
+        } catch (error: unknown) {
             console.error('Toggle favorite error:', error);
-            alert(error.message || 'Có lỗi xảy ra');
+            const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+            alert(message);
         } finally {
             setFavoriteLoading(false);
         }
     };
+    useEffect(() => {
+        if (product) {
+            const isLiked = isFavorite(product.product_id);
+            const favId = getFavoriteId(product.product_id);
+            if (product.is_favorite !== isLiked || product.favorite_id !== favId) {
+                setProduct(prev => prev ? {
+                    ...prev,
+                    is_favorite: isLiked,
+                    favorite_id: favId
+                } : null);
+            }
+        }
+    }, [product, isFavorite, getFavoriteId]);
 
     return {
         product,

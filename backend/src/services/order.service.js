@@ -162,36 +162,31 @@ async function createOrder(orderData, items) {
       });
     }
 
-    const paymentMethod = orderData.payment_method || 'cod';
-    
+    // Trừ stock cho TẤT CẢ đơn hàng (COD + PayOS)
     for (const item of items) {
       const qty = Number(item.quantity) || 0;
       if (qty <= 0) {
         throw new Error('Số lượng sản phẩm không hợp lệ');
       }
 
-      // Kiểm tra tồn kho
-      const variant = await trx('product_variants')
+      // Trừ stock với atomic check
+      const updated = await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
-        .select('stock_quantity', 'product_id')
-        .first();
+        .andWhere('stock_quantity', '>=', qty)
+        .decrement('stock_quantity', qty);
 
-      if (!variant || variant.stock_quantity < qty) {
+      const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
+      if (affectedRows === 0) {
         throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
       }
 
-  
-      if (paymentMethod === 'cod') {
-        const updated = await trx('product_variants')
-          .where('product_variants_id', item.product_variant_id)
-          .andWhere('stock_quantity', '>=', qty)
-          .decrement('stock_quantity', qty);
+      // Lấy product_id để update sold count
+      const variant = await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .select('product_id')
+        .first();
 
-        const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
-        if (affectedRows === 0) {
-          throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
-        }
-
+      if (variant) {
         await trx('products')
           .where('product_id', variant.product_id)
           .increment('sold', qty);
@@ -402,12 +397,13 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
   }
 
   const countQuery = knex('orders')
+    .leftJoin('payments', 'orders.order_id', 'payments.order_id')
     .where((builder) => {
       if (filters.user_id) {
-        builder.where('user_id', filters.user_id);
+        builder.where('orders.user_id', filters.user_id);
       }
       if (filters.order_status) {
-        builder.where('order_status', filters.order_status);
+        builder.where('orders.order_status', filters.order_status);
       }
       if (filters.payment_status) {
         builder.where('payments.payment_status', filters.payment_status);
@@ -416,7 +412,7 @@ async function getOrders(filters = {}, page = 1, limit = 10) {
         builder.where('payments.payment_method', filters.payment_method);
       }
       if (filters.start_date && filters.end_date) {
-        builder.whereBetween('order_date', [filters.start_date, filters.end_date]);
+        builder.whereBetween('orders.order_date', [filters.start_date, filters.end_date]);
       }
     })
     .count('* as count')
@@ -450,6 +446,7 @@ async function getOrderById(orderId) {
   const order = await knex('orders')
     .leftJoin('users', 'orders.user_id', 'users.user_id')
     .leftJoin('payments', 'orders.order_id', 'payments.order_id')
+    .leftJoin('vouchers', 'orders.voucher_id', 'vouchers.voucher_id')
     .select([
       'orders.*',
       'users.username as customer_name',
@@ -460,7 +457,10 @@ async function getOrderById(orderId) {
       'payments.paid_at',
       'payments.payos_order_code',
       'payments.payos_transaction_id',
-
+      'vouchers.code as voucher_code',
+      'vouchers.name as voucher_name',
+      'vouchers.discount_type as voucher_discount_type',
+      'vouchers.discount_value as voucher_discount_value'
     ])
     .where('orders.order_id', orderId)
     .first();
@@ -550,7 +550,7 @@ async function cancelOrder(orderId, cancelReason = null) {
       .first();
 
 
-    let newPaymentStatus = payments?.payment_status || 'unpaid';
+    let newPaymentStatus = payments?.payment_status || 'pending';
     if (payments?.payment_status === 'paid') {
       newPaymentStatus = 'refunded';
     } else {
@@ -562,7 +562,6 @@ async function cancelOrder(orderId, cancelReason = null) {
       .andWhere('order_status', 'pending')
       .update({
         order_status: 'cancelled',
-        payment_status: newPaymentStatus,
         cancelled_at: trx.fn.now(),
         cancel_reason: cancelReason ?? null,
         updated_at: trx.fn.now(),

@@ -46,8 +46,11 @@ const getPaymentMethodText = (method: string) => {
 
 const getPaymentStatusText = (status: string) => {
   switch (status) {
-    case 'unpaid': return 'Chưa thanh toán';
+    case 'pending': return 'Chưa thanh toán';
     case 'paid': return 'Đã thanh toán';
+    case 'failed': return 'Thanh toán thất bại';
+    case 'cancelled': return 'Đã hủy';
+    case 'refunded': return 'Đã hoàn tiền';
     default: return status;
   }
 };
@@ -121,7 +124,6 @@ const {
     if (!order || !isDelivered) return;
     const productIds = (order.items || []).map((i: any) => i.product_id);
     productIds.forEach(pid => fetchItemReview(pid));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.order_id, isDelivered]);
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -236,6 +238,15 @@ const {
               <Text>Phí vận chuyển:</Text>
               <Text>{formatVNDPrice(order.shipping_fee)}</Text>
             </div>
+            {order.voucher_code && (
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Text>Voucher:</Text>
+                  <Tag color="green" className="!m-0">{order.voucher_code}</Tag>
+                </div>
+                <Text className="text-green-600">-{formatVNDPrice(order.voucher_discount_amount || 0)}</Text>
+              </div>
+            )}
             <Divider className="my-2" />
             <div className="flex justify-between items-center">
               <Text strong className="text-lg">Thành tiền:</Text>

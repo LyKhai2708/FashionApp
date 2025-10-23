@@ -52,7 +52,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         items: [],
         totalItems: 0,
         totalPrice: 0,
-        loading: true, // Set true để tránh redirect sớm khi page load
+        loading: true, 
         error: null,
         appliedVoucher: null,
     });
@@ -63,7 +63,6 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             try {
                 setCartState(prev => ({ ...prev, loading: true }));
                 
-                // Only merge once when user logs in
                 if (!skipMerge && !hasMerged) {
                     await cartService.mergeLocalCartToServer();
                     setHasMerged(true);
@@ -213,7 +212,6 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
             error: null,
             appliedVoucher: null 
           });
-          message.success('Đã xóa giỏ hàng');
         } catch (error: any) {
           message.error(error.message || 'Không thể xóa giỏ hàng');
         }

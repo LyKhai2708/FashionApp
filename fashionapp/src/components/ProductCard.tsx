@@ -1,12 +1,12 @@
 import { HeartIcon, Star } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Product, ProductColor, ProductSize } from '../types/product';
 import { formatVNDPrice } from '../utils/priceFormatter';
-import { favoriteService } from '../services/favoriteService';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useMessage } from '../App';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 interface ProductCardProps {
     product: Product;
@@ -18,19 +18,16 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
     const { addToCart } = useCart();
     const message = useMessage();
     const navigate = useNavigate();
-    const [liked, setLiked] = useState(product.is_favorite || false);
+    const { isFavorite, getFavoriteId, toggleFavorite } = useFavorites();
     const [loading, setLoading] = useState(false);
-    const [favoriteId, setFavoriteId] = useState(product.favorite_id);
     const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [selectedColor, setSelectedColor] = useState<ProductColor | null>(
         product.colors && product.colors.length > 0 ? product.colors[0] : null
     );
     const [addingToCart, setAddingToCart] = useState(false);
 
-    useEffect(() => {
-        setLiked(product.is_favorite || false);
-        setFavoriteId(product.favorite_id);
-    }, [product.is_favorite, product.favorite_id, user?.id]);
+    const liked = isFavorite(product.product_id);
+    const favoriteId = getFavoriteId(product.product_id);
 
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -43,24 +40,10 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
 
         if (loading) return;
 
-        const previousLiked = liked;
-        const previousFavoriteId = favoriteId;
-
         try {
             setLoading(true);
-            
-            const result = await favoriteService.toggleFavorite(
-                product.product_id,
-                liked ? favoriteId : undefined
-            );
-            
-            setLiked(result.isLiked);
-            setFavoriteId(result.favoriteId);
-
+            await toggleFavorite(product.product_id, favoriteId);
         } catch (error: any) {
-
-            setLiked(previousLiked);
-            setFavoriteId(previousFavoriteId);
             console.error('Toggle favorite error:', error);
             message.error(error.message || 'Có lỗi xảy ra');
         } finally {
