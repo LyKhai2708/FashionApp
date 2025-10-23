@@ -14,6 +14,7 @@ import Colors from '../../pages/admin/Colors';
 import Sizes from '../../pages/admin/Sizes';
 import Categories from '../../pages/admin/Categories';
 import Vouchers from '../../pages/admin/Vouchers';
+import Promotions from '../../pages/admin/Promotions';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -51,6 +52,7 @@ const AdminRoutes: React.FC = () => {
                 <Route path="colors" element={<Colors />} />
                 <Route path="sizes" element={<Sizes />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="promotions" element={<Promotions />} />
                 <Route path="vouchers" element={<Vouchers />} />
             </Route>
 
