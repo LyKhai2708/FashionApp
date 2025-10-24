@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useMessage } from '../../App';
 import colorService from '../../services/colorService';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
+import { Modal, Form, Input } from 'antd';
 
 interface Color {
     color_id: number;
@@ -13,6 +14,10 @@ export default function Colors() {
     const message = useMessage();
     const [colors, setColors] = useState<Color[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [form] = Form.useForm();
+    const [submitting, setSubmitting] = useState(false);
+    const [previewColor, setPreviewColor] = useState('#000000');
 
     const fetchColors = async () => {
         try {
@@ -40,11 +45,33 @@ export default function Colors() {
         }
     };
 
+    const handleCreate = async (values: { name: string; hex_code: string }) => {
+        try {
+            setSubmitting(true);
+            await colorService.createColor(values);
+            message.success('Thêm màu thành công');
+            setIsModalOpen(false);
+            form.resetFields();
+            fetchColors();
+        } catch (error: any) {
+            message.error(error.message || 'Không thể thêm màu');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Quản lý màu sắc</h1>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <button 
+                    onClick={() => {
+                        setIsModalOpen(true);
+                        setPreviewColor('#000000');
+                        form.setFieldValue('hex_code', '#000000');
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
                     <Plus className="w-4 h-4" />
                     Thêm màu
                 </button>
@@ -78,6 +105,75 @@ export default function Colors() {
                     </div>
                 )}
             </div>
+
+            <Modal
+                title="Thêm màu mới"
+                open={isModalOpen}
+                onCancel={() => {
+                    setIsModalOpen(false);
+                    form.resetFields();
+                    setPreviewColor('#000000');
+                }}
+                onOk={() => form.submit()}
+                confirmLoading={submitting}
+                okText="Thêm"
+                cancelText="Hủy"
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleCreate}
+                    initialValues={{ hex_code: '#000000' }}
+                >
+                    <Form.Item
+                        label="Tên màu"
+                        name="name"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên màu' }]}
+                    >
+                        <Input placeholder="VD: Đỏ, Xanh dương..." />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Mã màu (Hex)"
+                        name="hex_code"
+                        rules={[
+                            { required: true, message: 'Vui lòng chọn màu' },
+                            { pattern: /^#[0-9A-F]{6}$/i, message: 'Mã màu không hợp lệ (VD: #FF0000)' }
+                        ]}
+                    >
+                        <div className="flex gap-2">
+                            <Input 
+                                placeholder="#000000"
+                                value={previewColor}
+                                onChange={(e) => {
+                                    const value = e.target.value.toUpperCase();
+                                    setPreviewColor(value);
+                                    form.setFieldValue('hex_code', value);
+                                }}
+                            />
+                            <input
+                                type="color"
+                                value={previewColor}
+                                onChange={(e) => {
+                                    const value = e.target.value.toUpperCase();
+                                    setPreviewColor(value);
+                                    form.setFieldValue('hex_code', value);
+                                }}
+                                className="w-16 h-10 border rounded cursor-pointer"
+                            />
+                        </div>
+                    </Form.Item>
+
+                    <div className="text-center">
+                        <div 
+                            className="w-24 h-24 rounded-full mx-auto border-2 shadow-lg"
+                            style={{ backgroundColor: previewColor }}
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Preview màu</p>
+                        <p className="text-xs text-gray-400 mt-1 font-mono">{previewColor}</p>
+                    </div>
+                </Form>
+            </Modal>
         </div>
     );
 }

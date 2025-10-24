@@ -113,6 +113,16 @@ class SizeService {
       throw new Error(error.response?.data?.message || 'Không thể xóa size');
     }
   }
+
+  async createSize(data: { name: string }): Promise<Size> {
+    try {
+      const response = await api.post<{ status: string; data: { size: Size } }>('/api/v1/sizes', data);
+      return response.data.data.size;
+    } catch (error: any) {
+      console.error('Create size error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể tạo size');
+    }
+  }
 }
 
 export const sizeService = new SizeService();

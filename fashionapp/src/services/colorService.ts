@@ -62,6 +62,16 @@ class ColorService {
     }
   }
 
+  async createColor(data: { name: string; hex_code: string }): Promise<Color> {
+    try {
+      const response = await api.post<{ status: string; data: { color: Color } }>('/api/v1/colors', data);
+      return response.data.data.color;
+    } catch (error: any) {
+      console.error('Create color error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể tạo màu sắc');
+    }
+  }
+
 }
 
 export const colorService = new ColorService();
