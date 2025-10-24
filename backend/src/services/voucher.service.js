@@ -31,18 +31,14 @@ function readVoucher(payload) {
     return voucher;
 }
 
-/**
- * Tạo voucher mới
- */
+
 async function createVoucher(payload) {
     const voucher = readVoucher(payload);
     const [id] = await voucherRepository().insert(voucher);
     return { voucher_id: id, ...voucher };
 }
 
-/**
- * Lấy danh sách vouchers (có phân trang và lọc)
- */
+
 async function getManyVoucher(payload) {
     const { page = 1, limit = 10, code, name, active, discount_type, start_date, end_date } = payload;
     const paginator = new Paginator(page, limit);

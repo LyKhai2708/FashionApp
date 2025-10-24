@@ -112,7 +112,17 @@ class ProductService{
         }, user_id);
     }
 
-    
+    async updateProduct(productId: number, formData: FormData) {
+        try {
+            const response = await api.patch(`/api/v1/products/${productId}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return response.data;
+        } catch (error: any) {
+            console.error('Update product error:', error);
+            throw new Error(error.response?.data?.message || 'Không thể cập nhật sản phẩm');
+        }
+    }
 }
 
 export const productService = new ProductService();

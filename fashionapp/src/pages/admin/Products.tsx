@@ -425,10 +425,16 @@ export default function Products() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-2">
+                                                    <button 
+                                                        onClick={() => navigate(`/products/${product.slug}-${product.product_id}`)}
+                                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-2"
+                                                    >
                                                         <Eye className='w-4 h-4'/>Xem
                                                     </button>
-                                                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2">
+                                                    <button 
+                                                        onClick={() => navigate(`/admin/products/edit/${product.product_id}`)}
+                                                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2"
+                                                    >
                                                         <Edit className='w-4 h-4'/>Sửa
                                                     </button>
                                                     {product.del_flag === 0 && (

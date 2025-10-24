@@ -51,6 +51,8 @@ export interface Product {
     review_count?: number;
     del_flag?: number;
     total_stock?: number;
+    sold?: number;
+    sold_in_promotion?: number;
 }
 
 // Variant cho product detail
@@ -91,6 +93,8 @@ export interface ProductDetail {
     favorite_id?: number;
     variants: ProductVariant[];
     price_info: PriceInfo;
+    average_rating?: number;
+    review_count?: number;
 }
   
   // req parám

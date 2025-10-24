@@ -153,7 +153,6 @@ async function createOrder(orderData, items) {
 
     await trx('orderdetails').insert(orderItems);
 
-    // Add to order_vouchers table if voucher was used
     if (voucher_id) {
       await trx('order_vouchers').insert({
         order_id: orderId,
@@ -162,14 +161,13 @@ async function createOrder(orderData, items) {
       });
     }
 
-    // Trừ stock cho TẤT CẢ đơn hàng (COD + PayOS)
+
     for (const item of items) {
       const qty = Number(item.quantity) || 0;
       if (qty <= 0) {
         throw new Error('Số lượng sản phẩm không hợp lệ');
       }
 
-      // Trừ stock với atomic check
       const updated = await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)
         .andWhere('stock_quantity', '>=', qty)
@@ -180,17 +178,6 @@ async function createOrder(orderData, items) {
         throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
       }
 
-      // Lấy product_id để update sold count
-      const variant = await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .select('product_id')
-        .first();
-
-      if (variant) {
-        await trx('products')
-          .where('product_id', variant.product_id)
-          .increment('sold', qty);
-      }
     }
 
     return { 
@@ -518,6 +505,25 @@ async function updateOrderStatus(orderId, order_status, adminId = null, cancelRe
       throw new Error('Không thể đánh dấu delivered khi chưa shipped');
     }
     if (!order.delivered_at) patch.delivered_at = knex.fn.now();
+    
+    if (order.order_status !== 'delivered') {
+      const orderItems = await knex('orderdetails')
+        .where('order_id', orderId)
+        .select('product_variant_id', 'quantity');
+      
+      for (const item of orderItems) {
+        const variant = await knex('product_variants')
+          .where('product_variants_id', item.product_variant_id)
+          .select('product_id')
+          .first();
+        
+        if (variant) {
+          await knex('products')
+            .where('product_id', variant.product_id)
+            .increment('sold', item.quantity);
+        }
+      }
+    }
   }
 
   const updated = await knex('orders')

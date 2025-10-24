@@ -80,11 +80,11 @@ async function removeImage(image_id) {
     if (!deletedImage) return null;
     await imagesRepository().where('image_id', image_id).del();
 
-    if (
-        deletedImage.image_url &&
-        deletedImage.image_url.startsWith('/public/uploads')
-    ) {
-        unlink(`.${deletedImage.image_url}`, (err) => {});
+    if (deletedImage.image_url) {
+        const filePath = deletedImage.image_url.startsWith('/public/uploads')
+            ? `.${deletedImage.image_url}`
+            : `./public${deletedImage.image_url}`;
+        unlink(filePath, (err) => {});
     }
     return deletedImage;
 }

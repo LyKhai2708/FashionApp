@@ -115,13 +115,23 @@ async function getProductById(req, res, next) {
 
 async function updateProduct(req, res, next) {
   try {
-    if(Object.keys(req.body).length === 0 && !req.file) {
+    if(Object.keys(req.body).length === 0 && (!req.files || req.files.length === 0)) {
       return next(new ApiError(400, "No data to update"));
     }
+
+    const imageData = {
+      uploadedFiles: req.files || [],
+      deletedImages: req.body.deleted_images ? JSON.parse(req.body.deleted_images) : [],
+      updatedImages: req.body.updated_images ? JSON.parse(req.body.updated_images) : [],
+      imageColors: req.body.image_colors ? JSON.parse(req.body.image_colors) : [],
+      newThumbnail: req.body.new_thumbnail === 'true'
+    };
+
     const updated = await productService.updateProduct(req.params.id, {
       ...req.body,
-      thumbnail: req.file ? `/public/uploads/${req.file.filename}` : null,
+      imageData
     });
+    
     if (!updated) return next(new ApiError(404, "Product not found"));
     return res.json(JSend.success({ product: updated }));
   } catch (err) {

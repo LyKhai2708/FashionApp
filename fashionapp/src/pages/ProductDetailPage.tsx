@@ -81,7 +81,9 @@ export default function ProductDetailPage() {
             
             const productForStorage: any = {
                 ...product,
-                colors: Array.from(colorMap.values())
+                colors: Array.from(colorMap.values()),
+                average_rating: product.average_rating || 0,
+                review_count: product.review_count || 0
             };
             addProduct(productForStorage);
         }

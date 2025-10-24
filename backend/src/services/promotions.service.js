@@ -154,7 +154,17 @@ async function getManyProductInPromotion(payload, role = null){
             'p.start_date',
             'p.end_date',
             'p.active',
-            knex.raw('ROUND(prod.base_price * (1 - p.discount_percent / 100), 2) as discounted_price')
+            knex.raw('ROUND(prod.base_price * (1 - p.discount_percent / 100), 2) as discounted_price'),
+            knex.raw(`(
+                SELECT COALESCE(SUM(od.quantity), 0)
+                FROM orderdetails od
+                JOIN orders o ON od.order_id = o.order_id
+                JOIN product_variants pv ON od.product_variant_id = pv.product_variants_id
+                WHERE pv.product_id = prod.product_id
+                  AND o.order_status = 'delivered'
+                  AND o.delivered_at >= p.start_date
+                  AND o.delivered_at <= p.end_date
+            ) as sold_in_promotion`)
         )
         .orderBy('prod.name')
         .limit(paginator.limit)
@@ -172,6 +182,21 @@ async function getManyProductInPromotion(payload, role = null){
     let totalRecords = products[0].recordCount;
     
     const productIds = products.map(item => item.product_id);
+
+    const reviewsStats = await knex('product_reviews')
+        .whereIn('product_id', productIds)
+        .select('product_id')
+        .select(knex.raw('COUNT(*) as review_count'))
+        .select(knex.raw('AVG(rating) as average_rating'))
+        .groupBy('product_id');
+
+    const reviewsByProduct = {};
+    for (const stat of reviewsStats) {
+        reviewsByProduct[stat.product_id] = {
+            review_count: parseInt(stat.review_count) || 0,
+            average_rating: parseFloat(stat.average_rating) || 0
+        };
+    }
     
 
     const colors = await knex('product_variants as pv')
@@ -254,6 +279,7 @@ async function getManyProductInPromotion(payload, role = null){
     
     const formattedProducts = products.map((item) => {
         const colors = colorsByProduct[item.product_id] || [];
+        const reviews = reviewsByProduct[item.product_id];
         
         return {
             product_id: item.product_id,
@@ -271,13 +297,17 @@ async function getManyProductInPromotion(payload, role = null){
             discounted_price: parseFloat(item.discounted_price),
             has_promotion: true,
             is_favorite: false,
+            sold: item.sold || 0,
+            sold_in_promotion: item.sold_in_promotion || 0,
             colors: colors,
             price_info: {
                 base_price: parseFloat(item.base_price),
                 discounted_price: parseFloat(item.discounted_price),
                 discount_percent: item.discount_percent,
                 has_promotion: true
-            }
+            },
+            review_count: reviews ? reviews.review_count : 0,
+            average_rating: reviews ? reviews.average_rating : 0
         };
     });
     

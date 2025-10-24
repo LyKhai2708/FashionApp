@@ -138,7 +138,7 @@ class PromotionService {
     async addProductToPromotion(promoId: number, productId: number): Promise<{ success: boolean }> {
         try {
             const response = await api.post<{ status: 'success'; data: { success: boolean } }>(
-                `/api/v1/promotions/${promoId}/products/${productId}`
+                `/api/v1/promotions/${promoId}/product/${productId}`
             );
             return response.data.data;
         } catch (error: any) {
@@ -151,7 +151,7 @@ class PromotionService {
     async removeProductFromPromotion(promoId: number, productId: number): Promise<{ success: boolean }> {
         try {
             const response = await api.delete<{ status: 'success'; data: { success: boolean } }>(
-                `/api/v1/promotions/${promoId}/products/${productId}`
+                `/api/v1/promotions/${promoId}/product/${productId}`
             );
             return response.data.data;
         } catch (error: any) {

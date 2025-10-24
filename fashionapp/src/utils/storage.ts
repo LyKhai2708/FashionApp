@@ -83,8 +83,15 @@ export const recentlyViewedStorage = {
             
             const filtered = items.filter(item => item.product.product_id !== product.product_id);
             
+            // Ensure product has rating info
+            const productWithRating = {
+                ...product,
+                average_rating: product.average_rating || 0,
+                review_count: product.review_count || 0
+            };
+            
             const newItems: RecentlyViewedItem[] = [
-                { product, viewedAt: Date.now() },
+                { product: productWithRating, viewedAt: Date.now() },
                 ...filtered
             ].slice(0, MAX_RECENTLY_VIEWED);
             
@@ -122,13 +129,13 @@ export const recentlyViewedStorage = {
     
     getProducts: (): Product[] => {
         return recentlyViewedStorage.get().map(item => {
-            // Filter out inactive variants from colors
             const filteredProduct = {
                 ...item.product,
+                average_rating: item.product.average_rating || 0,
+                review_count: item.product.review_count || 0,
                 colors: item.product.colors?.map(color => ({
                     ...color,
                     sizes: color.sizes?.filter(size => 
-                        // Filter by active status (if exists) and stock quantity
                         (size.active === undefined || size.active === 1) && 
                         size.stock_quantity > 0
                     ) || []

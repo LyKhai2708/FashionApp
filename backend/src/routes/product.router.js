@@ -324,7 +324,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.patch("/:id", authMiddleware, authorizeRoles(['admin']), uploadSingle('thumbnail'), productController.updateProduct);
+    router.patch("/:id", authMiddleware, authorizeRoles(['admin']), uploadMultiple('images', 30), productController.updateProduct);
 
     /**
      * @swagger
