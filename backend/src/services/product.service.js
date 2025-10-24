@@ -233,6 +233,12 @@ async function getProductById(id, user_id = null) {
             active: variant.active
         }));
 
+        const reviewStats = await knex('product_reviews')
+            .where('product_id', id)
+            .select(knex.raw('COUNT(*) as review_count'))
+            .select(knex.raw('AVG(rating) as average_rating'))
+            .first();
+
         return {
             ...product,
             variants: formattedVariants,
@@ -241,7 +247,9 @@ async function getProductById(id, user_id = null) {
                 discounted_price: parseFloat(product.discounted_price),
                 discount_percent: product.discount_percent,
                 has_promotion: product.has_promotion
-            }
+            },
+            review_count: reviewStats ? parseInt(reviewStats.review_count) || 0 : 0,
+            average_rating: reviewStats ? parseFloat(reviewStats.average_rating) || 0 : 0
         };
     } catch (error) {
         console.error('Error in getProductById:', error);
@@ -250,22 +258,131 @@ async function getProductById(id, user_id = null) {
 }
   
 async function updateProduct(id, payload) {
-    const updatedProduct = await productsRepository().where("product_id", id).select('*').first();
-    if (!updatedProduct) return null;
+    return await knex.transaction(async (trx) => {
+        const updatedProduct = await trx('products').where("product_id", id).select('*').first();
+        if (!updatedProduct) return null;
 
-    const update = readProduct(payload);
-    if(!update.thumbnail){
-        delete update.thumbnail;
-    }
-    await productsRepository().where("product_id", id).update(update);
-    if(update.thumbnail &&
-        updatedProduct.thumbnail &&
-        update.thumbnail !== updatedProduct.thumbnail
-        && updatedProduct.thumbnail.startsWith('/public/uploads/'))
-    {
-        unlink(`.${updatedProduct.thumbnail}`, (err) => {});
-    }
-    return { ...updatedProduct, ...update };
+        const update = readProduct(payload);
+        const { imageData } = payload;
+
+        if (imageData && imageData.newThumbnail && imageData.uploadedFiles.length > 0) {
+            update.thumbnail = `/public/uploads/${imageData.uploadedFiles[0].filename}`;
+            
+            if (updatedProduct.thumbnail && update.thumbnail !== updatedProduct.thumbnail) {
+                const oldFilePath = updatedProduct.thumbnail.startsWith('/public/uploads/')
+                    ? `.${updatedProduct.thumbnail}`
+                    : `./public${updatedProduct.thumbnail}`;
+                unlink(oldFilePath, (err) => {});
+            }
+        } else {
+            delete update.thumbnail;
+        }
+
+        await trx('products').where("product_id", id).update(update);
+
+        if (payload.variants) {
+            const variants = typeof payload.variants === 'string' 
+                ? JSON.parse(payload.variants) 
+                : payload.variants;
+
+            if (variants && variants.length > 0) {
+                const existingVariants = await trx('product_variants')
+                    .where('product_id', id)
+                    .select('*');
+
+                const existingVariantMap = new Map(
+                    existingVariants.map(v => [`${v.color_id}-${v.size_id}`, v])
+                );
+
+                const newVariantKeys = new Set();
+
+                for (const variant of variants) {
+                    const key = `${variant.color_id}-${variant.size_id}`;
+                    newVariantKeys.add(key);
+
+                    const existing = existingVariantMap.get(key);
+
+                    if (existing) {
+                        await trx('product_variants')
+                            .where('product_variants_id', existing.product_variants_id)
+                            .update({
+                                stock_quantity: variant.stock_quantity || 0,
+                                active: variant.active !== undefined ? variant.active : 1
+                            });
+                    } else {
+                        await trx('product_variants').insert({
+                            product_id: id,
+                            color_id: variant.color_id,
+                            size_id: variant.size_id,
+                            stock_quantity: variant.stock_quantity || 0,
+                            active: variant.active !== undefined ? variant.active : 1
+                        });
+                    }
+                }
+
+                for (const [key, existing] of existingVariantMap) {
+                    if (!newVariantKeys.has(key)) {
+                        await trx('product_variants')
+                            .where('product_variants_id', existing.product_variants_id)
+                            .update({ active: 0 });
+                    }
+                }
+            }
+        }
+
+        if (imageData) {
+            if (imageData.deletedImages && imageData.deletedImages.length > 0) {
+                for (const imageUrl of imageData.deletedImages) {
+                    await trx('images').where({
+                        product_id: id,
+                        image_url: imageUrl
+                    }).delete();
+
+                    const filePath = imageUrl.startsWith('/public/uploads/')
+                        ? `.${imageUrl}`
+                        : `./public${imageUrl}`;
+                    unlink(filePath, (err) => {});
+                }
+            }
+
+            if (imageData.updatedImages && imageData.updatedImages.length > 0) {
+                for (const img of imageData.updatedImages) {
+                    await trx('images').where({
+                        product_id: id,
+                        image_url: img.image_url
+                    }).update({
+                        is_primary: img.is_primary || false,
+                        display_order: img.display_order || 1
+                    });
+                }
+            }
+
+            let fileIndex = imageData.newThumbnail ? 1 : 0;
+            if (imageData.uploadedFiles && imageData.uploadedFiles.length > fileIndex) {
+                for (let i = fileIndex; i < imageData.uploadedFiles.length; i++) {
+                    const file = imageData.uploadedFiles[i];
+                    const colorId = imageData.imageColors[i - fileIndex];
+                    
+                    if (colorId) {
+                        const maxOrder = await trx('images')
+                            .where({ product_id: id, color_id: colorId })
+                            .max('display_order as max')
+                            .first();
+                        
+                        await trx('images').insert({
+                            product_id: id,
+                            color_id: colorId,
+                            image_url: `/public/uploads/${file.filename}`,
+                            is_primary: false,
+                            display_order: (maxOrder.max || 0) + 1
+                        });
+                    }
+                }
+            }
+        }
+
+        return { ...updatedProduct, ...update };
+    });
 }
 
 
@@ -576,8 +693,11 @@ async function hardDeleteProduct(id) {
         
 
         for (const img of images) {
-            if (img.image_url?.startsWith('/public/uploads/')) {
-                unlink(`.${img.image_url}`, (err) => {
+            if (img.image_url) {
+                const filePath = img.image_url.startsWith('/public/uploads/')
+                    ? `.${img.image_url}`
+                    : `./public${img.image_url}`;
+                unlink(filePath, (err) => {
                     if (err) console.error('Failed to delete image:', img.image_url);
                 });
             }

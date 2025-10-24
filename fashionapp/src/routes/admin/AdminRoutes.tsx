@@ -10,11 +10,13 @@ import OrderDetail from '../../pages/admin/OrderDetail';
 import Users from '../../pages/admin/Users';
 import Products from '../../pages/admin/Products';
 import AddProduct from '../../pages/admin/AddProduct';
+import EditProduct from '../../pages/admin/EditProduct';
 import Colors from '../../pages/admin/Colors';
 import Sizes from '../../pages/admin/Sizes';
 import Categories from '../../pages/admin/Categories';
 import Vouchers from '../../pages/admin/Vouchers';
 import Promotions from '../../pages/admin/Promotions';
+import PromotionProducts from '../../pages/admin/PromotionProducts';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -46,6 +48,7 @@ const AdminRoutes: React.FC = () => {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
                 <Route path="products/add" element={<AddProduct />} />
+                <Route path="products/edit/:id" element={<EditProduct />} />
                 <Route path="orders" element={<Orders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="users" element={<Users />} />
@@ -53,6 +56,7 @@ const AdminRoutes: React.FC = () => {
                 <Route path="sizes" element={<Sizes />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="promotions" element={<Promotions />} />
+                <Route path="promotions/:promo_id/products" element={<PromotionProducts />} />
                 <Route path="vouchers" element={<Vouchers />} />
             </Route>
 
