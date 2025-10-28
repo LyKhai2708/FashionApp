@@ -17,11 +17,15 @@ import {
     message as antMessage,
     Spin,
     Table,
-    Steps
+    Steps,
+    Tooltip
 } from 'antd';
 import {
     PlusOutlined,
     ArrowLeftOutlined,
+    DeleteOutlined,
+    StarOutlined,
+    StarFilled
 } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import brandService from '../../services/brandService';
@@ -58,6 +62,7 @@ interface Variant {
 interface ColorImage {
     color_id: number;
     images: UploadFile[];
+    primaryIndex: number;  // Index của ảnh primary (default: 0)
 }
 
 interface ColorVariants {
@@ -116,7 +121,7 @@ export default function AddProduct() {
 
         const newColorImages = colorIds.map(colorId => {
             const existing = colorImages.find(ci => ci.color_id === colorId);
-            return existing || { color_id: colorId, images: [] };
+            return existing || { color_id: colorId, images: [], primaryIndex: 0 };
         });
         setColorImages(newColorImages);
 
@@ -161,9 +166,65 @@ export default function AddProduct() {
 
     const handleColorImageChange = (colorId: number, fileList: UploadFile[]) => {
         setColorImages(prev =>
+            prev.map(ci => {
+                if (ci.color_id !== colorId) return ci;
+                // Reset primaryIndex if it's out of bounds
+                const newPrimaryIndex = fileList.length > 0 ? Math.min(ci.primaryIndex, fileList.length - 1) : 0;
+                return { ...ci, images: fileList, primaryIndex: newPrimaryIndex };
+            })
+        );
+    };
+
+    const handleSetPrimaryImage = (colorId: number, index: number) => {
+        setColorImages(prev =>
             prev.map(ci =>
-                ci.color_id === colorId ? { ...ci, images: fileList } : ci
+                ci.color_id === colorId ? { ...ci, primaryIndex: index } : ci
             )
+        );
+    };
+
+    const handleMoveImage = (colorId: number, fromIndex: number, toIndex: number) => {
+        setColorImages(prev =>
+            prev.map(ci => {
+                if (ci.color_id !== colorId) return ci;
+
+                const newImages = [...ci.images];
+                const [moved] = newImages.splice(fromIndex, 1);
+                newImages.splice(toIndex, 0, moved);
+
+                // Adjust primaryIndex if needed
+                let newPrimaryIndex = ci.primaryIndex;
+                if (fromIndex === ci.primaryIndex) {
+                    newPrimaryIndex = toIndex;
+                } else if (fromIndex < ci.primaryIndex && toIndex >= ci.primaryIndex) {
+                    newPrimaryIndex--;
+                } else if (fromIndex > ci.primaryIndex && toIndex <= ci.primaryIndex) {
+                    newPrimaryIndex++;
+                }
+
+                return { ...ci, images: newImages, primaryIndex: newPrimaryIndex };
+            })
+        );
+    };
+
+    const handleRemoveImage = (colorId: number, index: number) => {
+        setColorImages(prev =>
+            prev.map(ci => {
+                if (ci.color_id !== colorId) return ci;
+
+                const newImages = ci.images.filter((_, i) => i !== index);
+                let newPrimaryIndex = ci.primaryIndex;
+
+                if (index === ci.primaryIndex) {
+                    // If removing primary, set to 0 (or keep 0 if no images left)
+                    newPrimaryIndex = 0;
+                } else if (index < ci.primaryIndex) {
+                    // If removing before primary, adjust index
+                    newPrimaryIndex--;
+                }
+
+                return { ...ci, images: newImages, primaryIndex: newPrimaryIndex };
+            })
         );
     };
 
@@ -233,14 +294,31 @@ export default function AddProduct() {
             }
 
 
+            // Chuẩn bị dữ liệu ảnh với metadata
+            const imageMetadata: Array<{
+                color_id: number;
+                is_primary: boolean;
+                display_order: number;
+            }> = [];
+
             colorImages.forEach(ci => {
-                ci.images.forEach(img => {
+                ci.images.forEach((img, index) => {
                     if (img.originFileObj) {
                         formData.append('images', img.originFileObj);
                         formData.append('image_colors', ci.color_id.toString());
+                        
+                        // Metadata cho từng ảnh
+                        imageMetadata.push({
+                            color_id: ci.color_id,
+                            is_primary: index === ci.primaryIndex,
+                            display_order: index + 1
+                        });
                     }
                 });
             });
+
+            // Gửi metadata
+            formData.append('image_metadata', JSON.stringify(imageMetadata));
 
             const allVariants = colorVariants.flatMap(cv => cv.variants);
             formData.append('variants', JSON.stringify(allVariants));
@@ -673,12 +751,89 @@ export default function AddProduct() {
                                             <Text strong style={{ fontSize: 15 }}>{color?.name}</Text>
                                             <Tag color="blue">{ci.images.length} ảnh</Tag>
                                         </div>
+
+                                        {/* Preview ảnh đã có với controls */}
+                                        {ci.images.length > 0 && (
+                                            <div style={{ marginBottom: 16 }}>
+                                                <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                                                    Ảnh đã chọn:
+                                                </Text>
+                                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                    {ci.images.map((img, index) => (
+                                                        <div
+                                                            key={img.uid}
+                                                            style={{
+                                                                position: 'relative',
+                                                                width: 104,
+                                                                height: 104,
+                                                                border: index === ci.primaryIndex ? '3px solid #1890ff' : '1px solid #d9d9d9',
+                                                                borderRadius: '8px',
+                                                                overflow: 'hidden'
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src={img.thumbUrl || URL.createObjectURL(img.originFileObj as Blob)}
+                                                                alt=""
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            />
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                top: 4,
+                                                                right: 4,
+                                                                display: 'flex',
+                                                                gap: '4px'
+                                                            }}>
+                                                                <Tooltip title={index === ci.primaryIndex ? "Ảnh chính" : "Đặt làm ảnh chính"}>
+                                                                    <Button
+                                                                        size="small"
+                                                                        type={index === ci.primaryIndex ? "primary" : "default"}
+                                                                        icon={index === ci.primaryIndex ? <StarFilled /> : <StarOutlined />}
+                                                                        onClick={() => handleSetPrimaryImage(ci.color_id, index)}
+                                                                    />
+                                                                </Tooltip>
+                                                                <Button
+                                                                    size="small"
+                                                                    danger
+                                                                    icon={<DeleteOutlined />}
+                                                                    onClick={() => handleRemoveImage(ci.color_id, index)}
+                                                                />
+                                                            </div>
+                                                            {index > 0 && (
+                                                                <Button
+                                                                    size="small"
+                                                                    style={{ position: 'absolute', bottom: 4, left: 4 }}
+                                                                    onClick={() => handleMoveImage(ci.color_id, index, index - 1)}
+                                                                >
+                                                                    ←
+                                                                </Button>
+                                                            )}
+                                                            {index < ci.images.length - 1 && (
+                                                                <Button
+                                                                    size="small"
+                                                                    style={{ position: 'absolute', bottom: 4, right: 4 }}
+                                                                    onClick={() => handleMoveImage(ci.color_id, index, index + 1)}
+                                                                >
+                                                                    →
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Upload mới */}
                                         <Upload
                                             listType="picture-card"
-                                            fileList={ci.images}
-                                            onChange={({ fileList }) => handleColorImageChange(ci.color_id, fileList)}
+                                            fileList={[]}
+                                            onChange={({ fileList }) => {
+                                                // Append to existing images
+                                                const newImages = [...ci.images, ...fileList];
+                                                handleColorImageChange(ci.color_id, newImages);
+                                            }}
                                             beforeUpload={() => false}
                                             multiple
+                                            showUploadList={false}
                                         >
                                             <div>
                                                 <PlusOutlined />

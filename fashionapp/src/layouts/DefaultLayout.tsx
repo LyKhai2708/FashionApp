@@ -22,7 +22,7 @@ const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
     <>
         <Header></Header>
             <main className="w-full bg-white py-5">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1280px]">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px]">
                     {children}
                 </div>
             </main>

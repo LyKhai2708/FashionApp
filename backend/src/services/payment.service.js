@@ -77,7 +77,6 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
         expireAt = new Date(Date.now() + 15 * 60 * 1000);
       }
     } else {
-      // Lần đầu tạo payment link
       expireAt = new Date(Date.now() + 15 * 60 * 1000);
     } 
     const orderData = await knex('orders')

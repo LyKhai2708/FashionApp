@@ -1,7 +1,7 @@
 const knex = require('../database/knex');
 const slugify = require('./slugify');
 const Paginator = require('./paginator');
-const { unlink } = require('fs');
+const { unlink } = require('fs').promises;
 
 async function getAllChildCategoryIds(parentCategoryId) {
     const childCategories = await knex('categories')
@@ -272,7 +272,14 @@ async function updateProduct(id, payload) {
                 const oldFilePath = updatedProduct.thumbnail.startsWith('/public/uploads/')
                     ? `.${updatedProduct.thumbnail}`
                     : `./public${updatedProduct.thumbnail}`;
-                unlink(oldFilePath, (err) => {});
+                try {
+                    await unlink(oldFilePath);
+                    console.log('Deleted old thumbnail:', oldFilePath);
+                } catch (err) {
+                    if (err.code !== 'ENOENT') {
+                        console.error('Failed to delete old thumbnail:', oldFilePath, err.message);
+                    }
+                }
             }
         } else {
             delete update.thumbnail;
@@ -333,6 +340,10 @@ async function updateProduct(id, payload) {
         if (imageData) {
             if (imageData.deletedImages && imageData.deletedImages.length > 0) {
                 for (const imageUrl of imageData.deletedImages) {
+                    const deletedImage = await trx('images')
+                        .where({ product_id: id, image_url: imageUrl })
+                        .first();
+                    
                     await trx('images').where({
                         product_id: id,
                         image_url: imageUrl
@@ -341,7 +352,31 @@ async function updateProduct(id, payload) {
                     const filePath = imageUrl.startsWith('/public/uploads/')
                         ? `.${imageUrl}`
                         : `./public${imageUrl}`;
-                    unlink(filePath, (err) => {});
+                    try {
+                        await unlink(filePath);
+                        console.log('Deleted image:', filePath);
+                    } catch (err) {
+                        if (err.code !== 'ENOENT') {
+                            console.error('Failed to delete image file:', filePath, err.message);
+                        }
+                    }
+                    
+                    // If deleted image was primary, set first remaining image as primary
+                    if (deletedImage && deletedImage.is_primary) {
+                        const firstRemaining = await trx('images')
+                            .where({
+                                product_id: id,
+                                color_id: deletedImage.color_id
+                            })
+                            .orderBy('display_order', 'asc')
+                            .first();
+                        
+                        if (firstRemaining) {
+                            await trx('images')
+                                .where('image_id', firstRemaining.image_id)
+                                .update({ is_primary: true });
+                        }
+                    }
                 }
             }
 
@@ -682,6 +717,23 @@ async function deleteProduct(id) {
 async function hardDeleteProduct(id) {
     return await knex.transaction(async (trx) => {
 
+        const [orders] = await trx.raw(
+            `SELECT COUNT(*) as count FROM orderdetails od
+             INNER JOIN product_variants pv ON od.product_variant_id = pv.product_variants_id
+             WHERE pv.product_id = ?`,
+            [id]
+        );
+        
+        if (orders[0].count > 0) {
+            throw new Error('Không thể xóa sản phẩm đã có trong đơn hàng. Vui lòng chỉ dừng bán mặt hàng này.');
+        }
+        
+        // Lấy thông tin sản phẩm để xóa thumbnail
+        const product = await trx('products')
+            .where('product_id', id)
+            .select('thumbnail')
+            .first();
+        
         const images = await trx('images')
             .where('product_id', id)
             .select('image_url');
@@ -689,19 +741,40 @@ async function hardDeleteProduct(id) {
 
         await trx('images').where('product_id', id).del();
         await trx('product_variants').where('product_id', id).del();
+        await trx('product_reviews').where('product_id', id).del();
+        await trx('product_image_features').where('product_id', id).del();
         await trx('products').where('product_id', id).del();
         
 
-        for (const img of images) {
+
+        if (product && product.thumbnail) {
+            const thumbnailPath = product.thumbnail.startsWith('/public/uploads/')
+                ? `.${product.thumbnail}`
+                : `./public${product.thumbnail}`;
+            try {
+                await unlink(thumbnailPath);
+                console.log('Deleted thumbnail:', thumbnailPath);
+            } catch (err) {
+                console.error('Failed to delete thumbnail:', thumbnailPath, err.message);
+            }
+        }
+        
+        // Xóa tất cả images
+        const deletePromises = images.map(async (img) => {
             if (img.image_url) {
                 const filePath = img.image_url.startsWith('/public/uploads/')
                     ? `.${img.image_url}`
                     : `./public${img.image_url}`;
-                unlink(filePath, (err) => {
-                    if (err) console.error('Failed to delete image:', img.image_url);
-                });
+                try {
+                    await unlink(filePath);
+                    console.log('Deleted image:', filePath);
+                } catch (err) {
+                    console.error('Failed to delete image:', filePath, err.message);
+                }
             }
-        }
+        });
+        
+        await Promise.allSettled(deletePromises);
         
         return true;
     });
@@ -713,6 +786,189 @@ async function restoreProduct(id) {
         .update({ del_flag: 0 });
     return updated > 0;
 }
+
+async function getProductsByIds(productIds, user_id = null) {
+    if (!productIds || productIds.length === 0) {
+        return [];
+    }
+
+    // 1. Lấy basic product info
+    let query = knex('products as p')
+        .leftJoin('brand as b', 'p.brand_id', 'b.id')
+        .leftJoin('categories as cat', 'p.category_id', 'cat.category_id')
+        .leftJoin(function() {
+            this.select('product_id')
+                .max('discount_percent as discount_percent')
+                .from('promotion_products as pp')
+                .join('promotions as pr', 'pp.promo_id', 'pr.promo_id')
+                .whereRaw('NOW() BETWEEN pr.start_date AND pr.end_date')
+                .where('pr.active', true)
+                .groupBy('product_id')
+                .as('active_promotions');
+        }, 'p.product_id', 'active_promotions.product_id')
+        .whereIn('p.product_id', productIds)
+        .where('p.del_flag', 0)
+        .select(
+            'p.product_id',
+            'p.name',
+            'p.slug',
+            'p.description',
+            'p.base_price',
+            'p.thumbnail',
+            'p.category_id',
+            'cat.category_name as category_name',
+            'p.brand_id',
+            'b.name as brand_name',
+            'active_promotions.discount_percent',
+            knex.raw(`
+                CASE 
+                    WHEN active_promotions.discount_percent IS NOT NULL 
+                    THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2)
+                    ELSE p.base_price 
+                END as price
+            `)
+        );
+
+    
+    if (user_id) {
+        query.leftJoin('favorites as f', function() {
+            this.on('f.product_id', '=', 'p.product_id')
+                .andOn('f.user_id', '=', knex.raw('?', [user_id]));
+        }).select(
+            knex.raw(`
+                CASE 
+                    WHEN f.favorite_id IS NOT NULL 
+                    THEN true 
+                    ELSE false 
+                END as is_favorite
+            `)
+        );
+    }
+
+    const products = await query;
+
+    if (products.length === 0) {
+        return [];
+    }
+
+    const foundProductIds = products.map(p => p.product_id);
+
+    // 2. Lấy colors (bulk query)
+    const colors = await knex('product_variants as pv')
+        .join('colors as c', 'pv.color_id', 'c.color_id')
+        .whereIn('pv.product_id', foundProductIds)
+        .select('pv.product_id', 'c.color_id', 'c.name as color_name', 'c.hex_code')
+        .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
+        .orderBy('c.color_id');
+
+   
+    const images = await knex('images')
+        .whereIn('product_id', foundProductIds)
+        .select('product_id', 'color_id', 'image_url', 'is_primary', 'display_order')
+        .orderBy('display_order');
+
+    
+    const imagesByProductAndColor = {};
+    for (const img of images) {
+        const key = `${img.product_id}_${img.color_id}`;
+        if (!imagesByProductAndColor[key]) {
+            imagesByProductAndColor[key] = [];
+        }
+        imagesByProductAndColor[key].push({
+            image_url: img.image_url,
+            is_primary: img.is_primary,
+            display_order: img.display_order
+        });
+    }
+
+    
+    const variants = await knex('product_variants as pv')
+        .join('sizes as s', 'pv.size_id', 's.size_id')
+        .whereIn('pv.product_id', foundProductIds)
+        .select(
+            'pv.product_variants_id as variant_id',
+            'pv.product_id',
+            'pv.color_id',
+            'pv.size_id',
+            's.name as size_name',
+            'pv.stock_quantity',
+            'pv.active'
+        )
+        .orderBy('pv.color_id')
+        .orderBy('s.name');
+
+    // Group variants by product and color
+    const variantsByProductAndColor = {};
+    for (const variant of variants) {
+        const key = `${variant.product_id}_${variant.color_id}`;
+        if (!variantsByProductAndColor[key]) {
+            variantsByProductAndColor[key] = [];
+        }
+        variantsByProductAndColor[key].push({
+            variant_id: variant.variant_id,
+            size_id: variant.size_id,
+            size_name: variant.size_name,
+            stock_quantity: variant.stock_quantity,
+            active: variant.active
+        });
+    }
+
+    
+    const reviewsStats = await knex('product_reviews')
+        .whereIn('product_id', foundProductIds)
+        .select('product_id')
+        .select(knex.raw('COUNT(*) as review_count'))
+        .select(knex.raw('AVG(rating) as average_rating'))
+        .groupBy('product_id');
+
+    const reviewsMap = {};
+    for (const stat of reviewsStats) {
+        reviewsMap[stat.product_id] = {
+            review_count: parseInt(stat.review_count),
+            average_rating: parseFloat(stat.average_rating) || 0
+        };
+    }
+
+    // 6. Combine tất cả data
+    const colorsByProduct = {};
+    for (const color of colors) {
+        if (!colorsByProduct[color.product_id]) {
+            colorsByProduct[color.product_id] = [];
+        }
+        const key = `${color.product_id}_${color.color_id}`;
+        colorsByProduct[color.product_id].push({
+            color_id: color.color_id,
+            name: color.color_name,
+            hex_code: color.hex_code,
+            images: imagesByProductAndColor[key] || [],
+            sizes: variantsByProductAndColor[key] || []
+        });
+    }
+
+    // 7. Build final result
+    for (const product of products) {
+        product.colors = colorsByProduct[product.product_id] || [];
+        const stats = reviewsMap[product.product_id];
+        product.review_count = stats ? stats.review_count : 0;
+        product.average_rating = stats ? stats.average_rating : 0;
+    }
+
+    
+    const productMap = {};
+    for (const product of products) {
+        productMap[product.product_id] = product;
+    }
+    
+    const sortedProducts = [];
+    for (const id of productIds) {
+        if (productMap[id]) {
+            sortedProducts.push(productMap[id]);
+        }
+    }
+
+    return sortedProducts;
+}
+
 module.exports = {
     getManyProducts,
     createProduct,
@@ -721,5 +977,6 @@ module.exports = {
     deleteProduct,
     hardDeleteProduct,
     restoreProduct,
+    getProductsByIds,
 };
 

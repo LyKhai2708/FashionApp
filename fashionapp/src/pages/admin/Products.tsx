@@ -145,17 +145,32 @@ export default function Products() {
     };
 
     const handleDelete = async (productId: number) => {
-        if (!window.confirm('Xác nhận xóa sản phẩm này?')) {
+        if (!window.confirm('Xác nhận ngưng bán sản phẩm này?')) {
             return;
         }
 
         try {
             await productService.deleteProduct(productId);
-            message.success('Xóa sản phẩm thành công');
+            message.success('Ngưng bán sản phẩm thành công');
             await fetchProducts();
             await fetchStats();
         } catch (error: any) {
-            message.error(error.message || 'Không thể xóa sản phẩm');
+            message.error(error.message || 'Không thể ngưng bán sản phẩm');
+        }
+    };
+
+    const handleRestore = async (productId: number) => {
+        if (!window.confirm('Xác nhận bán lại sản phẩm này?')) {
+            return;
+        }
+
+        try {
+            await productService.restoreProduct(productId);
+            message.success('Bán lại sản phẩm thành công');
+            await fetchProducts();
+            await fetchStats();
+        } catch (error: any) {
+            message.error(error.message || 'Không thể bán lại sản phẩm');
         }
     };
 
@@ -437,12 +452,19 @@ export default function Products() {
                                                     >
                                                         <Edit className='w-4 h-4'/>Sửa
                                                     </button>
-                                                    {product.del_flag === 0 && (
+                                                    {product.del_flag === 0 ? (
                                                         <button
                                                             onClick={() => handleDelete(product.product_id)}
-                                                            className="text-red-600 hover:text-red-800 text-xs font-medium"
+                                                            className="text-red-600 hover:text-red-800 text-sm font-medium"
                                                         >
                                                             Ngưng bán
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleRestore(product.product_id)}
+                                                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                                        >
+                                                            Bán lại
                                                         </button>
                                                     )}
                                                 </div>

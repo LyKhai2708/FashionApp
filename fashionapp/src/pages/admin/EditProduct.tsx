@@ -13,20 +13,23 @@ import {
     Col,
     Typography,
     Tag,
-    message as antMessage,
     Spin,
     Table,
     Steps,
     Upload,
     Image,
-    Tooltip
+    Tooltip,
+    Switch,
+    Modal,
+    Popconfirm
 } from 'antd';
 import {
     PlusOutlined,
     ArrowLeftOutlined,
     DeleteOutlined,
     StarOutlined,
-    StarFilled
+    StarFilled,
+    ExclamationCircleOutlined
 } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import brandService from '../../services/brandService';
@@ -35,6 +38,7 @@ import colorService from '../../services/colorService';
 import sizeService from '../../services/sizeService';
 import productService from '../../services/productService';
 import { getImageUrl } from '../../utils/imageHelper';
+import { useMessage } from '../../App';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -60,12 +64,13 @@ interface Variant {
     size_id: number;
     stock_quantity: number;
     variant_id?: number;
+    active: number;
 }
 
 interface ColorVariants {
     color_id: number;
-    selected_sizes: number[];
     variants: Variant[];
+    hasExistingVariants: boolean;
 }
 
 interface ExistingImage {
@@ -84,6 +89,7 @@ interface ColorImages {
 export default function EditProduct() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const message = useMessage();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
@@ -97,7 +103,6 @@ export default function EditProduct() {
     const [newThumbnailFile, setNewThumbnailFile] = useState<UploadFile[]>([]);
     
     const [colorVariants, setColorVariants] = useState<ColorVariants[]>([]);
-    const [selectedColors, setSelectedColors] = useState<number[]>([]);
     
     const [colorImages, setColorImages] = useState<ColorImages[]>([]);
     const [deletedImages, setDeletedImages] = useState<string[]>([]);
@@ -121,7 +126,7 @@ export default function EditProduct() {
                     await loadProduct(Number(id));
                 }
             } catch (error) {
-                antMessage.error('Không thể tải dữ liệu');
+                message.error('Không thể tải dữ liệu');
                 navigate('/admin/products');
             } finally {
                 setPageLoading(false);
@@ -129,6 +134,7 @@ export default function EditProduct() {
         };
 
         loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const loadProduct = async (productId: number) => {
@@ -154,18 +160,18 @@ export default function EditProduct() {
                 if (!colorMap.has(colorId)) {
                     colorMap.set(colorId, {
                         color_id: colorId,
-                        selected_sizes: [],
-                        variants: []
+                        variants: [],
+                        hasExistingVariants: true
                     });
                 }
 
                 const colorVariant = colorMap.get(colorId)!;
-                colorVariant.selected_sizes.push(variant.size.size_id);
                 colorVariant.variants.push({
                     color_id: colorId,
                     size_id: variant.size.size_id,
                     stock_quantity: variant.stock_quantity,
-                    variant_id: variant.variant_id
+                    variant_id: variant.variant_id,
+                    active: variant.active
                 });
 
                 if (variant.color.images && variant.color.images.length > 0 && !imageMap.has(colorId)) {
@@ -180,7 +186,6 @@ export default function EditProduct() {
 
             const colorVariantsArray = Array.from(colorMap.values());
             setColorVariants(colorVariantsArray);
-            setSelectedColors(colorVariantsArray.map(cv => cv.color_id));
 
             const colorImagesArray = Array.from(imageMap.entries()).map(([color_id, images]) => ({
                 color_id,
@@ -190,53 +195,55 @@ export default function EditProduct() {
             setColorImages(colorImagesArray);
 
         } catch (error: any) {
-            antMessage.error(error.message || 'Không thể tải thông tin sản phẩm');
+            message.error(error.message || 'Không thể tải thông tin sản phẩm');
             navigate('/admin/products');
         }
     };
 
-    const handleColorChange = (colorIds: number[]) => {
-        setSelectedColors(colorIds);
+    const handleAddColor = (colorId: number) => {
+        const existing = colorVariants.find(cv => cv.color_id === colorId);
+        if (existing) return;
 
-        const newColorVariants = colorIds.map(colorId => {
-            const existing = colorVariants.find(cv => cv.color_id === colorId);
-            return existing || {
-                color_id: colorId,
-                selected_sizes: [],
-                variants: []
-            };
-        });
-        setColorVariants(newColorVariants);
+        setColorVariants(prev => [...prev, {
+            color_id: colorId,
+            variants: [],
+            hasExistingVariants: false
+        }]);
 
-        const newColorImages = colorIds.map(colorId => {
-            const existing = colorImages.find(ci => ci.color_id === colorId);
-            return existing || {
-                color_id: colorId,
-                existingImages: [],
-                newImages: []
-            };
-        });
-        setColorImages(newColorImages);
+        setColorImages(prev => [...prev, {
+            color_id: colorId,
+            existingImages: [],
+            newImages: []
+        }]);
     };
 
-    const handleColorSizeChange = (colorId: number, sizeIds: number[]) => {
+    const handleRemoveColor = (colorId: number) => {
+        const colorVariant = colorVariants.find(cv => cv.color_id === colorId);
+        if (!colorVariant || colorVariant.hasExistingVariants) {
+            message.error('Không thể xóa màu đã có sản phẩm');
+            return;
+        }
+
+        setColorVariants(prev => prev.filter(cv => cv.color_id !== colorId));
+        setColorImages(prev => prev.filter(ci => ci.color_id !== colorId));
+    };
+
+    const handleAddSize = (colorId: number, sizeId: number) => {
         setColorVariants(prev =>
             prev.map(cv => {
                 if (cv.color_id !== colorId) return cv;
 
-                const newVariants = sizeIds.map(sizeId => {
-                    const existing = cv.variants.find(v => v.size_id === sizeId);
-                    return existing || {
-                        color_id: colorId,
-                        size_id: sizeId,
-                        stock_quantity: 0
-                    };
-                });
+                const exists = cv.variants.some(v => v.size_id === sizeId);
+                if (exists) return cv;
 
                 return {
                     ...cv,
-                    selected_sizes: sizeIds,
-                    variants: newVariants
+                    variants: [...cv.variants, {
+                        color_id: colorId,
+                        size_id: sizeId,
+                        stock_quantity: 0,
+                        active: 1
+                    }]
                 };
             })
         );
@@ -254,6 +261,36 @@ export default function EditProduct() {
                             ? { ...v, stock_quantity: value || 0 }
                             : v
                     )
+                };
+            })
+        );
+    };
+
+    const handleVariantActiveToggle = (colorId: number, sizeId: number, checked: boolean) => {
+        setColorVariants(prev =>
+            prev.map(cv => {
+                if (cv.color_id !== colorId) return cv;
+
+                return {
+                    ...cv,
+                    variants: cv.variants.map(v =>
+                        v.size_id === sizeId
+                            ? { ...v, active: checked ? 1 : 0 }
+                            : v
+                    )
+                };
+            })
+        );
+    };
+
+    const handleDeleteNewVariant = (colorId: number, sizeId: number) => {
+        setColorVariants(prev =>
+            prev.map(cv => {
+                if (cv.color_id !== colorId) return cv;
+
+                return {
+                    ...cv,
+                    variants: cv.variants.filter(v => v.size_id !== sizeId)
                 };
             })
         );
@@ -325,17 +362,38 @@ export default function EditProduct() {
 
     const handleSubmit = async (values: any) => {
         try {
-            if (selectedColors.length === 0) {
-                antMessage.error('Vui lòng chọn ít nhất 1 màu sắc');
+            const allVariants = colorVariants.flatMap(cv => cv.variants);
+            if (allVariants.length === 0) {
+                message.error('Phải có ít nhất 1 variant');
                 return;
             }
 
-            const missingSizes = colorVariants.filter(cv => cv.selected_sizes.length === 0);
-            if (missingSizes.length > 0) {
-                const colorNames = missingSizes
+            const hasActiveVariant = allVariants.some(v => v.active === 1);
+            if (!hasActiveVariant) {
+                message.error('Phải có ít nhất 1 variant active');
+                return;
+            }
+
+            const emptyColors = colorVariants.filter(cv => cv.variants.length === 0);
+            if (emptyColors.length > 0) {
+                const colorNames = emptyColors
                     .map(cv => colors.find(c => c.color_id === cv.color_id)?.name)
                     .join(', ');
-                antMessage.error(`Vui lòng chọn size cho màu: ${colorNames}`);
+                message.error(`Vui lòng thêm size cho màu: ${colorNames}`);
+                return;
+            }
+
+            const colorsWithoutImages = colorVariants.filter(cv => {
+                const ci = colorImages.find(img => img.color_id === cv.color_id);
+                const totalImages = (ci?.existingImages.length || 0) + (ci?.newImages.length || 0);
+                return totalImages === 0;
+            });
+
+            if (colorsWithoutImages.length > 0) {
+                const colorNames = colorsWithoutImages
+                    .map(cv => colors.find(c => c.color_id === cv.color_id)?.name)
+                    .join(', ');
+                message.error(`Mỗi màu phải có ít nhất 1 ảnh. Thiếu ảnh: ${colorNames}`);
                 return;
             }
 
@@ -348,7 +406,6 @@ export default function EditProduct() {
             formData.append('category_id', values.category_id.toString());
             formData.append('brand_id', values.brand_id.toString());
 
-            const allVariants = colorVariants.flatMap(cv => cv.variants);
             formData.append('variants', JSON.stringify(allVariants));
 
             if (newThumbnailFile.length > 0 && newThumbnailFile[0].originFileObj) {
@@ -382,11 +439,25 @@ export default function EditProduct() {
 
             await productService.updateProduct(Number(id), formData);
 
-            antMessage.success('Cập nhật sản phẩm thành công!');
+            message.success('Cập nhật sản phẩm thành công!');
             navigate('/admin/products');
         } catch (error: any) {
             console.error('Update product error:', error);
-            antMessage.error(error.message || 'Không thể cập nhật sản phẩm');
+            message.error(error.message || 'Không thể cập nhật sản phẩm');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleHardDelete = async () => {
+        try {
+            setLoading(true);
+            await productService.hardDeleteProduct(Number(id));
+            message.success('Xóa sản phẩm thành công!');
+            navigate('/admin/products');
+        } catch (error: any) {
+            console.error('Hard delete product error:', error);
+            message.error(error.message || 'Không thể xóa sản phẩm');
         } finally {
             setLoading(false);
         }
@@ -395,6 +466,7 @@ export default function EditProduct() {
     const renderVariantsTable = (colorId: number) => {
         const color = colors.find(c => c.color_id === colorId);
         const cv = colorVariants.find(cv => cv.color_id === colorId);
+        if (!cv) return null;
 
         const columns = [
             {
@@ -416,30 +488,79 @@ export default function EditProduct() {
                         value={record.stock_quantity}
                         onChange={(value) => handleStockChange(colorId, record.size_id, value)}
                         style={{ width: '100%' }}
+                        disabled={record.active === 0}
                     />
                 )
+            },
+            {
+                title: 'Thao tác',
+                key: 'actions',
+                width: 150,
+                render: (_: any, record: Variant) => {
+                    const isExisting = record.variant_id !== undefined;
+                    
+                    if (isExisting) {
+                        return (
+                            <Switch
+                                checked={record.active === 1}
+                                onChange={(checked) => handleVariantActiveToggle(colorId, record.size_id, checked)}
+                                checkedChildren="Active"
+                                unCheckedChildren="Inactive"
+                            />
+                        );
+                    } else {
+                        return (
+                            <Button
+                                danger
+                                size="small"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDeleteNewVariant(colorId, record.size_id)}
+                            >
+                                Xóa
+                            </Button>
+                        );
+                    }
+                }
             }
         ];
+
+        const availableSizes = sizes.filter(size => 
+            !cv.variants.some(v => v.size_id === size.size_id)
+        );
 
         return (
             <Card
                 key={colorId}
                 size="small"
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div
-                            style={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: '50%',
-                                backgroundColor: color?.hex_code,
-                                border: '2px solid white',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}
-                        />
-                        <Text strong style={{ fontSize: 15 }}>{color?.name}</Text>
-                        {cv && cv.variants.length > 0 && (
-                            <Tag color="green">{cv.variants.length} variants</Tag>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div
+                                style={{
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    backgroundColor: color?.hex_code,
+                                    border: '2px solid white',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                }}
+                            />
+                            <Text strong style={{ fontSize: 15 }}>{color?.name}</Text>
+                            {cv.variants.length > 0 && (
+                                <Tag color="green">
+                                    {cv.variants.filter(v => v.active === 1).length} active / {cv.variants.length} total
+                                </Tag>
+                            )}
+                        </div>
+                        {!cv.hasExistingVariants && (
+                            <Button
+                                danger
+                                size="small"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleRemoveColor(colorId)}
+                            >
+                                Xóa màu
+                            </Button>
                         )}
                     </div>
                 }
@@ -453,33 +574,34 @@ export default function EditProduct() {
                     borderBottom: '2px solid #f0f0f0'
                 }}
             >
-                <div style={{
-                    marginBottom: 16,
-                    padding: '12px',
-                    background: 'white',
-                    borderRadius: '6px',
-                    border: '1px solid #f0f0f0'
-                }}>
-                    <Text strong style={{ display: 'block', marginBottom: 8, color: '#595959' }}>
-                        Chọn size có sẵn:
-                    </Text>
-                    <Select
-                        mode="multiple"
-                        placeholder="Chọn size cho màu này"
-                        value={cv?.selected_sizes || []}
-                        onChange={(sizeIds) => handleColorSizeChange(colorId, sizeIds)}
-                        style={{ width: '100%' }}
-                        size="large"
-                    >
-                        {sizes.map(size => (
-                            <Select.Option key={size.size_id} value={size.size_id}>
-                                <Tag color="blue">{size.name}</Tag>
-                            </Select.Option>
-                        ))}
-                    </Select>
-                </div>
+                {availableSizes.length > 0 && (
+                    <div style={{
+                        marginBottom: 16,
+                        padding: '12px',
+                        background: 'white',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0'
+                    }}>
+                        <Text strong style={{ display: 'block', marginBottom: 8, color: '#595959' }}>
+                            Thêm size:
+                        </Text>
+                        <Select
+                            placeholder="Chọn size để thêm"
+                            onChange={(sizeId) => handleAddSize(colorId, sizeId)}
+                            value={null}
+                            style={{ width: '100%' }}
+                            size="large"
+                        >
+                            {availableSizes.map(size => (
+                                <Select.Option key={size.size_id} value={size.size_id}>
+                                    <Tag color="blue">{size.name}</Tag>
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </div>
+                )}
 
-                {cv && cv.variants.length > 0 ? (
+                {cv.variants.length > 0 ? (
                     <div style={{
                         background: 'white',
                         borderRadius: '6px',
@@ -801,24 +923,8 @@ export default function EditProduct() {
                                 </Form.Item>
                             </Card>
 
-                            {selectedColors.length > 0 && (
-                                <Card
-                                    title="Quản lý tồn kho theo màu sắc"
-                                    style={{
-                                        marginBottom: 24,
-                                        borderRadius: '12px',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                                    }}
-                                    headStyle={{ borderBottom: '2px solid #f0f0f0' }}
-                                >
-                                    {selectedColors.map(colorId => renderVariantsTable(colorId))}
-                                </Card>
-                            )}
-                        </Col>
-
-                        <Col xs={24} lg={10}>
                             <Card
-                                title="Màu sắc & Hình ảnh"
+                                title="Quản lý màu sắc & Variants"
                                 style={{
                                     marginBottom: 24,
                                     borderRadius: '12px',
@@ -826,25 +932,26 @@ export default function EditProduct() {
                                 }}
                                 headStyle={{ borderBottom: '2px solid #f0f0f0' }}
                             >
-                                <Form.Item label="Chọn màu sắc">
+                                <div style={{ marginBottom: 16, padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}>
+                                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                                        Thêm màu sắc mới:
+                                    </Text>
                                     <Select
-                                        mode="multiple"
+                                        placeholder="Chọn màu để thêm"
+                                        onChange={handleAddColor}
+                                        value={null}
+                                        style={{ width: '100%' }}
                                         size="large"
-                                        placeholder="Chọn màu sắc"
-                                        value={selectedColors}
-                                        onChange={handleColorChange}
-                                        optionLabelProp="label"
                                     >
-                                        {colors.map(color => (
-                                            <Select.Option
-                                                key={color.color_id}
-                                                value={color.color_id}
-                                                label={
+                                        {colors
+                                            .filter(color => !colorVariants.some(cv => cv.color_id === color.color_id))
+                                            .map(color => (
+                                                <Select.Option key={color.color_id} value={color.color_id}>
                                                     <Space>
                                                         <div
                                                             style={{
-                                                                width: 16,
-                                                                height: 16,
+                                                                width: 20,
+                                                                height: 20,
                                                                 borderRadius: '50%',
                                                                 backgroundColor: color.hex_code,
                                                                 border: '1px solid #d9d9d9'
@@ -852,28 +959,30 @@ export default function EditProduct() {
                                                         />
                                                         {color.name}
                                                     </Space>
-                                                }
-                                            >
-                                                <Space>
-                                                    <div
-                                                        style={{
-                                                            width: 20,
-                                                            height: 20,
-                                                            borderRadius: '50%',
-                                                            backgroundColor: color.hex_code,
-                                                            border: '1px solid #d9d9d9'
-                                                        }}
-                                                    />
-                                                    {color.name}
-                                                </Space>
-                                            </Select.Option>
-                                        ))}
+                                                </Select.Option>
+                                            ))}
                                     </Select>
-                                </Form.Item>
+                                </div>
 
-                                <Divider />
+                                {colorVariants.map(cv => renderVariantsTable(cv.color_id))}
+                            </Card>
+                        </Col>
 
-                                {selectedColors.map(colorId => renderColorImages(colorId))}
+                        <Col xs={24} lg={10}>
+                            <Card
+                                title="Quản lý Hình ảnh"
+                                style={{
+                                    marginBottom: 24,
+                                    borderRadius: '12px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                                }}
+                                headStyle={{ borderBottom: '2px solid #f0f0f0' }}
+                            >
+                                <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                                    Quản lý hình ảnh cho từng màu sắc
+                                </Text>
+
+                                {colorVariants.map(cv => renderColorImages(cv.color_id))}
                             </Card>
                         </Col>
                     </Row>
@@ -894,6 +1003,23 @@ export default function EditProduct() {
                                 Kiểm tra kỹ thông tin trước khi lưu
                             </Text>
                             <Space size="middle">
+                                <Popconfirm
+                                    title="Xóa sản phẩm"
+                                    description="Bạn chắc chắn muốn xóa vĩnh viễn sản phẩm này? Hành động này không thể hoàn tác."
+                                    onConfirm={() => handleHardDelete()}
+                                    okText="Xóa"
+                                    cancelText="Hủy"
+                                    okButtonProps={{ danger: true }}
+                                >
+                                    <Button
+                                        size="large"
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        disabled={loading}
+                                    >
+                                        Xóa
+                                    </Button>
+                                </Popconfirm>
                                 <Button
                                     size="large"
                                     onClick={() => navigate('/admin/products')}

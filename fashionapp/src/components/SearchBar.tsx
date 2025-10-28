@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SearchIcon, XIcon, CameraIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
+import ImageSearchModal from './ImageSearchModal';
 import { productService } from '../services/productService';
 import type { Product } from '../types/product';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
@@ -12,6 +13,7 @@ export default function SearchBar() {
     const [trendingKeywords, setTrendingKeywords] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
     const navigate = useNavigate();
     const overlayRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +48,8 @@ export default function SearchBar() {
     }, [query]);
 
     const handleImageSearch = () => {
-        alert('...');
+        setShowImageModal(true);
+        setIsOpen(false); // Close search modal
     };
 
     useEffect(() => {
@@ -97,21 +100,22 @@ export default function SearchBar() {
     };
 
     return (
-        <div className="relative">
-            <div className="flex items-center border border-gray-300 rounded-full overflow-hidden bg-white max-w-xs">
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={handleFocus} 
-                    placeholder="Tìm kiếm..."
-                    className="flex-grow cursor-pointer px-4 py-2 outline-none text-sm"
-                />
-                <button className="px-3 py-2 text-gray-500">
-                    <SearchIcon size={18} />
-                </button>
-            </div>
+        <>
+            <div className="relative">
+                <div className="flex items-center border border-gray-300 rounded-full overflow-hidden bg-white max-w-xs">
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onFocus={handleFocus} 
+                        placeholder="Tìm kiếm..."
+                        className="flex-grow cursor-pointer px-4 py-2 outline-none text-sm"
+                    />
+                    <button className="px-3 py-2 text-gray-500">
+                        <SearchIcon size={18} />
+                    </button>
+                </div>
 
             {isOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
@@ -194,6 +198,12 @@ export default function SearchBar() {
                     </div>
                 </div>
             )}
-        </div>
+            </div>
+            
+            <ImageSearchModal 
+                open={showImageModal} 
+                onClose={() => setShowImageModal(false)} 
+            />
+        </>
     );
 }

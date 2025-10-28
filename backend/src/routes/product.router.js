@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const productController = require("../controllers/products.controller");
+const imageSearchController = require("../controllers/imageSearch.controller");
 const { methodNotAllowed } = require("../controllers/errors.controller");
 const {authMiddleware, authorizeRoles, optionalAuthMiddleware} = require('../middleware/auth.middleware');
 const { uploadSingle, uploadMultiple } = require("../middleware/upload_image.middleware");
@@ -414,8 +415,61 @@ module.exports.setup = (app) => {
      */
     router.delete("/:id/permanent", authMiddleware, authorizeRoles(['admin']), productController.hardDeleteProduct);
 
+    /**
+     * @swagger
+     * /api/v1/products/{id}/restore:
+     *   put:
+     *     summary: Restore deleted product
+     *     description: Restore a soft-deleted product (set del_flag to 0). Admin only.
+     *     tags: [Products]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: integer
+     *         description: Product ID
+     *     responses:
+     *       200:
+     *         description: Product restored successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   enum: [success]
+     *                 data:
+     *                   type: object
+     *                   properties:
+     *                     message:
+     *                       type: string
+     *                       example: "Product restored"
+     *       401:
+     *         $ref: '#/components/responses/Unauthorized'
+     *       403:
+     *         $ref: '#/components/responses/Forbidden'
+     *       404:
+     *         description: Product not found
+     *       500:
+     *         $ref: '#/components/responses/ServerError'
+     */
+    router.put("/:id/restore", authMiddleware, authorizeRoles(['admin']), productController.restoreProduct);
+
+    /**
+     * Image Search Endpoint
+     * POST /api/v1/products/search-by-image
+     * Upload image and get similar products
+     */
+    router.post("/search-by-image", uploadSingle('image'), imageSearchController.searchByImage);
+
     // Method not allowed handlers
     router.all("/", methodNotAllowed);
     router.all("/:id", methodNotAllowed);
     router.all("/:id/permanent", methodNotAllowed);
+    router.all("/:id/restore", methodNotAllowed);
+    router.all("/search-by-image", methodNotAllowed);
 }

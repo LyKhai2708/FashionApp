@@ -77,7 +77,23 @@ class ProductService{
     async deleteProduct (productId: number) {
         const response = await api.delete(`/api/v1/products/${productId}`);
         return response.data;
+    }
+
+    async restoreProduct (productId: number) {
+        const response = await api.put(`/api/v1/products/${productId}/restore`);
+        return response.data;
     };
+
+    async hardDeleteProduct (productId: number) {
+        try {
+            const response = await api.delete(`/api/v1/products/${productId}/permanent`);
+            return response.data;
+        } catch (error: any) {
+            console.error('Hard delete product error:', error);
+            throw new Error(error.response?.data?.message || 'Không thể xóa sản phẩm');
+        }
+    };
+
     async getProductById(id: number, user_id?: number): Promise<ProductDetail> {
         try{
             const query = new URLSearchParams();
@@ -121,6 +137,37 @@ class ProductService{
         } catch (error: any) {
             console.error('Update product error:', error);
             throw new Error(error.response?.data?.message || 'Không thể cập nhật sản phẩm');
+        }
+    }
+
+    async searchByImage(imageFile: File): Promise<Product[]> {
+        try {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            
+            const response = await api.post<ProductsResponse>(
+                '/api/v1/products/search-by-image',
+                formData,
+                {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    timeout: 120000 // 2 minutes timeout (model load takes time)
+                }
+            );
+            
+            return response.data.data.products;
+        } catch (error: any) {
+            console.error('Image search error:', error);
+            
+            // Mock data for development (remove when backend ready)
+            if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
+                console.warn('Backend not ready, using mock data...');
+                
+                // Return random products as mock
+                const mockResponse = await this.getProducts({ limit: 8, page: 1 });
+                return mockResponse.products;
+            }
+            
+            throw new Error(error.response?.data?.message || 'Tìm kiếm bằng hình ảnh thất bại');
         }
     }
 }

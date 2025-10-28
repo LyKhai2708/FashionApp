@@ -1,6 +1,7 @@
 const productService = require("../services/product.service");
 const ApiError = require("../api-error");
 const JSend = require("../jsend");
+const { extractProductFeatures } = require("../utils/extractFeatures");
 
 async function createProduct(req, res, next) {
   try {
@@ -15,6 +16,17 @@ async function createProduct(req, res, next) {
           payload.variants = JSON.parse(payload.variants);
         } catch (parseErr) {
           return next(new ApiError(400, "Invalid variants format"));
+        }
+      }
+      
+      let imageMetadata = [];
+      if (payload.image_metadata) {
+        try {
+          imageMetadata = typeof payload.image_metadata === 'string' 
+            ? JSON.parse(payload.image_metadata) 
+            : payload.image_metadata;
+        } catch (parseErr) {
+          console.error('Error parsing image_metadata:', parseErr);
         }
       }
       
@@ -34,7 +46,12 @@ async function createProduct(req, res, next) {
           if (!colorImages[colorId]) {
             colorImages[colorId] = [];
           }
-          colorImages[colorId].push(imagePath);
+          const metadata = imageMetadata[index] || {};
+          colorImages[colorId].push({
+            url: imagePath,
+            is_primary: metadata.is_primary || false,
+            display_order: metadata.display_order || colorImages[colorId].length + 1
+          });
         }
       });
       
@@ -50,6 +67,11 @@ async function createProduct(req, res, next) {
     }
     
     const product = await productService.createProduct(payload);
+    
+    extractProductFeatures(product.product_id, false).catch(err => {
+      console.error('Feature extraction error:', err);
+    });
+    
     return res.status(201).json(JSend.success({ product }));
   } catch (err) {
     console.error('Create product error:', err);
@@ -133,6 +155,17 @@ async function updateProduct(req, res, next) {
     });
     
     if (!updated) return next(new ApiError(404, "Product not found"));
+    
+    const hasImageChanges = (req.files && req.files.length > 0) || 
+                           (imageData.deletedImages && imageData.deletedImages.length > 0) ||
+                           (imageData.updatedImages && imageData.updatedImages.length > 0);
+    
+    if (hasImageChanges) {
+      extractProductFeatures(req.params.id, false).catch(err => {
+        console.error('Feature extraction error:', err);
+      });
+    }
+    
     return res.json(JSend.success({ product: updated }));
   } catch (err) {
     console.error('Update product error:', err);
