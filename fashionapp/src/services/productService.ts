@@ -170,6 +170,19 @@ class ProductService{
             throw new Error(error.response?.data?.message || 'Tìm kiếm bằng hình ảnh thất bại');
         }
     }
+
+    async getProductsByIds(ids: number[]): Promise<Product[]> {
+        try {
+            const response = await api.post<{ status: string; data: { products: Product[] } }>(
+                '/api/v1/products/by-ids',
+                { ids }
+            );
+            return response.data.data.products;
+        } catch (error: any) {
+            console.error('Error fetching products by IDs:', error);
+            throw new Error(error.response?.data?.message || 'Không thể lấy sản phẩm');
+        }
+    }
 }
 
 export const productService = new ProductService();

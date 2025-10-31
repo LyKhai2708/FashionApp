@@ -53,40 +53,10 @@ export default function ProductDetailPage() {
         setSelectedImageIndex(0);
     }, [selectedColor]);
 
-    //them vao danh sach xem qua
+    //them vao danh sach da xem
     useEffect(() => {
         if (product) {
-            const colorMap = new Map();
-            
-            product.variants?.forEach(variant => {
-                const colorId = variant.color.color_id;
-                
-                if (!colorMap.has(colorId)) {
-                    colorMap.set(colorId, {
-                        color_id: variant.color.color_id,
-                        name: variant.color.name,
-                        hex_code: variant.color.hex_code,
-                        images: variant.color.images || [],
-                        sizes: []
-                    });
-                }
-                
-                colorMap.get(colorId).sizes.push({
-                    variant_id: variant.variant_id,
-                    size_id: variant.size.size_id,
-                    size_name: variant.size.name,
-                    stock_quantity: variant.stock_quantity,
-                    active: variant.active
-                });
-            });
-            
-            const productForStorage: any = {
-                ...product,
-                colors: Array.from(colorMap.values()),
-                average_rating: product.average_rating || 0,
-                review_count: product.review_count || 0
-            };
-            addProduct(productForStorage);
+            addProduct(product.product_id);
         }
     }, [product, addProduct]);
 

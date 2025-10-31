@@ -1,17 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { recentlyViewedStorage } from '../utils/storage';
+import productService from '../services/productService';
 import type { Product } from '../types/product';
 
 export const useRecentlyViewed = () => {
     const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(false);
 
+    const loadProducts = useCallback(async () => {
+        const ids = recentlyViewedStorage.getIds();
+        
+        if (ids.length === 0) {
+            setProducts([]);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const fetchedProducts = await productService.getProductsByIds(ids);
+            setProducts(fetchedProducts);
+        } catch (error) {
+            console.error('Error loading recently viewed products:', error);
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const loadProducts = () => {
-            const stored = recentlyViewedStorage.getProducts();
-            setProducts(stored);
-        };
-
         loadProducts();
 
         const handleStorageChange = (e: StorageEvent) => {
@@ -22,17 +38,17 @@ export const useRecentlyViewed = () => {
 
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
+    }, [loadProducts]);
 
-    const addProduct = useCallback((product: Product) => {
-        recentlyViewedStorage.add(product);
-        setProducts(recentlyViewedStorage.getProducts());
-    }, []);
+    const addProduct = useCallback((productId: number) => {
+        recentlyViewedStorage.add(productId);
+        loadProducts(); // Reload to get fresh data
+    }, [loadProducts]);
 
     const removeProduct = useCallback((productId: number) => {
         recentlyViewedStorage.remove(productId);
-        setProducts(recentlyViewedStorage.getProducts());
-    }, []);
+        loadProducts();
+    }, [loadProducts]);
 
     const clearAll = useCallback(() => {
         recentlyViewedStorage.clear();
@@ -41,6 +57,7 @@ export const useRecentlyViewed = () => {
 
     return {
         products,
+        loading,
         addProduct,
         removeProduct,
         clearAll,

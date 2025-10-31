@@ -10,7 +10,6 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
         return '/placeholder-image.jpg';
     }
 
-    // If already a full URL, return as is
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
         return imagePath;
     }
