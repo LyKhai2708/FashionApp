@@ -1,6 +1,7 @@
 const knex = require('../database/knex');
 const Paginator = require('./paginator');
 const slugify = require('./slugify');
+const { unlink } = require('fs').promises;
 function categoryRepository() {
     return knex('categories');
 }
@@ -9,24 +10,39 @@ function readCategory(payload) {
         category_name: payload.category_name,
         parent_id: payload.parent_id || null,
     }
+
     if (payload.slug && payload.slug.trim() !== "") {
       category.slug = slugify(payload.slug);
     } else if (payload.category_name) {
       category.slug = slugify(payload.category_name);
     }
+
+    if (payload.description !== undefined) {
+      category.description = payload.description;
+    }
+
+    if (payload.image_url !== undefined) {
+      category.image_url = payload.image_url;
+    }
+
     return category;
 }
 
 async function createCategory(payload) {
     const category = readCategory(payload);
+    
+    if (category.parent_id) {
+        const validDepth = await isValidCategoryDepth(category.parent_id, 2);
+        if (!validDepth) {
+            throw new Error("Chỉ được tạo tối đa 2 cấp category (cha - con)");
+        }
+    }
+    
     const [id] = await categoryRepository().insert(category);
     return { category_id: id, ...category };
   }
   
   async function getCategoryById(id) {
-    console.log('aaaaaa');
-    console.log(id);
-    console.log(await categoryRepository().where('category_id', id).first());
     return await categoryRepository().where('category_id', id).first();
   }
   
@@ -43,6 +59,50 @@ async function createCategory(payload) {
     if (!existingCategory) return null;
   
     const category = readCategory(payload);
+    
+    if (category.parent_id !== undefined && category.parent_id !== null) {
+        const children = await categoryRepository()
+            .where('parent_id', id)
+            .select('category_id');
+        
+        if (children.length > 0) {
+            throw new Error('Danh mục đã có danh mục con, không thể chuyển thành danh mục con. Vui lòng xóa hoặc di chuyển danh mục con trước.');
+        }
+        
+        const newParent = await getCategoryById(category.parent_id);
+        if (newParent && newParent.parent_id !== null) {
+            throw new Error('Chỉ được phép 2 cấp danh mục. Danh mục cha bạn chọn đã là danh mục con.');
+        }
+    }
+    
+    if (existingCategory.image_url) {
+      if (category.image_url && category.image_url !== existingCategory.image_url) {
+        const oldImagePath = existingCategory.image_url.startsWith('/public/uploads/')
+          ? `.${existingCategory.image_url}`
+          : `./public${existingCategory.image_url}`;
+        try {
+          await unlink(oldImagePath);
+          console.log('Deleted old category image:', oldImagePath);
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
+            console.error('Failed to delete old category image:', oldImagePath, err.message);
+          }
+        }
+      } else if (category.image_url === null) {
+        const oldImagePath = existingCategory.image_url.startsWith('/public/uploads/')
+          ? `.${existingCategory.image_url}`
+          : `./public${existingCategory.image_url}`;
+        try {
+          await unlink(oldImagePath);
+          console.log('Deleted category image:', oldImagePath);
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
+            console.error('Failed to delete category image:', oldImagePath, err.message);
+          }
+        }
+      }
+    }
+    
     await categoryRepository().where('category_id', id).update(category);
     return { ...existingCategory, ...category };
   }
@@ -84,7 +144,9 @@ async function createCategory(payload) {
         knex.raw('count(category_id) OVER() AS recordCount'),
         'category_id',
         'category_name',
+        'description',
         'slug',
+        'image_url',
         'parent_id',
         'active'
       )
@@ -119,7 +181,9 @@ async function createCategory(payload) {
         knex.raw('count(category_id) OVER() AS recordCount'),
         'category_id',
         'category_name',
+        'description',
         'slug',
+        'image_url',
         'parent_id'
       ).where('active', 1)
       .limit(paginator.limit)
@@ -146,7 +210,40 @@ async function createCategory(payload) {
   async function getCategoryBySlug(slug) {
     return await categoryRepository().where('slug', slug).first();
   }
-  module.exports = {
+  async function isLeafCategory(categoryId) {
+    const children = await categoryRepository()
+        .where('parent_id', categoryId)
+        .select('category_id');
+    return children.length === 0;
+}
+
+async function getCategoryDepth(categoryId) {
+    let depth = 0;
+    let currentId = categoryId;
+    
+    while (currentId !== null) {
+        const parent = await categoryRepository()
+            .where('category_id', currentId)
+            .select('parent_id')
+            .first();
+        
+        if (!parent) break;
+        
+        depth++;
+        currentId = parent.parent_id;
+        
+        if (depth > 2) break;
+    }
+    
+    return depth;
+}
+
+async function isValidCategoryDepth(categoryId, maxDepth = 2) {
+    const depth = await getCategoryDepth(categoryId);
+    return depth < maxDepth;
+}
+
+module.exports = {
     createCategory,
     getCategoryById,
     getCategoryByName,
@@ -156,4 +253,8 @@ async function createCategory(payload) {
     deleteCategory,
     getAllCategories,
     deleteAllCategories,
+    getCategoryBySlug,
+    isLeafCategory,
+    getCategoryDepth,
+    isValidCategoryDepth,
   };

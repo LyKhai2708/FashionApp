@@ -3,12 +3,18 @@ import { useState, useEffect } from 'react';
 import { useMessage } from '../../App';
 import categoryService, { type Category } from '../../services/categoryService';
 import { Edit, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import CategoryForm from '../../components/admin/CategoryForm';
+import { getImageUrl } from '../../utils/imageHelper';
 
 export default function Categories() {
     const message = useMessage();
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+
+    // Form modal states
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
     // Stats
     const [stats, setStats] = useState({
@@ -73,6 +79,38 @@ export default function Categories() {
         setExpandedCategories(newExpanded);
     };
 
+    const handleOpenAddForm = () => {
+        setEditingCategory(null);
+        setIsFormOpen(true);
+    };
+
+    const handleOpenEditForm = (category: Category) => {
+        setEditingCategory(category);
+        setIsFormOpen(true);
+    };
+
+    const handleCloseForm = () => {
+        setIsFormOpen(false);
+        setEditingCategory(null);
+    };
+
+    const handleSubmitForm = async (formData: FormData) => {
+        try {
+            if (editingCategory) {
+                await categoryService.updateCategory(editingCategory.category_id, formData);
+                message.success('Cập nhật danh mục thành công');
+            } else {
+                await categoryService.createCategory(formData);
+                message.success('Thêm danh mục thành công');
+            }
+
+            await fetchCategories();
+            await fetchStats();
+        } catch (error: any) {
+            message.error(error.message || 'Không thể thực hiện thao tác');
+        }
+    };
+
     // Organize categories into tree structure
     const parentCategories = categories.filter(cat => !cat.parent_id);
     const getChildCategories = (parentId: number) => 
@@ -83,7 +121,10 @@ export default function Categories() {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Quản lý danh mục</h1>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <button
+                    onClick={handleOpenAddForm}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
                     <Plus className="w-4 h-4" />
                     Thêm danh mục
                 </button>
@@ -143,9 +184,17 @@ export default function Categories() {
                                                     )}
                                                 </button>
                                             )}
-                                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                                {parent.category_name.charAt(0).toUpperCase()}
-                                            </div>
+                                            {parent.image_url ? (
+                                                <img 
+                                                    src={getImageUrl(parent.image_url)} 
+                                                    alt={parent.category_name}
+                                                    className="w-8 h-8 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                    {parent.category_name.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
                                             <div>
                                                 <div className={`font-medium text-gray-900 ${parent.active === 0 ? 'opacity-50 line-through' : ''}`}>
                                                 🗂️ {parent.category_name} {parent.active === 0 && '(Vô hiệu hóa)'}
@@ -157,7 +206,10 @@ export default function Categories() {
                                         </div>
                                         
                                         <div className="flex items-center gap-2">
-                                            <button className="text-blue-600 hover:text-blue-800 p-1">
+                                            <button
+                                                onClick={() => handleOpenEditForm(parent)}
+                                                className="text-blue-600 hover:text-blue-800 p-1"
+                                            >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
@@ -179,9 +231,17 @@ export default function Categories() {
                                                 >
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-1 h-6 bg-gray-300 rounded-full"></div>
-                                                        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                                                            {child.category_name.charAt(0).toUpperCase()}
-                                                        </div>
+                                                        {child.image_url ? (
+                                                            <img 
+                                                                src={getImageUrl(child.image_url)} 
+                                                                alt={child.category_name}
+                                                                className="w-6 h-6 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                                                {child.category_name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                        )}
                                                         <div>
                                                             <div className={`font-medium text-gray-900 text-sm ${child.active === 0 ? 'opacity-50 line-through' : ''}`}>
                                                                 📁 {child.category_name} {child.active === 0 && '(Vô hiệu hóa)'}
@@ -193,7 +253,10 @@ export default function Categories() {
                                                     </div>
                                                     
                                                     <div className="flex items-center gap-1">
-                                                        <button className="text-blue-600 hover:text-blue-800 p-1">
+                                                        <button
+                                                            onClick={() => handleOpenEditForm(child)}
+                                                            className="text-blue-600 hover:text-blue-800 p-1"
+                                                        >
                                                             <Edit className="w-3 h-3" />
                                                         </button>
                                                         <button
@@ -216,12 +279,20 @@ export default function Categories() {
                             <div key={orphan.category_id} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                                            {orphan.category_name.charAt(0).toUpperCase()}
-                                        </div>
+                                        {orphan.image_url ? (
+                                            <img 
+                                                src={getImageUrl(orphan.image_url)} 
+                                                alt={orphan.category_name}
+                                                className="w-6 h-6 rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                                {orphan.category_name.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
                                         <div>
                                             <div className="font-medium text-gray-900 text-sm">
-                                                ⚠️ {orphan.category_name}
+                                                {orphan.category_name}
                                             </div>
                                             <div className="text-xs text-yellow-600">
                                                 Danh mục mồ côi (parent không tồn tại)
@@ -246,6 +317,15 @@ export default function Categories() {
                     </div>
                 )}
             </div>
+
+            <CategoryForm
+                category={editingCategory}
+                parentCategories={parentCategories}
+                isOpen={isFormOpen}
+                onClose={handleCloseForm}
+                onSubmit={handleSubmitForm}
+                isEditing={!!editingCategory}
+            />
         </div>
     );
 }

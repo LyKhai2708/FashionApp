@@ -2,8 +2,9 @@ const ApiError = require('../api-error')
 const categoryService = require('../services/categories.service');
 const JSend = require('../jsend');
 
+
 async function createCategory(req, res, next) {
-  const {category_name, parent_id} = req.body;
+  const {category_name, parent_id, description} = req.body;
   if(!category_name || typeof category_name !== 'string') {
     return next(new ApiError(400, 'Category name should be non-empty string'));
   }
@@ -11,8 +12,15 @@ async function createCategory(req, res, next) {
   if(duplicate){
     return next(new ApiError(409, 'Category name already exists'));
   }
+
   try{
-    const category = await categoryService.createCategory({...req.body});
+    const payload = {...req.body};
+
+    if (req.file) {
+      payload.image_url = `/public/uploads/${req.file.filename}`;
+    }
+
+    const category = await categoryService.createCategory(payload);
     return res
     .status(201)
     .set({
@@ -63,10 +71,19 @@ async function getCategoriesbyFilter(req, res, next) {
 
 async function updateCategory(req, res, next) {
     try {
-      const updated = await categoryService.updateCategory(req.params.id, req.body);
+      const payload = {...req.body};
+
+      if (req.file) {
+        payload.image_url = `/public/uploads/${req.file.filename}`;
+      } else if (req.body.remove_image === 'true') {
+        payload.image_url = null;
+      }
+
+      const updated = await categoryService.updateCategory(req.params.category_id, payload);
       if (!updated) return next(new ApiError(404, 'Category not found'));
       return res.json(JSend.success({ category: updated }));
     } catch (err) {
+      console.error('Update category error:', err);
       next(new ApiError(500, 'Error updating category'));
     }
   }
@@ -74,7 +91,7 @@ async function updateCategory(req, res, next) {
   //xoá category
   async function deleteCategory(req, res, next) {
     try {
-      const deleted = await categoryService.deleteCategory(req.params.id);
+      const deleted = await categoryService.deleteCategory(req.params.category_id);
       if (!deleted) return next(new ApiError(404, 'Category not found'));
       return res.json(JSend.success({ category: deleted }));
     } catch (err) {

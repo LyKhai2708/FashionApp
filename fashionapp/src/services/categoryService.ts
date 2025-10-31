@@ -1,9 +1,12 @@
 import { api } from '../utils/axios';
+import axios from 'axios';
 
 export interface Category {
   category_id: number;
   category_name: string;
+  description?: string;
   slug: string;
+  image_url?: string;
   parent_id: number | null;
   active: number;
   children?: Category[];
@@ -32,9 +35,7 @@ class CategoryService {
     }
   }
 
-  /**
-   * Lấy danh mục cha (parent_id = null)
-   */
+
   async getParentCategories(): Promise<Category[]> {
     try {
       const categories = await this.getCategories();
@@ -46,9 +47,6 @@ class CategoryService {
     }
   }
 
-  /**
-   * Lấy danh mục con theo parent_id
-   */
   async getSubCategories(parentId: number): Promise<Category[]> {
     try {
       const categories = await this.getCategories();
@@ -60,9 +58,6 @@ class CategoryService {
     }
   }
 
-  /**
-   * Lấy danh mục theo slug
-   */
   async getCategoryBySlug(slug: string): Promise<Category | null> {
     try {
       const categories = await this.getCategories();
@@ -74,9 +69,7 @@ class CategoryService {
     }
   }
 
-  /**
-   * Tạo cấu trúc cây danh mục
-   */
+
   buildCategoryTree(categories: Category[]): Category[] {
     const categoryMap = new Map<number, Category>();
     const rootCategories: Category[] = [];
@@ -137,6 +130,48 @@ async getAllCategoriesIncludeInactive(): Promise<Category[]> {
     throw new Error(error.response?.data?.message || 'Không thể tải danh mục');
   }
 }
+
+  async getLeafCategories(): Promise<Category[]> {
+    try {
+      const categories = await this.getCategories();
+      // Tìm các category có parent_id (là con) và không có ai có parent_id là id của nó
+      const childIds = new Set(categories.map(cat => cat.parent_id).filter(id => id !== null));
+      return categories.filter(cat => !childIds.has(cat.category_id));
+      
+    } catch (error: any) {
+      console.error('Get leaf categories error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể tải danh mục con');
+    }
+  }
+
+   async createCategory(formData: FormData): Promise<Category> {
+    try {
+      const response = await api.post('/api/v1/categories', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data.category;
+    } catch (error: any) {
+      console.error('Create category error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể tạo danh mục');
+    }
+  }
+
+
+  async updateCategory(id: number, formData: FormData): Promise<Category> {
+    try {
+      const response = await api.put(`/api/v1/categories/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data.category;
+    } catch (error: any) {
+      console.error('Update category error:', error);
+      throw new Error(error.response?.data?.message || 'Không thể cập nhật danh mục');
+    }
+  }
 }
 
 export const categoryService = new CategoryService();

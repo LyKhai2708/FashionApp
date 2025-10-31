@@ -69,29 +69,22 @@ export const isAuth = (): boolean => {
 }
 
 const MAX_RECENTLY_VIEWED = 20;
-const EXPIRY_DAYS = 1;
+const EXPIRY_DAYS = 7; 
 
 interface RecentlyViewedItem {
-    product: Product;
+    product_id: number;  
     viewedAt: number;
 }
 
 export const recentlyViewedStorage = {
-    add: (product: Product): void => {
+    add: (productId: number): void => {
         try {
             const items = recentlyViewedStorage.get();
             
-            const filtered = items.filter(item => item.product.product_id !== product.product_id);
-            
-            // Ensure product has rating info
-            const productWithRating = {
-                ...product,
-                average_rating: product.average_rating || 0,
-                review_count: product.review_count || 0
-            };
+            const filtered = items.filter(item => item.product_id !== productId);
             
             const newItems: RecentlyViewedItem[] = [
-                { product: productWithRating, viewedAt: Date.now() },
+                { product_id: productId, viewedAt: Date.now() },
                 ...filtered
             ].slice(0, MAX_RECENTLY_VIEWED);
             
@@ -110,12 +103,10 @@ export const recentlyViewedStorage = {
             const now = Date.now();
             const expiryTime = EXPIRY_DAYS * 24 * 60 * 60 * 1000;
             
-            // Filter expired items
             const validItems = items.filter(item => {
                 return (now - item.viewedAt) < expiryTime;
             });
             
-            // Update storage if items were filtered
             if (validItems.length !== items.length) {
                 localStorage.setItem(STORAGE_KEYS.recently_viewed, JSON.stringify(validItems));
             }
@@ -127,28 +118,14 @@ export const recentlyViewedStorage = {
         }
     },
     
-    getProducts: (): Product[] => {
-        return recentlyViewedStorage.get().map(item => {
-            const filteredProduct = {
-                ...item.product,
-                average_rating: item.product.average_rating || 0,
-                review_count: item.product.review_count || 0,
-                colors: item.product.colors?.map(color => ({
-                    ...color,
-                    sizes: color.sizes?.filter(size => 
-                        (size.active === undefined || size.active === 1) && 
-                        size.stock_quantity > 0
-                    ) || []
-                })) || []
-            };
-            return filteredProduct;
-        });
+    getIds: (): number[] => {
+        return recentlyViewedStorage.get().map(item => item.product_id);
     },
     
     remove: (productId: number): void => {
         try {
             const items = recentlyViewedStorage.get();
-            const filtered = items.filter(item => item.product.product_id !== productId);
+            const filtered = items.filter(item => item.product_id !== productId);
             localStorage.setItem(STORAGE_KEYS.recently_viewed, JSON.stringify(filtered));
         } catch (e) {
             console.error('Error removing recently viewed', e);

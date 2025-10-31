@@ -2,15 +2,19 @@ import ProductSlider from "../components/ProductSlider"
 import type { FC } from "react";
 import ProductList from "../components/ProductList";
 import HomeLayout from "../layouts/HomeLayout";
+import CategorySlider from "../components/CategorySlider";
 
 import { useFeaturedProducts, useMostSoldProducts } from "../hooks/useProductList";
 import PromotionTabsSection from "../components/promotion/PromotionTabsSection";
+import { categoryService } from "../services/categoryService";
+import { useState, useEffect } from "react";
+import type { Category } from "../services/categoryService";
 
 
 const Home: FC = () => {
-    const { 
-        products: featuredProducts, 
-        loading: featuredLoading 
+    const {
+        products: featuredProducts,
+        loading: featuredLoading
     } = useFeaturedProducts(8);
 
     const {
@@ -18,30 +22,39 @@ const Home: FC = () => {
         loading: mostSoldLoading
     } = useMostSoldProducts(8);
 
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const leafCategories = await categoryService.getLeafCategories();
+                console.log('Home - Loaded categories:', leafCategories);
+                setCategories(leafCategories);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
     // const handleCategoryClick = (category: CategoryItem) => {
     //     navigate(`/collection/${category.slug}`);
     // };
 
     return (
         <HomeLayout>
-            {/* Category Section */}
-            {/* <section className="mx-auto max-w-6xl p-4 flex flex-col items-center">
-                <h2 className="font-bold text-2xl">DANH MỤC SẢN PHẨM</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-                    {categories.map((category) => (
-                        <button 
-                            key={category.id} 
-                            className="cursor-pointer" 
-                            onClick={() => handleCategoryClick(category)}
-                        >
-                            <div className="flex flex-col items-center p-10 border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
-                                {category.icon}
-                                <span className="mt-2 text-md font-medium">{category.name}</span>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-            </section> */}
+            <section className="mt-20">
+                <CategorySlider
+                    categories={categories}
+                    loading={categoriesLoading}
+                    title="DANH MỤC SẢN PHẨM"
+                    subtitle="Khám phá theo từng dòng sản phẩm cụ thể"
+                />
+            </section>
             <PromotionTabsSection />
             <section className="mt-20">
                 <h2 className="text-xl font-bold mb-4 text-center">SẢN PHẨM NỔI BẬT</h2>
