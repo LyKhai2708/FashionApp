@@ -101,51 +101,51 @@ async function getCart(userId) {
 
 async function addToCart(userId, cartData) {
     const { product_variants_id, quantity = 1 } = cartData;
+    return await knex.transaction(async (trx) => {
+        const variant = await trx('product_variants as pv')
+            .join('products as p', 'pv.product_id', 'p.product_id')
+            .where('pv.product_variants_id', product_variants_id)
+            .where('pv.active', 1)
+            .where('p.del_flag', 0)
+            .select('pv.stock_quantity', 'p.name as product_name')
+            .first();
 
-    // Kiểm tra variant có tồn tại và còn hàng không
-    const variant = await knex('product_variants as pv')
-        .join('products as p', 'pv.product_id', 'p.product_id')
-        .where('pv.product_variants_id', product_variants_id)
-        .where('pv.active', 1)
-        .where('p.del_flag', 0)
-        .select('pv.stock_quantity', 'p.name as product_name')
-        .first();
-
-    if (!variant) {
-        throw new Error('Sản phẩm không tồn tại hoặc đã ngừng bán');
-    }
-
-    if (variant.stock_quantity < quantity) {
-        throw new Error(`Sản phẩm "${variant.product_name}" chỉ còn ${variant.stock_quantity} sản phẩm`);
-    }
-
-    // Kiểm tra đã có trong giỏ chưa
-    const existingItem = await cartRepository()
-        .where('user_id', userId)
-        .where('variant_id', product_variants_id)
-        .first();
-
-    if (existingItem) {
-        // Kiểm tra tổng số lượng sau khi cộng
-        const newQuantity = existingItem.quantity + quantity;
-        if (newQuantity > variant.stock_quantity) {
-            throw new Error(`Tổng số lượng vượt quá tồn kho. Còn lại: ${variant.stock_quantity}`);
+        if (!variant) {
+            throw new Error('Sản phẩm không tồn tại hoặc đã ngừng bán');
         }
 
-        // Cập nhật số lượng
-        await cartRepository()
-            .where('cart_id', existingItem.cart_id)
-            .update({ quantity: newQuantity });
-    } else {
-        // Thêm mới vào giỏ
-        await cartRepository().insert({
-            user_id: userId,
-            variant_id: product_variants_id,
-            quantity
-        });
-    }
+        if (variant.stock_quantity < quantity) {
+            throw new Error(`Sản phẩm "${variant.product_name}" chỉ còn ${variant.stock_quantity} sản phẩm`);
+        }
 
-    return await getCart(userId);
+        const existingItem = await trx('cart')
+            .where('user_id', userId)
+            .where('variant_id', product_variants_id)
+            .forUpdate()
+            .first();
+
+        if (existingItem) {
+            const newQuantity = existingItem.quantity + quantity;
+            
+            if (newQuantity > variant.stock_quantity) {
+                throw new Error(`Tổng số lượng vượt quá tồn kho. Còn lại: ${variant.stock_quantity}`);
+            }
+
+            await trx('cart')
+                .where('cart_id', existingItem.cart_id)
+                .update({ quantity: newQuantity });
+        } else {
+            // Thêm mới vào giỏ
+            await trx('cart').insert({
+                user_id: userId,
+                variant_id: product_variants_id,
+                quantity
+            });
+        }
+
+        // Transaction commit tự động
+        return await getCart(userId);
+    });
 }
 
 async function updateCartItem(userId, cartId, quantity) {

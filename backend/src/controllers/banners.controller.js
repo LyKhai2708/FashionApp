@@ -83,6 +83,8 @@ async function createBanner(req, res, next) {
                 payload.start_date = promotion.start_date;
                 payload.end_date = promotion.end_date;
             }
+
+            payload.link_url = `/promotions/${payload.promotion_id}`;
         }
         
         if (payload.banner_type === 'voucher') {
@@ -102,6 +104,11 @@ async function createBanner(req, res, next) {
             if (!payload.category_id) {
                 return next(new ApiError(400, 'Category ID là bắt buộc cho category banner'));
             }
+
+            const category = await knex('categories').where('category_id', payload.category_id).first();
+            if (category && category.slug) {
+                payload.link_url = `/collections/${category.slug}`;
+            }
         }
         
         
@@ -119,14 +126,23 @@ async function updateBanner(req, res, next) {
     try {
         const payload = { ...req.body };
         
-        // Xử lý upload ảnh mới
         if (req.file) {
             payload.image_url = `/public/uploads/${req.file.filename}`;
         }
         
-        // Validate banner_type nếu có thay đổi
         if (payload.banner_type && !['promotion', 'voucher', 'category', 'custom'].includes(payload.banner_type)) {
             return next(new ApiError(400, 'Banner type không hợp lệ'));
+        }
+
+        if (payload.banner_type === 'promotion' && payload.promotion_id) {
+         payload.link_url = `/promotions/${payload.promotion_id}`;
+        }
+
+        if (payload.banner_type === 'category' && payload.category_id) {
+            const category = await knex('categories').where('category_id', payload.category_id).first();
+            if (category && category.slug) {
+                payload.link_url = `/collections/${category.slug}`;
+            }
         }
         
         const updated = await bannerService.updateBanner(req.params.id, payload);

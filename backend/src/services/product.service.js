@@ -728,7 +728,6 @@ async function hardDeleteProduct(id) {
             throw new Error('Không thể xóa sản phẩm đã có trong đơn hàng. Vui lòng chỉ dừng bán mặt hàng này.');
         }
         
-        // Lấy thông tin sản phẩm để xóa thumbnail
         const product = await trx('products')
             .where('product_id', id)
             .select('thumbnail')
@@ -759,7 +758,6 @@ async function hardDeleteProduct(id) {
             }
         }
         
-        // Xóa tất cả images
         const deletePromises = images.map(async (img) => {
             if (img.image_url) {
                 const filePath = img.image_url.startsWith('/public/uploads/')
@@ -792,7 +790,6 @@ async function getProductsByIds(productIds, user_id = null) {
         return [];
     }
 
-    // 1. Lấy basic product info
     let query = knex('products as p')
         .leftJoin('brand as b', 'p.brand_id', 'b.id')
         .leftJoin('categories as cat', 'p.category_id', 'cat.category_id')
@@ -853,7 +850,6 @@ async function getProductsByIds(productIds, user_id = null) {
 
     const foundProductIds = products.map(p => p.product_id);
 
-    // 2. Lấy colors (bulk query)
     const colors = await knex('product_variants as pv')
         .join('colors as c', 'pv.color_id', 'c.color_id')
         .whereIn('pv.product_id', foundProductIds)
@@ -897,7 +893,6 @@ async function getProductsByIds(productIds, user_id = null) {
         .orderBy('pv.color_id')
         .orderBy('s.name');
 
-    // Group variants by product and color
     const variantsByProductAndColor = {};
     for (const variant of variants) {
         const key = `${variant.product_id}_${variant.color_id}`;
@@ -945,7 +940,6 @@ async function getProductsByIds(productIds, user_id = null) {
         });
     }
 
-    // 7. Build final result
     for (const product of products) {
         product.colors = colorsByProduct[product.product_id] || [];
         const stats = reviewsMap[product.product_id];

@@ -123,7 +123,6 @@ async function createPaymentLink(orderId, returnUrl, cancelUrl) {
       price: Math.floor(item.price) 
     }));
 
-    // PayOS yêu cầu description tối đa 25 ký tự
     const description = `DH ${orderData.order_code}`.substring(0, 25);
 
     const body = {
@@ -309,6 +308,11 @@ async function cancelExpiredPayments() {
 
     for (const payment of expiredPayments) {
       await knex.transaction(async (trx) => {
+        const order = await trx('orders')
+          .where('order_id', payment.order_id)
+          .first();
+
+        // Rollback stock
         const orderItems = await trx('orderdetails')
           .where('order_id', payment.order_id)
           .select('product_variant_id', 'quantity');
@@ -329,6 +333,17 @@ async function cancelExpiredPayments() {
               .decrement('sold', item.quantity);
           }
         }
+        // back voucher usage
+        if (order.voucher_id) {
+          await trx('vouchers')
+            .where('voucher_id', order.voucher_id)
+            .decrement('used_count', 1);
+          
+          await trx('user_vouchers')
+            .where('user_id', order.user_id)
+            .where('voucher_id', order.voucher_id)
+            .decrement('used_count', 1);
+        }
 
         await trx('orders')
           .where('order_id', payment.order_id)
@@ -346,7 +361,7 @@ async function cancelExpiredPayments() {
             updated_at: knex.fn.now()
           });
 
-        console.log(`Auto-cancelled expired payment for order ${payment.order_id} and restored stock`);
+        console.log(`Auto-cancelled order ${payment.order_id}: restored stock and voucher`);
       });
     }
 

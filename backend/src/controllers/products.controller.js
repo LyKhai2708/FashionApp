@@ -1,4 +1,5 @@
 const productService = require("../services/product.service");
+const categoriesService = require("../services/categories.service");
 const ApiError = require("../api-error");
 const JSend = require("../jsend");
 const { extractProductFeatures } = require("../utils/extractFeatures");
@@ -6,6 +7,13 @@ const { extractProductFeatures } = require("../utils/extractFeatures");
 async function createProduct(req, res, next) {
   try {
     const payload = { ...req.body };
+    
+    if (payload.category_id) {
+      const isLeaf = await categoriesService.isLeafCategory(payload.category_id);
+      if (!isLeaf) {
+        return next(new ApiError(400, "Vui lòng chọn danh mục cụ thể (danh mục con)"));
+      }
+    }
     if (req.files && req.files.length > 0) {
       const imagePaths = req.files.map(file => `/public/uploads/${file.filename}`);
       
@@ -140,6 +148,14 @@ async function updateProduct(req, res, next) {
     if(Object.keys(req.body).length === 0 && (!req.files || req.files.length === 0)) {
       return next(new ApiError(400, "No data to update"));
     }
+    
+    // Validate category phải là leaf category
+    if (req.body.category_id) {
+      const isLeaf = await categoriesService.isLeafCategory(req.body.category_id);
+      if (!isLeaf) {
+        return next(new ApiError(400, "Vui lòng chọn danh mục cụ thể (danh mục con)"));
+      }
+    }
 
     const imageData = {
       uploadedFiles: req.files || [],
@@ -203,6 +219,24 @@ async function restoreProduct(req, res, next) {
   }
 }
 
+async function getProductsByIds(req, res, next) {
+  try {
+    const { ids } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return next(new ApiError(400, "Product IDs array is required"));
+    }
+    
+    const user_id = req.user?.user_id || null;
+    const products = await productService.getProductsByIds(ids, user_id);
+    
+    return res.json(JSend.success({ products }));
+  } catch (err) {
+    console.error(err);
+    return next(new ApiError(500, "Error fetching products"));
+  }
+}
+
 module.exports = {
   createProduct,
   getProducts,
@@ -211,4 +245,5 @@ module.exports = {
   deleteProduct,
   hardDeleteProduct,
   restoreProduct,
+  getProductsByIds,
 };

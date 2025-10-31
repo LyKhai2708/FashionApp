@@ -1,6 +1,7 @@
 const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
+const voucherService = require('./voucher.service');
 
 
 async function generateOrderCode(prefix = 'DL') {
@@ -25,31 +26,7 @@ function calculateShippingFee(subTotal) {
   return subTotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
 }
 
-function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
-  let discountAmount = 0;
 
-  switch (voucher.discount_type) {
-    case 'percentage':
-      discountAmount = orderAmount * (voucher.discount_value / 100);
-      if (voucher.max_discount_amount && discountAmount > voucher.max_discount_amount) {
-        discountAmount = voucher.max_discount_amount;
-      }
-      break;
-
-    case 'fixed_amount':
-      discountAmount = voucher.discount_value;
-      if (discountAmount > orderAmount) {
-        discountAmount = orderAmount;
-      }
-      break;
-
-    case 'free_shipping':
-      discountAmount = shippingFee;
-      break;
-  }
-
-  return Math.round(discountAmount);
-}
 
 
 async function createOrder(orderData, items) {
@@ -60,45 +37,16 @@ async function createOrder(orderData, items) {
     let voucher_discount_amount = 0;
     let voucher_id = null;
 
-    // Handle voucher if provided
     if (orderData.voucher_code) {
       try {
-        // Validate voucher
-        const voucher = await trx('vouchers')
-          .where('code', orderData.voucher_code.toUpperCase())
-          .andWhere('active', true)
-          .first();
 
-        if (!voucher) {
-          throw new Error('Voucher không hợp lệ hoặc đã hết hiệu lực');
-        }
-
-        // Check validity
-        const now = new Date();
-        const startDate = new Date(voucher.start_date);
-        const endDate = new Date(voucher.end_date);
-        endDate.setHours(23, 59, 59, 999);
-
-        if (now < startDate || now > endDate) {
-          throw new Error('Voucher không nằm trong thời gian hiệu lực');
-        }
-
-        if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
-          throw new Error('Voucher đã hết lượt sử dụng');
-        }
-
-        if (sub_total < voucher.min_order_amount) {
-          throw new Error(`Đơn hàng tối thiểu phải đạt ${voucher.min_order_amount} VNĐ để sử dụng voucher này`);
-        }
-
-        // Calculate discount
-        voucher_discount_amount = calculateVoucherDiscount(voucher, sub_total);
+        const voucher = await voucherService.validateVoucher(
+          orderData.voucher_code,
+          orderData.user_id,
+          sub_total
+        );
+        voucher_discount_amount = voucherService.calculateVoucherDiscount(voucher, sub_total);
         voucher_id = voucher.voucher_id;
-
-        // Update voucher usage count
-        await trx('vouchers')
-          .where('voucher_id', voucher.voucher_id)
-          .increment('used_count', 1);
 
       } catch (error) {
         throw new Error(`Voucher error: ${error.message}`);
@@ -168,17 +116,27 @@ async function createOrder(orderData, items) {
         throw new Error('Số lượng sản phẩm không hợp lệ');
       }
 
-      const updated = await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .andWhere('stock_quantity', '>=', qty)
-        .decrement('stock_quantity', qty);
 
-      const affectedRows = Array.isArray(updated) ? (Number(updated[0]) || 0) : Number(updated) || 0;
-      if (affectedRows === 0) {
-        throw new Error('Sản phẩm không đủ tồn kho, vui lòng giảm số lượng hoặc chọn biến thể khác');
+      const variant = await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .forUpdate() //lock row
+        .first();
+
+
+      if (!variant) {
+        throw new Error('Sản phẩm không tồn tại hoặc đã ngừng bán');
       }
 
+      if (variant.stock_quantity < qty) {
+        throw new Error(`Sản phẩm không đủ tồn kho. Còn lại: ${variant.stock_quantity}, yêu cầu: ${qty}`);
+      }
+
+      await trx('product_variants')
+        .where('product_variants_id', item.product_variant_id)
+        .decrement('stock_quantity', qty);
+
     }
+
 
     return { 
       order_id: orderId,
@@ -186,11 +144,22 @@ async function createOrder(orderData, items) {
       sub_total,
       shipping_fee,
       total_amount,
+      voucher_id,
+      voucher_discount_amount,
       payment_method: orderData.payment_method || 'cod',
       order_status: 'pending',
       ...orderData 
     };
   });
+
+  if (orderResult.voucher_id) {
+    await voucherService.useVoucher(
+      orderResult.voucher_id,
+      orderData.user_id,
+      orderResult.order_id,
+      orderResult.voucher_discount_amount
+    );
+  }
 
   sendOrderConfirmationEmail(
     orderResult.order_id, 
@@ -498,6 +467,18 @@ async function updateOrderStatus(orderId, order_status, adminId = null, cancelRe
   }
 
   if (order_status === 'shipped') {
+    const payment = await knex('payments')
+      .where('order_id', orderId)
+      .first();
+    
+    if (payment) {
+      const requirePrepayment = ['bank_transfer', 'payos', 'momo', 'vnpay'];
+      
+      if (requirePrepayment.includes(payment.payment_method) && payment.payment_status !== 'paid') {
+        throw new Error(`Không thể giao hàng khi chưa thanh toán. Phương thức: ${payment.payment_method}, Trạng thái: ${payment.payment_status}`);
+      }
+    }
+    
     if (!order.shipped_at) patch.shipped_at = knex.fn.now();
   }
   if (order_status === 'delivered') {
@@ -601,6 +582,22 @@ async function cancelOrder(orderId, cancelReason = null) {
           .where('product_id', variant.product_id)
           .decrement('sold', item.quantity);
       }
+    }
+
+
+    if (order.voucher_id) {
+      await trx('vouchers')
+        .where('voucher_id', order.voucher_id)
+        .decrement('used_count', 1);
+      
+      await trx('user_vouchers')
+        .where('user_id', order.user_id)
+        .where('voucher_id', order.voucher_id)
+        .decrement('used_count', 1);
+      
+      // await trx('order_vouchers')
+      //   .where('order_id', orderId)
+      //   .delete();
     }
 
     return true;

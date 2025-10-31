@@ -3,6 +3,7 @@ const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
 const categoryController = require('../controllers/categories.controller');
 const {authMiddleware, authorizeRoles} = require('../middleware/auth.middleware');
+const { uploadSingle } = require("../middleware/upload_image.middleware");
 module.exports.setup = (app) => {
     app.use('/api/v1/categories', router);
     /**
@@ -146,7 +147,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "An error occurred while creating category"
      */
-    router.post('/',authMiddleware,authorizeRoles('admin'), categoryController.createCategory);
+    router.post('/', authMiddleware, authorizeRoles('admin'), uploadSingle('image'), categoryController.createCategory);
     /**
      * @swagger
      * /api/v1/categories:
@@ -259,7 +260,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "Error updating category"
      */
-    router.put('/:category_id',authMiddleware,authorizeRoles('admin'), categoryController.updateCategory);
+    router.put('/:category_id', authMiddleware, authorizeRoles('admin'), uploadSingle('image'), categoryController.updateCategory);
     /**
      * @swagger
      * /api/v1/categories/{category_id}:

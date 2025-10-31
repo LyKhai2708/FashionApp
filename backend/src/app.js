@@ -22,6 +22,7 @@ const addressRouter = require('./routes/address.router');
 const adminRouter = require('./routes/admin.router');
 const otpRouter = require('./routes/otp.router');
 const voucherRouter = require('./routes/voucher.router');
+const bannersRouter = require('./routes/banners.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
@@ -66,12 +67,10 @@ addressRouter.setup(app);
 adminRouter.setup(app);
 otpRouter.setup(app);
 voucherRouter.setup(app);
+bannersRouter.setup(app);
 paymentRouter.setup(app);
 const voucherService = require('./services/voucher.service');
-cron.schedule('0 0 * * *', () => {
-  promotionService.autoDeactivateExpiredPromotions();
-  voucherService.autoDeactivateExpiredVouchers();
-});
+
 
 app.use(resourceNotFound);
 app.use(handleError);

@@ -257,6 +257,35 @@ module.exports.setup = (app) => {
 
     /**
      * @swagger
+     * /api/v1/products/by-ids:
+     *   post:
+     *     summary: Get products by IDs
+     *     description: Retrieve multiple products by their IDs 
+     *     tags: [Products]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               ids:
+     *                 type: array
+     *                 items:
+     *                   type: integer
+     *                 example: [1, 2, 3, 4, 5]
+     *     responses:
+     *       200:
+     *         description: Products retrieved successfully
+     *       400:
+     *         description: Invalid request
+     *       500:
+     *         description: Server error
+     */
+    router.post("/by-ids", productController.getProductsByIds);
+
+    /**
+     * @swagger
      * /api/v1/products/{id}:
      *   patch:
      *     summary: Update product
@@ -466,7 +495,6 @@ module.exports.setup = (app) => {
      */
     router.post("/search-by-image", uploadSingle('image'), imageSearchController.searchByImage);
 
-    // Method not allowed handlers
     router.all("/", methodNotAllowed);
     router.all("/:id", methodNotAllowed);
     router.all("/:id/permanent", methodNotAllowed);

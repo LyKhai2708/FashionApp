@@ -17,6 +17,7 @@ import Categories from '../../pages/admin/Categories';
 import Vouchers from '../../pages/admin/Vouchers';
 import Promotions from '../../pages/admin/Promotions';
 import PromotionProducts from '../../pages/admin/PromotionProducts';
+import Banners from '../../pages/admin/Banners';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -58,6 +59,7 @@ const AdminRoutes: React.FC = () => {
                 <Route path="promotions" element={<Promotions />} />
                 <Route path="promotions/:promo_id/products" element={<PromotionProducts />} />
                 <Route path="vouchers" element={<Vouchers />} />
+                <Route path="banners" element={<Banners />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
