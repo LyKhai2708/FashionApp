@@ -111,7 +111,7 @@ export default function EditProduct() {
         const loadData = async () => {
             try {
                 const [categoriesData, brandsData, colorsData, sizesData] = await Promise.all([
-                    categoryService.getCategories(),
+                    categoryService.getLeafCategories(),
                     brandService.getBrands(),
                     colorService.getColors(),
                     sizeService.getSizes()

@@ -118,7 +118,7 @@ export default function SearchBar() {
                 </div>
 
             {isOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                <div className="fixed inset-0 bg-black/70 bg-opacity-50 z-50 flex items-center justify-center">
                     <div ref={overlayRef} className="bg-white w-full max-w-4xl h-[90vh] p-6 rounded-lg shadow-lg relative overflow-y-auto">
                         <button onClick={handleClose} className="absolute top-2 right-2 text-gray-500 hover:text-black">
                             <XIcon size={24} />

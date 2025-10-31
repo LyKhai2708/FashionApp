@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../../contexts/admin/SidebarContext';
 import { Package, Shirt, Tag, User, Ticket } from 'lucide-react';
+import Banners from '../../pages/admin/Banners';
 
 type NavItem = {
   name: string;
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
       { name: "Brands", path: "/admin/brands" },
       { name: "Colors", path: "/admin/colors" },
       { name: "Sizes", path: "/admin/sizes" },
+  
     ],
   },
   {
@@ -61,6 +63,13 @@ const navItems: NavItem[] = [
     ),
     name: "Vouchers",
     path: "/admin/vouchers",
+  },
+  {
+    icon: (
+      <Tag/>
+    ),
+    name: "Banners",
+    path: "/admin/banners",
   },
 ];
 

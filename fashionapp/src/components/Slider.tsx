@@ -1,29 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import slider1 from "../assets/slider1.jpg";
-import slider2 from "../assets/slider2.jpg";
-import slider3 from "../assets/slider3.jpg";
-import slider4 from "../assets/slider4.jpg";
+import bannerService, { type Banner } from "../services/bannerService";
+import { getImageUrl } from "../utils/imageHelper";
 
 export default function Slider() {
-  const sliderData = [
-    {
-      id: 1,
-      image: slider1,
-    },
-    {
-      id: 2,
-      image: slider2,
-    },
-    {
-      id: 3,
-      image: slider3,
-    },
-    {
-      id: 4,
-      image: slider4,
-    },
-  ];
+  const navigate = useNavigate();
+  const [banners, setBanners] = useState<Banner[]>([]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -33,23 +16,45 @@ export default function Slider() {
   const intervalRef = useRef<number | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const data = await bannerService.getActiveBanners('home-hero');
+        setBanners(data);
+      } catch (error) {
+        console.error('Error loading banners:', error);
+      }
+    };
+    fetchBanners();
+  }, []);
+
   const goToPrevious = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? sliderData.length - 1 : prevIndex - 1
+      prevIndex === 0 ? banners.length - 1 : prevIndex - 1
     );
   };
 
   const goToNext = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex === sliderData.length - 1 ? 0 : prevIndex + 1
+      prevIndex === banners.length - 1 ? 0 : prevIndex + 1
     );
+  };
+
+  const handleBannerClick = (banner: Banner) => {
+    if (!banner.link_url) return;
+    
+    if (banner.link_url.startsWith('http')) {
+      window.open(banner.link_url, banner.link_target || '_self');
+    } else {
+      navigate(banner.link_url);
+    }
   };
 
   useEffect(() => {
     if (intervalRef.current) {
       window.clearInterval(intervalRef.current);
     }
-    if (!isPaused && !isDragging) {
+    if (!isPaused && !isDragging && banners.length > 0) {
       intervalRef.current = window.setInterval(goToNext, 3000);
     }
     return () => {
@@ -57,7 +62,7 @@ export default function Slider() {
         window.clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused, isDragging, sliderData.length]);
+  }, [isPaused, isDragging, banners.length]);
 
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     setIsDragging(true);
@@ -117,11 +122,14 @@ export default function Slider() {
         className="flex h-full transition-transform duration-500 ease-out"
         style={{ transform: `translateX(${translateX}%)` }}
       >
-        {sliderData.map((slide) => (
+        {banners.map((banner) => (
           <div
-            key={slide.id}
-            className="w-full h-full flex-shrink-0 bg-center bg-cover"
-            style={{ backgroundImage: `url(${slide.image})` }}
+            key={banner.banner_id}
+            className={`w-full h-full flex-shrink-0 bg-center bg-cover ${
+              banner.link_url ? 'cursor-pointer' : 'cursor-default'
+            }`}
+            style={{ backgroundImage: `url(${getImageUrl(banner.image_url)})` }}
+            onClick={() => handleBannerClick(banner)}
           ></div>
         ))}
       </div>
@@ -135,22 +143,24 @@ export default function Slider() {
         className="hidden absolute right-3 top-1/2 -translate-y-1/2 bg-white/50 rounded-full p-1.5 sm:p-2 shadow backdrop-blur focus:outline-none cursor-pointer group-hover:block"
         onClick={goToNext}
       />
-      <div className="absolute bottom-2 space-x-1 left-1/2 -translate-x-1/2">
-        {sliderData.map((slide, slideIndex) => (
-          <button
-            key={slide.id}
-            type="button"
-            onClick={() => setCurrentIndex(slideIndex)}
-            className="focus:outline-none cursor-pointer"
-          >
-            <span
-              className={`${
-                slideIndex === currentIndex ? "bg-black/60" : "bg-white/40"
-              } hover:bg-white/80 inline-block rounded-full h-1 w-5`}
-            ></span>
-          </button>
-        ))}
-      </div>
+      {banners.length > 0 && (
+        <div className="absolute bottom-2 space-x-1 left-1/2 -translate-x-1/2">
+          {banners.map((banner, bannerIndex) => (
+            <button
+              key={banner.banner_id}
+              type="button"
+              onClick={() => setCurrentIndex(bannerIndex)}
+              className="focus:outline-none cursor-pointer"
+            >
+              <span
+                className={`${
+                  bannerIndex === currentIndex ? "bg-black/60" : "bg-white/40"
+                } hover:bg-white/80 inline-block rounded-full h-1 w-5`}
+              ></span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
