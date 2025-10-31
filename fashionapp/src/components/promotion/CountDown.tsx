@@ -22,7 +22,11 @@ const Countdown: React.FC<CountdownProps> = ({
     const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft());
 
     function calculateTimeLeft(): TimeLeft {
-        const difference = new Date(endDate).getTime() - new Date().getTime();
+        // Parse endDate và set đến cuối ngày (23:59:59)
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        const difference = end.getTime() - new Date().getTime();
         
         if (difference <= 0) {
             return { days: 0, hours: 0, minutes: 0, seconds: 0 };

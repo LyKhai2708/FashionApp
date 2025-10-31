@@ -257,12 +257,10 @@ function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
  */
 async function useVoucher(voucherId, userId, orderId, discountAmount) {
     return await knex.transaction(async (trx) => {
-        // Tăng used_count trong vouchers table
         await trx('vouchers')
             .where('voucher_id', voucherId)
             .increment('used_count', 1);
         
-        // Cập nhật hoặc tạo user_voucher record
         const userVoucher = await trx('user_vouchers')
             .where('user_id', userId)
             .where('voucher_id', voucherId)
@@ -285,7 +283,6 @@ async function useVoucher(voucherId, userId, orderId, discountAmount) {
             });
         }
         
-        // Thêm vào order_vouchers
         await trx('order_vouchers').insert({
             order_id: orderId,
             voucher_id: voucherId,

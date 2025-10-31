@@ -14,8 +14,8 @@ const PromotionTabsSection = () => {
     const [productsCache, setProductsCache] = useState<Record<number, Product[]>>({});
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [filteredPromotions, setFilteredPromotions] = useState<Promotion[]>([]);
 
-    // Fetch promotions
     useEffect(() => {
         const fetchPromotions = async () => {
             try {
@@ -23,10 +23,33 @@ const PromotionTabsSection = () => {
                 const promos = await promotionService.getCurrentPromotions(10);
                 setPromotions(promos);
                 
-                // Auto-select first promotion and fetch its products
-                if (promos.length > 0) {
+
+                const promosWithProducts: Promotion[] = [];
+                const newProductsCache: Record<number, Product[]> = {};
+                
+                for (const promo of promos) {
+                    try {
+                        const response = await promotionService.getPromotionProducts(promo.promo_id, { 
+                            limit: 8 
+                        });
+                        const { products } = response;
+                        
+
+                        if (products && products.length > 0) {
+                            promosWithProducts.push(promo);
+                            newProductsCache[promo.promo_id] = products;
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching products for promotion ${promo.promo_id}:`, error);
+                    }
+                }
+                
+                setFilteredPromotions(promosWithProducts);
+                setProductsCache(newProductsCache);
+                
+                // Auto-select first promotion
+                if (promosWithProducts.length > 0) {
                     setActiveKey('0');
-                    fetchProducts(promos[0].promo_id);
                 }
             } catch (error) {
                 console.error('Error fetching promotions:', error);
@@ -38,9 +61,7 @@ const PromotionTabsSection = () => {
         fetchPromotions();
     }, []);
 
-    // Fetch products for selected promotion
     const fetchProducts = async (promoId: number) => {
-        // Check cache first
         if (productsCache[promoId]) {
             return;
         }
@@ -67,12 +88,11 @@ const PromotionTabsSection = () => {
     const handleTabChange = (key: string) => {
         setActiveKey(key);
         const index = parseInt(key);
-        if (promotions[index]) {
-            fetchProducts(promotions[index].promo_id);
+        if (filteredPromotions[index]) {
+            fetchProducts(filteredPromotions[index].promo_id);
         }
     };
 
-    // Initial loading
     if (initialLoading) {
         return (
             <section className="container mx-auto px-4 py-8">
@@ -89,12 +109,11 @@ const PromotionTabsSection = () => {
         );
     }
 
-    // No promotions
-    if (promotions.length === 0) {
+    if (filteredPromotions.length === 0) {
         return null;
     }
 
-    const currentPromo = promotions[parseInt(activeKey)];
+    const currentPromo = filteredPromotions[parseInt(activeKey)];
     const currentProducts = currentPromo ? productsCache[currentPromo.promo_id] || [] : [];
 
     return (
@@ -113,7 +132,7 @@ const PromotionTabsSection = () => {
                 onChange={handleTabChange}
                 type="card"
                 className="promotion-tabs"
-                items={promotions.map((promo, index) => ({
+                items={filteredPromotions.map((promo, index) => ({
                     key: index.toString(),
                     label: (
                         <div className="flex items-center gap-2 px-2">
