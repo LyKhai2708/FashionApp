@@ -36,7 +36,7 @@ const CategorySlider: React.FC<CategorySliderProps> = ({
     if (loading) {
         return (
             <section className="container mx-auto px-4">
-                {title && (
+                {/* {title && (
                     <div className="text-center mb-4">
                         <h2 className="text-xl font-bold mb-4 text-center text-gray-900">
                             {title}
@@ -47,7 +47,7 @@ const CategorySlider: React.FC<CategorySliderProps> = ({
                             </h3>
                         )}
                     </div>
-                )}
+                )} */}
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {[1, 2, 3, 4, 5, 6].map(i => (
                         <div key={i} className="animate-pulse">
@@ -67,8 +67,8 @@ const CategorySlider: React.FC<CategorySliderProps> = ({
 
     return (
         <section className="container mx-auto px-4">
-            {/* Header */}
-            {title && (
+
+            {/* {title && (
                 <div className="text-center mb-4">
                     <h2 className="text-xl font-bold mb-4 text-center text-gray-900">
                         {title}
@@ -79,9 +79,9 @@ const CategorySlider: React.FC<CategorySliderProps> = ({
                         </h3>
                     )}
                 </div>
-            )}
+            )} */}
 
-            {/* Swiper Slider */}
+
             <div className="overflow-hidden relative">
                 <Swiper
                     modules={[Navigation]}

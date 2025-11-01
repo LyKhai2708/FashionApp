@@ -51,6 +51,7 @@ async function getManyPromotion(payload){
             knex.raw('COUNT(pp.product_id) as product_count')
     )
     .groupBy('promotions.promo_id')
+    .orderBy('promotions.created_at', 'desc')
     .limit(paginator.limit).offset(paginator.offset);
     
     let totalRecords = 0;

@@ -14,12 +14,15 @@ import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import RecentlyViewedSection from '../components/RecentlyViewedSection';
 import { useRelatedProducts } from '../hooks/useProductList';
 import { Image } from 'antd';
+import { useMessage } from '../App';
 
 export default function ProductDetailPage() {
+    const navigate = useNavigate();
     const { addToCart } = useCart();
     const { addProduct } = useRecentlyViewed();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { slug } = useParams<{ slug: string }>();
+    const message = useMessage();
     
     const productId = extractProductIdFromSlug(slug || '');
     
@@ -63,11 +66,11 @@ export default function ProductDetailPage() {
 
     const handleAddToCart = async () => {
         if (!product ||!selectedVariant) {
-            alert('Vui lòng chọn màu sắc và kích cỡ');
+            message.warning('Vui lòng chọn màu sắc và kích cỡ');
             return;
         }
         if (stockQuantity <= 0) {
-            alert('Sản phẩm đã hết hàng');
+            message.warning('Sản phẩm đã hết hàng');
             return;
         }
 
@@ -94,6 +97,43 @@ export default function ProductDetailPage() {
             setIsSubmitting(false);
         }
     };
+
+    const handleBuyNow = async () => {
+        if (!product || !selectedVariant) {
+            message.warning('Vui lòng chọn màu sắc và kích cỡ');
+            return;
+        }
+        if (stockQuantity <= 0) {
+            message.warning('Sản phẩm đã hết hàng');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                product_variants_id: selectedVariant.variant_id,
+                quantity: quantity,
+            };
+    
+            const productDetails = {
+                product_id: product.product_id,
+                product_name: product.name,
+                thumbnail: mainImage, 
+                price: product.price_info.has_promotion ? product.price_info.discounted_price : product.price_info.base_price,    
+                variant: selectedVariant,
+            };
+    
+            await addToCart(payload, productDetails);
+            
+
+            navigate('/cart');
+        } catch (error) {
+            console.error('Failed to buy now:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const handleQuantityChange = (delta: number) => {
         const newQuantity = quantity + delta;
         if (newQuantity >= 1 && newQuantity <= stockQuantity) {
@@ -345,10 +385,11 @@ export default function ProductDetailPage() {
                             {isSubmitting ? 'Đang thêm...' : (stockQuantity === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng')}
                         </button>
                         <button 
+                            onClick={handleBuyNow}
                             className='flex-1 bg-white rounded border font-medium py-3 cursor-pointer hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed'
-                            disabled={stockQuantity === 0 || !selectedVariant}
+                            disabled={stockQuantity === 0 || !selectedVariant || isSubmitting}
                         >
-                            Mua Ngay
+                            {isSubmitting ? 'Đang xử lý...' : 'Mua Ngay'}
                         </button>
                         <button 
                             onClick={toggleFavorite}

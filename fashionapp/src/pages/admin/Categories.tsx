@@ -1,8 +1,7 @@
-// src/pages/admin/Categories.tsx
 import { useState, useEffect } from 'react';
 import { useMessage } from '../../App';
 import categoryService, { type Category } from '../../services/categoryService';
-import { Edit, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Edit, Plus, Trash2, ChevronDown, ChevronRight, Check, Folder } from 'lucide-react';
 import CategoryForm from '../../components/admin/CategoryForm';
 import { getImageUrl } from '../../utils/imageHelper';
 
@@ -111,7 +110,6 @@ export default function Categories() {
         }
     };
 
-    // Organize categories into tree structure
     const parentCategories = categories.filter(cat => !cat.parent_id);
     const getChildCategories = (parentId: number) => 
         categories.filter(cat => cat.parent_id === parentId);
@@ -138,7 +136,7 @@ export default function Categories() {
                             <p className="text-gray-600 text-sm">Tổng danh mục</p>
                             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                         </div>
-                        <div className="text-3xl">📂</div>
+                        <div className="text-3xl"><Folder></Folder></div>
                     </div>
                 </div>
 
@@ -197,7 +195,7 @@ export default function Categories() {
                                             )}
                                             <div>
                                                 <div className={`font-medium text-gray-900 ${parent.active === 0 ? 'opacity-50 line-through' : ''}`}>
-                                                🗂️ {parent.category_name} {parent.active === 0 && '(Vô hiệu hóa)'}
+                                                 {parent.category_name} {parent.active === 0 && '(Vô hiệu hóa)'}
                                                 </div>
                                                 <div className="text-xs text-gray-500">
                                                     {children.length} danh mục con
@@ -216,7 +214,7 @@ export default function Categories() {
                                                 onClick={() => handleToggleStatus(parent.category_id, parent.active)}
                                                 className={`p-1 ${parent.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
                                             >
-                                                {parent.active === 1 ? <Trash2 className="w-4 h-4" /> : '✅'}
+                                                {parent.active === 1 ? <Trash2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                                             </button>
                                         </div>
                                     </div>
@@ -244,7 +242,7 @@ export default function Categories() {
                                                         )}
                                                         <div>
                                                             <div className={`font-medium text-gray-900 text-sm ${child.active === 0 ? 'opacity-50 line-through' : ''}`}>
-                                                                📁 {child.category_name} {child.active === 0 && '(Vô hiệu hóa)'}
+                                                                 {child.category_name} {child.active === 0 && '(Vô hiệu hóa)'}
                                                             </div>
                                                             <div className="text-xs text-gray-500">
                                                                 ID: {child.category_id}
@@ -263,7 +261,7 @@ export default function Categories() {
                                                             onClick={() => handleToggleStatus(child.category_id, child.active)}
                                                             className={`p-1 ${child.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
                                                         >
-                                                            {child.active === 1 ? <Trash2 className="w-3 h-3" /> : '✅'}
+                                                            {child.active === 1 ? <Trash2 className="w-3 h-3" /> : <Check className="w-3 h-3" />}
                                                         </button>
                                                     </div>
                                                 </div>

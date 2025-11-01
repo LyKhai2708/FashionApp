@@ -251,68 +251,7 @@ class VoucherService {
         }
     }
 
-    /**
-     * Tính số tiền giảm giá của voucher (client-side calculation)
-     */
-    calculateVoucherDiscount(voucher: Voucher, orderAmount: number, shippingFee: number = 0): number {
-        let discountAmount = 0;
 
-        switch (voucher.discount_type) {
-            case 'percentage':
-                discountAmount = orderAmount * (voucher.discount_value / 100);
-                if (voucher.max_discount_amount && discountAmount > voucher.max_discount_amount) {
-                    discountAmount = voucher.max_discount_amount;
-                }
-                break;
-
-            case 'fixed_amount':
-                discountAmount = voucher.discount_value;
-                if (discountAmount > orderAmount) {
-                    discountAmount = orderAmount;
-                }
-                break;
-
-            case 'free_shipping':
-                discountAmount = shippingFee;
-                break;
-        }
-
-        return Math.round(discountAmount);
-    }
-
-    /**
-     * Kiểm tra voucher có hợp lệ không (client-side validation)
-     */
-    isVoucherValid(voucher: Voucher, orderAmount: number): {
-        isValid: boolean;
-        reason?: string;
-    } {
-        const now = new Date();
-        const startDate = new Date(voucher.start_date);
-        const endDate = new Date(voucher.end_date);
-        endDate.setHours(23, 59, 59, 999);
-
-        if (!voucher.active) {
-            return { isValid: false, reason: 'Voucher đã hết hiệu lực' };
-        }
-
-        if (now < startDate || now > endDate) {
-            return { isValid: false, reason: 'Voucher không nằm trong thời gian hiệu lực' };
-        }
-
-        if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
-            return { isValid: false, reason: 'Voucher đã hết lượt sử dụng' };
-        }
-
-        if (orderAmount < voucher.min_order_amount) {
-            return {
-                isValid: false,
-                reason: `Đơn hàng tối thiểu phải đạt ${voucher.min_order_amount.toLocaleString('vi-VN')} VNĐ để sử dụng voucher này`
-            };
-        }
-
-        return { isValid: true };
-    }
 
     /**
      * Format discount type text

@@ -822,7 +822,14 @@ async function getProductsByIds(productIds, user_id = null) {
                     WHEN active_promotions.discount_percent IS NOT NULL 
                     THEN ROUND(p.base_price * (1 - active_promotions.discount_percent / 100), 2)
                     ELSE p.base_price 
-                END as price
+                END as discounted_price
+            `),
+            knex.raw(`
+                CASE 
+                    WHEN active_promotions.discount_percent IS NOT NULL 
+                    THEN true 
+                    ELSE false 
+                END as has_promotion
             `)
         );
 

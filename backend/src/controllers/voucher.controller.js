@@ -1,9 +1,7 @@
 const voucherService = require('../services/voucher.service');
 const ApiError = require('../api-error');
 
-/**
- * Lấy danh sách vouchers (Admin)
- */
+
 const getVouchers = async (req, res, next) => {
     try {
         const { page, limit, code, name, active, discount_type, start_date, end_date } = req.query;
@@ -29,9 +27,7 @@ const getVouchers = async (req, res, next) => {
     }
 };
 
-/**
- * Lấy chi tiết voucher theo ID (Admin)
- */
+
 const getVoucherById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -48,9 +44,7 @@ const getVoucherById = async (req, res, next) => {
     }
 };
 
-/**
- * Tạo voucher mới (Admin)
- */
+
 const createVoucher = async (req, res, next) => {
     try {
         // Validation
@@ -108,9 +102,7 @@ const createVoucher = async (req, res, next) => {
     }
 };
 
-/**
- * Cập nhật voucher (Admin)
- */
+
 const updateVoucher = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -157,9 +149,7 @@ const updateVoucher = async (req, res, next) => {
     }
 };
 
-/**
- * Xóa voucher (Admin)
- */
+
 const deleteVoucher = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -176,9 +166,7 @@ const deleteVoucher = async (req, res, next) => {
     }
 };
 
-/**
- * Lấy danh sách vouchers có sẵn cho user
- */
+
 const getAvailableVouchers = async (req, res, next) => {
     try {
         const userId = req.user?.user_id;
@@ -199,9 +187,7 @@ const getAvailableVouchers = async (req, res, next) => {
     }
 };
 
-/**
- * Validate và áp dụng voucher
- */
+
 const validateVoucher = async (req, res, next) => {
     try {
         const { code } = req.params;

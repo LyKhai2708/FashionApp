@@ -2,6 +2,7 @@ const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 const voucherService = require('./voucher.service');
+const { SHIPPING } = require('../config/constants');
 
 
 async function generateOrderCode(prefix = 'DL') {
@@ -19,12 +20,7 @@ async function generateOrderCode(prefix = 'DL') {
 }
 
 
-function calculateShippingFee(subTotal) {
-  const FREE_SHIP_THRESHOLD = 200000; // 200k
-  const STANDARD_SHIPPING_FEE = 30000; // 30k
 
-  return subTotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
-}
 
 
 
@@ -34,18 +30,24 @@ async function createOrder(orderData, items) {
   const orderResult = await knex.transaction(async (trx) => {
     const sub_total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+    const shipping_fee = SHIPPING.STANDARD_FEE;
+    
     let voucher_discount_amount = 0;
     let voucher_id = null;
 
     if (orderData.voucher_code) {
       try {
-
         const voucher = await voucherService.validateVoucher(
           orderData.voucher_code,
           orderData.user_id,
           sub_total
         );
-        voucher_discount_amount = voucherService.calculateVoucherDiscount(voucher, sub_total);
+        
+        voucher_discount_amount = voucherService.calculateVoucherDiscount(
+          voucher, 
+          sub_total, 
+          shipping_fee
+        );
         voucher_id = voucher.voucher_id;
 
       } catch (error) {
@@ -53,7 +55,6 @@ async function createOrder(orderData, items) {
       }
     }
 
-    const shipping_fee = calculateShippingFee(sub_total);
     const total_amount = sub_total + shipping_fee - voucher_discount_amount;
 
     const fullAddress = [
@@ -101,15 +102,6 @@ async function createOrder(orderData, items) {
 
     await trx('orderdetails').insert(orderItems);
 
-    if (voucher_id) {
-      await trx('order_vouchers').insert({
-        order_id: orderId,
-        voucher_id: voucher_id,
-        discount_amount: voucher_discount_amount
-      });
-    }
-
-
     for (const item of items) {
       const qty = Number(item.quantity) || 0;
       if (qty <= 0) {
@@ -152,6 +144,7 @@ async function createOrder(orderData, items) {
     };
   });
 
+  // Update voucher usage and insert order_vouchers record
   if (orderResult.voucher_id) {
     await voucherService.useVoucher(
       orderResult.voucher_id,
@@ -626,7 +619,6 @@ async function getEligibleOrdersForReview(userId, productId) {
 module.exports = {
   createOrder,
   getOrders,
-  calculateShippingFee,
   getOrderById,
   updateOrderStatus,
   cancelOrder,

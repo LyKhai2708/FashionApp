@@ -24,10 +24,8 @@ interface CartContextType extends CartState {
     clearCart: () => Promise<void>;
     applyVoucher: (voucherData: VoucherValidationResponse) => void;
     removeVoucher: () => void;
-    calculateShippingFee: (subtotal: number) => number;
-    getOrderSummary: () => {
+    getCartSummary: () => {
         subtotal: number;
-        shippingFee: number;
         voucherDiscount: number;
         total: number;
     };
@@ -231,22 +229,13 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         }));
     };
 
-    const calculateShippingFee = (subtotal: number): number => {
-        const FREE_SHIP_THRESHOLD = 200000; // 200k
-        const STANDARD_SHIPPING_FEE = 30000; // 30k
-        
-        return subtotal >= FREE_SHIP_THRESHOLD ? 0 : STANDARD_SHIPPING_FEE;
-    };
-
-    const getOrderSummary = () => {
+    const getCartSummary = () => {
         const subtotal = cartState.totalPrice;
-        const shippingFee = calculateShippingFee(subtotal);
         const voucherDiscount = cartState.appliedVoucher ? cartState.appliedVoucher.order_summary.discount_amount : 0;
-        const total = Math.max(0, subtotal + shippingFee - voucherDiscount);
+        const total = Math.max(0, subtotal - voucherDiscount);
 
         return {
             subtotal,
-            shippingFee,
             voucherDiscount,
             total
         };
@@ -260,8 +249,7 @@ export const CartProvider = ({children}: {children: ReactNode}) =>{
         clearCart,
         applyVoucher,
         removeVoucher,
-        calculateShippingFee,
-        getOrderSummary
+        getCartSummary
     };
 
     

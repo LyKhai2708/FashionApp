@@ -144,7 +144,7 @@ async function getVoucherByCode(code) {
  */
 async function updateVoucher(voucherId, payload) {
     const voucher = readVoucher(payload);
-    delete voucher.code; // Không cho phép thay đổi code
+    delete voucher.code; 
     
     const updated = await voucherRepository()
         .where('voucher_id', voucherId)
@@ -160,9 +160,7 @@ async function updateVoucher(voucherId, payload) {
     return await getVoucherById(voucherId);
 }
 
-/**
- * Xóa voucher (soft delete - set active = false)
- */
+
 async function deleteVoucher(voucherId) {
     const voucher = await voucherRepository()
         .where('voucher_id', voucherId)

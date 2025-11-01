@@ -4,6 +4,7 @@ import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { useAdminAuth } from '../../contexts/admin/AdminAuthContext';
 import { useMessage } from '../../App';
+import { LogInIcon } from 'lucide-react';
 const { Title, Text } = Typography;
 
 interface LoginFormValues {
@@ -48,7 +49,7 @@ const AdminLogin: React.FC = () => {
             >
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                        <LoginOutlined className="text-3xl text-blue-600" />
+                        <LogInIcon className="text-3xl text-blue-600" />
                     </div>
                     <Title level={2} className="mb-2">
                         Delulu Admin Panel

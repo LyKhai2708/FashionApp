@@ -8,12 +8,13 @@ import addressService from "../services/addressService";
 import orderService from "../services/orderService";
 import type { CreateOrderPayload } from "../services/orderService";
 import paymentService from "../services/paymentService";
+import { SHIPPING } from '../config/constants';
 
 const {Title} = Typography;
 
 export default function Order() {
     const navigate = useNavigate();
-    const { items, totalPrice, loading: cartLoading, clearCart, appliedVoucher, removeVoucher, getOrderSummary } = useCart();
+    const { items, totalPrice, loading: cartLoading, clearCart, appliedVoucher, removeVoucher } = useCart();
     const { isAuthenticated, user } = useAuth();
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
@@ -29,8 +30,9 @@ export default function Order() {
     }, []);
     const formatCurrency = (value: number) => value.toLocaleString("vi-VN");
 
-    const orderSummary = getOrderSummary();
-    const FREE_SHIP_THRESHOLD = 200000;
+    const shippingFee = SHIPPING.STANDARD_FEE;
+    const voucherDiscount = appliedVoucher?.order_summary.discount_amount || 0;
+    const orderTotal = totalPrice + shippingFee - voucherDiscount;
 
 
     useEffect(() => {
@@ -337,7 +339,7 @@ export default function Order() {
                                         <p><strong>Chủ tài khoản:</strong> LY PHUONG KHAI</p>
                                         <p><strong>Nội dung chuyển khoản:</strong> [SĐT]-[Mã đơn hàng]-[Nội dung muốn thêm nếu có]</p>
                                         <p className="text-sm text-gray-600 mt-2">
-                                            Vui lòng chuyển khoản đúng số tiền {formatCurrency(orderSummary.total)}₫ và ghi rõ nội dung. Sau khi chuyển khoản, vui lòng gọi hotline: 0896670687 để nhân viên sẽ xác nhận và xử lý đơn hàng.
+                                            Vui lòng chuyển khoản đúng số tiền {formatCurrency(orderTotal)}₫ và ghi rõ nội dung. Sau khi chuyển khoản, vui lòng gọi hotline: 0896670687 để nhân viên sẽ xác nhận và xử lý đơn hàng.
                                         </p>
                                     </div>
                                 )}
@@ -375,23 +377,18 @@ export default function Order() {
                             </div>
                             <div className="flex justify-between text-sm mb-2">
                                 <span>Phí vận chuyển</span>
-                                <span>{orderSummary.shippingFee > 0 ? `${formatCurrency(orderSummary.shippingFee)}₫` : "Miễn phí"}</span>
+                                <span>{formatCurrency(shippingFee)}₫</span>
                             </div>
-                            {orderSummary.voucherDiscount > 0 && (
+                            {voucherDiscount > 0 && (
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span>Voucher</span>
-                                    <span className="text-red-500">-{formatCurrency(orderSummary.voucherDiscount)}₫</span>
-                                </div>
-                            )}
-                            {totalPrice < FREE_SHIP_THRESHOLD && totalPrice > 0 && (
-                                <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded mb-2">
-                                    Mua thêm {formatCurrency(FREE_SHIP_THRESHOLD - totalPrice)}₫ để được miễn phí ship!
+                                    <span>Giảm giá</span>
+                                    <span className="text-red-500">-{formatCurrency(voucherDiscount)}₫</span>
                                 </div>
                             )}
                             <Divider />
                             <div className="flex justify-between font-semibold text-lg mb-4">
                                 <span>Tổng cộng</span>
-                                <span className="text-red-500">{formatCurrency(orderSummary.total)}₫</span>
+                                <span className="text-red-500">{formatCurrency(orderTotal)}₫</span>
                             </div>
 
                             {/* Applied Voucher Display */}
