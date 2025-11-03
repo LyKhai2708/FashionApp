@@ -22,7 +22,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
 
     // Load provinces
     useEffect(() => {
-        fetch('https://provinces.open-api.vn/api/v2/?depth=1')
+        fetch('http://provinces.open-api.vn/api/v2/?depth=1')
         .then(res => res.json())
         .then(data => {
             setProvinces(data || []);
@@ -72,7 +72,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
         if (provinceCode) {
             try {
                 const res = await fetch(
-                    `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
+                    `http://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
                 );
                 const data = await res.json();
                 setWards(data.wards || []);

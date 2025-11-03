@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMessage } from '../../App';
 import categoryService, { type Category } from '../../services/categoryService';
-import { Edit, Plus, Trash2, ChevronDown, ChevronRight, Check, Folder } from 'lucide-react';
+import { Edit, Plus, Trash2, ChevronDown, ChevronRight, Check, Folder, CheckCircle } from 'lucide-react';
 import CategoryForm from '../../components/admin/CategoryForm';
 import { getImageUrl } from '../../utils/imageHelper';
 
@@ -146,7 +146,7 @@ export default function Categories() {
                             <p className="text-gray-600 text-sm">Đang hoạt động</p>
                             <p className="text-2xl font-bold text-green-600">{stats.active}</p>
                         </div>
-                        <div className="text-3xl">✅</div>
+                        <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
                 </div>
             </div>
@@ -306,7 +306,7 @@ export default function Categories() {
                                             onClick={() => handleToggleStatus(orphan.category_id, orphan.active)}
                                             className={`p-1 ${orphan.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
                                         >
-                                            {orphan.active === 1 ? <Trash2 className="w-3 h-3" /> : '✅'}
+                                            {orphan.active === 1 ? <Trash2 className="w-3 h-3" /> : <Check className="w-3 h-3" />}
                                         </button>
                                     </div>
                                 </div>

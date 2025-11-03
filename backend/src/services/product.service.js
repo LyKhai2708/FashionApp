@@ -313,7 +313,6 @@ async function updateProduct(id, payload) {
                         await trx('product_variants')
                             .where('product_variants_id', existing.product_variants_id)
                             .update({
-                                stock_quantity: variant.stock_quantity || 0,
                                 active: variant.active !== undefined ? variant.active : 1
                             });
                     } else {

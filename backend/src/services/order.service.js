@@ -2,6 +2,7 @@ const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 const voucherService = require('./voucher.service');
+const stockHelper = require('./stock.helper');
 const { SHIPPING } = require('../config/constants');
 
 
@@ -123,9 +124,12 @@ async function createOrder(orderData, items) {
         throw new Error(`Sản phẩm không đủ tồn kho. Còn lại: ${variant.stock_quantity}, yêu cầu: ${qty}`);
       }
 
-      await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .decrement('stock_quantity', qty);
+      await stockHelper.updateStock(trx, item.product_variant_id, -qty, {
+        actionType: 'sale',
+        adminId: null,
+        reason: `Đơn hàng #${order_code}`,
+        notes: `Bán ${qty} sản phẩm`
+      });
 
     }
 
@@ -561,9 +565,12 @@ async function cancelOrder(orderId, cancelReason = null) {
       .select('product_variant_id', 'quantity');
 
     for (const item of orderItems) {
-      await trx('product_variants')
-        .where('product_variants_id', item.product_variant_id)
-        .increment('stock_quantity', item.quantity);
+      await stockHelper.updateStock(trx, item.product_variant_id, item.quantity, {
+        actionType: 'order_cancelled',
+        adminId: null,
+        reason: `Hủy đơn hàng #${order.order_code || orderId}`,
+        notes: cancelReason ? `Lý do: ${cancelReason}` : 'Hủy đơn hàng'
+      });
       
       const variant = await trx('product_variants')
         .where('product_variants_id', item.product_variant_id)

@@ -18,6 +18,7 @@ import {
     Col,
     Image
 } from 'antd';
+import { Tag as TagIcon, Ticket, Folder } from 'lucide-react';
 import { 
     PlusOutlined, 
     DeleteOutlined, 
@@ -291,9 +292,21 @@ export default function Banners() {
             key: 'details',
             width: 180,
             render: (_, record) => {
-                if (record.promotion_name) return <span>🎯 {record.promotion_name}</span>;
-                if (record.voucher_code) return <span>🎁 {record.voucher_code}</span>;
-                if (record.category_name) return <span>📁 {record.category_name}</span>;
+                if (record.promotion_name) return (
+                    <span className="flex items-center gap-1">
+                        <TagIcon className="w-3 h-3" /> {record.promotion_name}
+                    </span>
+                );
+                if (record.voucher_code) return (
+                    <span className="flex items-center gap-1">
+                        <Ticket className="w-3 h-3" /> {record.voucher_code}
+                    </span>
+                );
+                if (record.category_name) return (
+                    <span className="flex items-center gap-1">
+                        <Folder className="w-3 h-3" /> {record.category_name}
+                    </span>
+                );
                 if (record.link_url) return <span className="text-xs text-gray-500">{record.link_url}</span>;
                 return <span className="text-gray-400">-</span>;
             }

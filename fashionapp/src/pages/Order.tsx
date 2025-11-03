@@ -24,7 +24,7 @@ export default function Order() {
     
     // Load tp
     useEffect(() => {
-        fetch('https://provinces.open-api.vn/api/v2/?depth=1')
+        fetch('http://provinces.open-api.vn/api/v2/?depth=1')
           .then(res => res.json())
           .then(data => setProvinces(data));
     }, []);
@@ -69,7 +69,7 @@ export default function Order() {
 
 
                     const provinceRes = await fetch(
-                        `https://provinces.open-api.vn/api/v2/p/${address.province_code}?depth=2`
+                        `http://provinces.open-api.vn/api/v2/p/${address.province_code}?depth=2`
                     );
                     const provinceData = await provinceRes.json();
                     setWards(provinceData.wards || []);
@@ -100,7 +100,7 @@ export default function Order() {
         if (provinceCode) {
             try {
                 const res = await fetch(
-                    `https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
+                    `http://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`
                 );
                 const data = await res.json();
                 setWards(data.wards || []);
@@ -312,7 +312,7 @@ export default function Order() {
                                         <Divider/>
                                         <Radio value="payos">
                                             <div className="flex items-center gap-2">
-                                                <img className="w-8 h-8" src="/payos-logo.png"/>
+                                                <img className="w-8 h-8" src="/payos.png"/>
                                                 <span className="text-lg">Thanh toán online (PayOS)</span>
                                             </div>
                                         </Radio>

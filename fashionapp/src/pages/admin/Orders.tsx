@@ -140,6 +140,7 @@ const Orders: React.FC = () => {
                             <option value="">Tất cả</option>
                             <option value="cod">COD</option>
                             <option value="bank_transfer">Chuyển khoản</option>
+                            <option value="payos">PayOS</option>
                         </select>
                     </div>
 

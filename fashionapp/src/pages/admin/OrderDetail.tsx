@@ -261,7 +261,12 @@ const OrderDetail: React.FC = () => {
                             <div className="border-t pt-3">
                                 <p className="text-sm text-gray-500">Phương thức thanh toán</p>
                                 <p className="font-medium">
-                                    {order.payment_method === 'cash_on_delivery' ? 'COD' : 'Chuyển khoản'}
+                                    {order.payment_method === 'cod' ? 'COD' :
+                                     order.payment_method === 'bank_transfer' ? 'Chuyển khoản' :
+                                     order.payment_method === 'payos' ? 'PayOS' :
+                                     order.payment_method === 'momo' ? 'MoMo' :
+                                     order.payment_method === 'vnpay' ? 'VNPay' :
+                                     order.payment_method}
                                 </p>
                             </div>
                             <div>

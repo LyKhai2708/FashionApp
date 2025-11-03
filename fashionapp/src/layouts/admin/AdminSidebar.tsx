@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../../contexts/admin/SidebarContext';
-import { Package, Shirt, Tag, User, Ticket } from 'lucide-react';
-import Banners from '../../pages/admin/Banners';
+import { Package, Shirt, Tag, User, Ticket, LayoutDashboard, Image, Warehouse } from 'lucide-react';
+
 
 type NavItem = {
   name: string;
@@ -13,11 +13,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
-      </svg>
-    ),
+    icon: <LayoutDashboard />,
     name: "Dashboard",
     path: "/admin/dashboard",
   },
@@ -35,6 +31,13 @@ const navItems: NavItem[] = [
       { name: "Sizes", path: "/admin/sizes" },
   
     ],
+  },
+  {
+    icon: (
+      <Warehouse/>
+    ),
+    name: "Inventory",
+    path: "/admin/inventory",
   },
   {
     icon: (
@@ -65,9 +68,7 @@ const navItems: NavItem[] = [
     path: "/admin/vouchers",
   },
   {
-    icon: (
-      <Tag/>
-    ),
+    icon: <Image />,
     name: "Banners",
     path: "/admin/banners",
   },

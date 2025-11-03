@@ -482,15 +482,26 @@ export default function EditProduct() {
                 title: 'Số lượng',
                 dataIndex: 'stock_quantity',
                 key: 'stock_quantity',
-                render: (_: any, record: Variant) => (
-                    <InputNumber
-                        min={0}
-                        value={record.stock_quantity}
-                        onChange={(value) => handleStockChange(colorId, record.size_id, value)}
-                        style={{ width: '100%' }}
-                        disabled={record.active === 0}
-                    />
-                )
+                render: (_: any, record: Variant) => {
+                    const isExisting = record.variant_id !== undefined;
+                    
+                    if (isExisting) {
+                        return (
+                            <Tooltip title="Chỉ có thể chỉnh sửa tồn kho trong trang Quản lý tồn kho">
+                                <Text disabled>{record.stock_quantity}</Text>
+                            </Tooltip>
+                        );
+                    } else {
+                        return (
+                            <InputNumber
+                                min={0}
+                                value={record.stock_quantity}
+                                onChange={(value) => handleStockChange(colorId, record.size_id, value)}
+                                style={{ width: '100%' }}
+                            />
+                        );
+                    }
+                }
             },
             {
                 title: 'Thao tác',

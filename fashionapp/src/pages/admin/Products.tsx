@@ -6,7 +6,7 @@ import type { Product } from '../../types/product';
 import { useMessage } from '../../App';
 import brandService from '../../services/brandService';
 import categoryService, { type Category } from '../../services/categoryService';
-import { Edit, Eye, Plus } from 'lucide-react';
+import { Edit, Eye, Plus, PackageOpen, CheckCircle, AlertTriangle, XCircle, Search } from 'lucide-react';
 
 interface Paginate {
     totalRecords: number;
@@ -217,7 +217,7 @@ export default function Products() {
                             <p className="text-3xl font-bold">{stats.active}</p>
                         </div>
                         <div className="bg-white/20 rounded-full p-3">
-                            ✅
+                            <CheckCircle className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -229,7 +229,7 @@ export default function Products() {
                             <p className="text-3xl font-bold">{stats.lowStock}</p>
                         </div>
                         <div className="bg-white/20 rounded-full p-3">
-                            ⚠️
+                            <AlertTriangle className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -241,7 +241,7 @@ export default function Products() {
                             <p className="text-3xl font-bold">{stats.outOfStock}</p>
                         </div>
                         <div className="bg-white/20 rounded-full p-3">
-                            🚫
+                            <XCircle className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -261,7 +261,7 @@ export default function Products() {
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                🔍
+                                <Search className="w-4 h-4 text-gray-400" />
                             </div>
                             <button
                                 type="submit"
@@ -333,7 +333,7 @@ export default function Products() {
                     </div>
                 ) : products.length === 0 ? (
                     <div className="text-center py-20 text-gray-500">
-                        <div className="text-6xl mb-4">📦</div>
+                        <PackageOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                         <p className="text-xl font-medium mb-2">Không tìm thấy sản phẩm nào</p>
                         <p className="text-gray-400">Thử thay đổi bộ lọc hoặc tìm kiếm khác</p>
                     </div>

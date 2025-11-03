@@ -14,10 +14,12 @@ import EditProduct from '../../pages/admin/EditProduct';
 import Colors from '../../pages/admin/Colors';
 import Sizes from '../../pages/admin/Sizes';
 import Categories from '../../pages/admin/Categories';
+import Brands from '../../pages/admin/Brands';
 import Vouchers from '../../pages/admin/Vouchers';
 import Promotions from '../../pages/admin/Promotions';
 import PromotionProducts from '../../pages/admin/PromotionProducts';
 import Banners from '../../pages/admin/Banners';
+import Inventory from '../../pages/admin/Inventory';
 
 const AdminRoutes: React.FC = () => {
     const { isAuthenticated } = useAdminAuth();
@@ -56,10 +58,12 @@ const AdminRoutes: React.FC = () => {
                 <Route path="colors" element={<Colors />} />
                 <Route path="sizes" element={<Sizes />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="brands" element={<Brands />} />
                 <Route path="promotions" element={<Promotions />} />
                 <Route path="promotions/:promo_id/products" element={<PromotionProducts />} />
                 <Route path="vouchers" element={<Vouchers />} />
                 <Route path="banners" element={<Banners />} />
+                <Route path="inventory" element={<Inventory />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

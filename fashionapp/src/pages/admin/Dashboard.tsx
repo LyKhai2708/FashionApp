@@ -3,6 +3,7 @@ import { dashboardService,type DashboardStats } from '../../services/admin/dashb
 import RevenueCard from '../../components/admin/Revenue/RevenueCard';
 import RevenueChart from '../../components/admin/Revenue/RevenueChart';
 import StatCard from '../../components/admin/StatCard';
+import { Users, Package, ShoppingCart, Clock, Calendar, DollarSign, Trophy, AlertTriangle } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -48,7 +49,7 @@ const Dashboard: React.FC = () => {
                     showComparison={true}
                     icon={
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">👤</span>
+                            <Users className="w-5 h-5 text-blue-600" />
                         </div>
                     }
                 />
@@ -60,7 +61,7 @@ const Dashboard: React.FC = () => {
                     showComparison={false}
                     icon={
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">📦</span>
+                            <Package className="w-5 h-5 text-green-600" />
                         </div>
                     }
                 />
@@ -73,7 +74,7 @@ const Dashboard: React.FC = () => {
                     showComparison={true}
                     icon={
                         <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">🛒</span>
+                            <ShoppingCart className="w-5 h-5 text-purple-600" />
                         </div>
                     }
                 />
@@ -84,7 +85,7 @@ const Dashboard: React.FC = () => {
                     showComparison={false}
                     icon={
                         <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span className="text-xl">⏳</span>
+                            <Clock className="w-5 h-5 text-orange-600" />
                         </div>
                     }
                 />
@@ -99,7 +100,7 @@ const Dashboard: React.FC = () => {
                     period="today"
                     icon={
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-2xl">📅</span>
+                            <Calendar className="w-6 h-6 text-blue-600" />
                         </div>
                     }
                 />
@@ -111,7 +112,7 @@ const Dashboard: React.FC = () => {
                     period="month"
                     icon={
                         <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-2xl">💰</span>
+                            <DollarSign className="w-6 h-6 text-purple-600" />
                         </div>
                     }
                 />
@@ -124,7 +125,10 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b">
-                        <h2 className="text-lg font-semibold">🏆 Sản phẩm bán chạy tháng này</h2>
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-yellow-500" />
+                        Sản phẩm bán chạy tháng này
+                    </h2>
                     </div>
                     <div className="p-6">
                         {stats.topProducts.length > 0 ? (
@@ -160,7 +164,10 @@ const Dashboard: React.FC = () => {
 
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b">
-                        <h2 className="text-lg font-semibold">⚠️ Sản phẩm sắp hết hàng (dưới 10 sản phẩm)</h2>
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-orange-500" />
+                        Sản phẩm sắp hết hàng (dưới 10 sản phẩm)
+                    </h2>
                     </div>
                     <div className="p-6">
                         {stats.lowStockProducts.length > 0 ? (

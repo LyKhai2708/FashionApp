@@ -3,25 +3,26 @@ const brandService = require('../services/brand.service');
 const JSend = require('../jsend');
 
 async function createBrand(req, res, next) {
-  const {name, active}  = req.body;
-  if(!name || typeof name !== 'string') {
-    return next(new ApiError(400, 'Brand name should be non-empty string'));
-  }
-  const checkName = await brandService.checkBrandName(name);
-  if(checkName){
-    return next(new ApiError(409, 'Brand name already exists'));
-  }
-  try{
+  try {
+    const {name, active}  = req.body;
+    if(!name || typeof name !== 'string') {
+      return next(new ApiError(400, 'Tên thương hiệu là bắt buộc và phải là chuỗi ký tự'));
+    }
+    const checkName = await brandService.checkBrandName(name);
+    if(checkName){
+      return next(new ApiError(409, 'Tên thương hiệu đã tồn tại'));
+    }
+    
     const brand = await brandService.createBrand({...req.body});
     return res
-    .status(201)
-    .set({
+      .status(201)
+      .set({
         Location: `${req.baseUrl}/${brand.id}`
-    })
-    .json(JSend.success({brand}));
-  }catch(error){
+      })
+      .json(JSend.success({brand}));
+  } catch(error) {
     console.log(error);
-    return (next(new ApiError(500, 'An error occurred while creating brand')));
+    return next(new ApiError(500, 'Đã xảy ra lỗi khi tạo thương hiệu'));
   }
 }
 async function getBrandbyFilter(req, res, next) {
@@ -37,62 +38,70 @@ async function getBrandbyFilter(req, res, next) {
     };
   try {
     result = await brandService.getManyBrands(req.query);
-
+    
+    return res.json(JSend.success({
+      metadata: result.metadata,
+      brands: result.brands
+    }));
   } catch (error) {
     console.log(error);
-    return next(new ApiError(500, 'Internal server error'));
+    return next(new ApiError(500, 'Đã xảy ra lỗi khi lấy danh sách thương hiệu'));
   }
-  return res.json(JSend.success({
-    metadata: result.metadata,
-    brands: result.brands
-  }));
 }
 
 async function getBrand(req, res, next) {
-  const {id} = req.params;
   try {
+    const {id} = req.params;
     const brand = await brandService.getBrandById(id);
+    
     if (!brand) {
-      return next(new ApiError(404, 'Brand not found'));
+      return next(new ApiError(404, 'Không tìm thấy thương hiệu'));
     }
+    
     return res.json(JSend.success({brand}));
   } catch (error) {
     console.log(error);
-    return next(new ApiError(500, `Error retrieving brand with id=${id}`));
+    return next(new ApiError(500, `Đã xảy ra lỗi khi lấy thông tin thương hiệu với id=${req.params.id}`));
   }
 }
 
 async function updateBrand(req, res, next) {
-  if (Object.keys(req.body).length === 0) {
-    return next(new ApiError(400, 'Data for update cannot be empty'));
-  }
-  const {id} = req.params;
   try {
+    const {id} = req.params;
+    
+
+    if (Object.keys(req.body).length === 0) {
+      return next(new ApiError(400, 'Dữ liệu cập nhật không được để trống'));
+    }
+    
     const updated = await brandService.updateBrand(id, req.body);
     if (!updated) {
-      return next(new ApiError(404, 'Brand not found'));
+      return next(new ApiError(404, 'Không tìm thấy thương hiệu'));
     }
+    
     return res.json(JSend.success({brand: updated}));
   } catch (error) {
     console.log(error);
     if (error.code === "ER_DUP_ENTRY") {
-      return next(new ApiError(409, "Brand name already exists"));
+      return next(new ApiError(409, "Tên thương hiệu đã tồn tại"));
     }
-    return next(new ApiError(500, `An error occurred while updating brand with id ${id}`));
+    return next(new ApiError(500, `Đã xảy ra lỗi khi cập nhật thương hiệu với id ${req.params.id}`));
   }
 }
 
 async function deleteBrand(req, res, next) {
-  const {id} = req.params;
   try {
+    const {id} = req.params;
     const deleted = await brandService.deleteBrand(id);
+    
     if (!deleted) {
-      return next(new ApiError(404, 'Brand not found'));
+      return next(new ApiError(404, 'Không tìm thấy thương hiệu'));
     }
+    
     return res.json(JSend.success({ deleted: true }));
   } catch (error) {
     console.log(error);
-    return next(new ApiError(500, `An error occurred while removing brand with id ${id}`));
+    return next(new ApiError(500, `Đã xảy ra lỗi khi xóa thương hiệu với id ${req.params.id}`));
   }
 }
 
@@ -102,7 +111,7 @@ async function deleteAllBrands(req, res, next) {
     return res.json(JSend.success({ deleted: true }));
   } catch (error) {
     console.log(error);
-    return next(new ApiError(500, 'An error occurred while removing all brand'));
+    return next(new ApiError(500, 'Đã xảy ra lỗi khi xóa tất cả thương hiệu'));
   }
 }
 
