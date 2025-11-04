@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Card, Table, Input, Select, Button, Space, Tag, Popconfirm, Statistic, Row, Col } from 'antd';
+import { UserOutlined, SearchOutlined, ReloadOutlined, CheckOutlined, StopOutlined } from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
 import userService, { type User } from '../../services/userService';
 
 const Users: React.FC = () => {
@@ -80,252 +83,190 @@ const Users: React.FC = () => {
         });
     };
 
-    const getRoleBadge = (role: string) => {
-        return role === 'admin' 
-            ? <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Admin</span>
-            : <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Customer</span>;
-    };
-
-    const getStatusBadge = (is_active: number) => {
-        return is_active === 1
-            ? <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Hoạt động</span>
-            : <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Vô hiệu hóa</span>;
-    };
+    const columns: ColumnsType<User> = [
+        {
+            title: 'ID',
+            dataIndex: 'user_id',
+            key: 'user_id',
+            width: 80,
+            render: (id: number) => <span style={{ fontWeight: 500 }}>#{id}</span>
+        },
+        {
+            title: 'Tên người dùng',
+            dataIndex: 'username',
+            key: 'username',
+            width: 150,
+            render: (name: string) => <span style={{ fontWeight: 500 }}>{name}</span>
+        },
+        {
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+            width: 200
+        },
+        {
+            title: 'Số điện thoại',
+            dataIndex: 'phone',
+            key: 'phone',
+            width: 120,
+            render: (phone: string) => phone || '-'
+        },
+        {
+            title: 'Vai trò',
+            dataIndex: 'role',
+            key: 'role',
+            width: 100,
+            render: (role: string) => (
+                <Tag color={role === 'admin' ? 'purple' : 'blue'}>
+                    {role === 'admin' ? 'Admin' : 'Customer'}
+                </Tag>
+            )
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'is_active',
+            key: 'is_active',
+            width: 120,
+            render: (is_active: number) => (
+                <Tag color={is_active === 1 ? 'success' : 'error'}>
+                    {is_active === 1 ? 'Hoạt động' : 'Vô hiệu hóa'}
+                </Tag>
+            )
+        },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 150,
+            render: (date: string) => formatDate(date)
+        },
+        {
+            title: 'Hành động',
+            key: 'actions',
+            width: 150,
+            fixed: 'right',
+            render: (_, record) => {
+                if (record.role === 'admin') return null;
+                return (
+                    <Popconfirm
+                        title={record.is_active === 1 ? 'Vô hiệu hóa người dùng?' : 'Kích hoạt người dùng?'}
+                        description={`Xác nhận ${record.is_active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} người dùng này?`}
+                        onConfirm={() => handleToggleStatus(record.user_id, record.is_active || 0)}
+                        okText="Xác nhận"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: record.is_active === 1 }}
+                    >
+                        <Button
+                            type="link"
+                            danger={record.is_active === 1}
+                            icon={record.is_active === 1 ? <StopOutlined /> : <CheckOutlined />}
+                        >
+                            {record.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                        </Button>
+                    </Popconfirm>
+                );
+            }
+        }
+    ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
-                    <p className="text-gray-600 mt-1">Tổng số: {total} người dùng</p>
+        <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                    <UserOutlined /> Quản lý người dùng
+                </h1>
+                <div style={{ fontSize: 14, color: '#999' }}>
+                    Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{total}</span> người dùng
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card style={{ marginBottom: 24 }}>
+                <Space size="middle" wrap>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tìm kiếm
-                        </label>
-                        <input
-                            type="text"
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Tìm kiếm</div>
+                        <Input
+                            placeholder="Tên người dùng..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            placeholder="Tên người dùng..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onPressEnter={handleSearch}
+                            style={{ width: 200 }}
+                            prefix={<SearchOutlined />}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Vai trò
-                        </label>
-                        <select
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Vai trò</div>
+                        <Select
+                            value={roleFilter || undefined}
+                            onChange={(value) => setRoleFilter(value || '')}
+                            style={{ width: 150 }}
+                            placeholder="Tất cả"
+                            allowClear
                         >
-                            <option value="">Tất cả</option>
-                            <option value="customer">Customer</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                            <Select.Option value="customer">Customer</Select.Option>
+                            <Select.Option value="admin">Admin</Select.Option>
+                        </Select>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Trạng thái
-                        </label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Trạng thái</div>
+                        <Select
+                            value={statusFilter || undefined}
+                            onChange={(value) => setStatusFilter(value || '')}
+                            style={{ width: 150 }}
+                            placeholder="Tất cả"
+                            allowClear
                         >
-                            <option value="">Tất cả</option>
-                            <option value="1">Hoạt động</option>
-                            <option value="0">Vô hiệu hóa</option>
-                        </select>
+                            <Select.Option value="1">Hoạt động</Select.Option>
+                            <Select.Option value="0">Vô hiệu hóa</Select.Option>
+                        </Select>
                     </div>
 
-                    <div className="flex items-end space-x-2">
-                        <button
-                            onClick={handleSearch}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                        >
-                            Tìm kiếm
-                        </button>
-                        <button
-                            onClick={handleResetFilters}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                        >
-                            Đặt lại
-                        </button>
+                    <div style={{ paddingTop: 30 }}>
+                        <Space>
+                            <Button
+                                type="primary"
+                                icon={<SearchOutlined />}
+                                onClick={handleSearch}
+                            >
+                                Tìm kiếm
+                            </Button>
+                            <Button
+                                icon={<ReloadOutlined />}
+                                onClick={handleResetFilters}
+                            >
+                                Đặt lại
+                            </Button>
+                        </Space>
                     </div>
-                </div>
-            </div>
+                </Space>
+            </Card>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                {loading ? (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="mt-2 text-gray-500">Đang tải...</p>
-                    </div>
-                ) : error ? (
-                    <div className="text-center py-12">
-                        <p className="text-red-600">{error}</p>
-                        <button
-                            onClick={loadUsers}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                        >
-                            Thử lại
-                        </button>
-                    </div>
-                ) : users.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500">Không tìm thấy người dùng nào</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            ID
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Tên người dùng
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Email
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Số điện thoại
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Vai trò
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Trạng thái
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Ngày tạo
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Hành động
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {users.map((user) => (
-                                        <tr key={user.user_id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                #{user.user_id}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {user.username}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {user.email}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {user.phone || '-'}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getRoleBadge(user.role)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getStatusBadge(user.is_active || 0)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {formatDate(user.created_at)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                {user.role == 'admin' ? (null) : (
-                                                    <button
-                                                    onClick={() => handleToggleStatus(user.user_id, user.is_active || 0)}
-                                                    className={`px-3 py-1 rounded-md text-white ${
-                                                        user.is_active === 1
-                                                            ? 'bg-red-600 hover:bg-red-700'
-                                                            : 'bg-green-600 hover:bg-green-700'
-                                                    }`}
-                                                >
-                                                    {user.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                                                </button>
-                                                )}
-                                                
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {totalPages > 1 && (
-                            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                                <div className="flex-1 flex justify-between sm:hidden">
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                        disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Trước
-                                    </button>
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                        disabled={currentPage === totalPages}
-                                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Sau
-                                    </button>
-                                </div>
-                                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-700">
-                                            Hiển thị <span className="font-medium">{(currentPage - 1) * limit + 1}</span> đến{' '}
-                                            <span className="font-medium">{Math.min(currentPage * limit, total)}</span> trong{' '}
-                                            <span className="font-medium">{total}</span> kết quả
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                            <button
-                                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                                disabled={currentPage === 1}
-                                                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                            >
-                                                Trước
-                                            </button>
-                                            {[...Array(totalPages)].map((_, idx) => (
-                                                <button
-                                                    key={idx + 1}
-                                                    onClick={() => setCurrentPage(idx + 1)}
-                                                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                        currentPage === idx + 1
-                                                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                    }`}
-                                                >
-                                                    {idx + 1}
-                                                </button>
-                                            ))}
-                                            <button
-                                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                                disabled={currentPage === totalPages}
-                                                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                            >
-                                                Sau
-                                            </button>
-                                        </nav>
-                                    </div>
-                                </div>
+            <Card>
+                <Table
+                    dataSource={users}
+                    columns={columns}
+                    rowKey="user_id"
+                    loading={loading}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: limit,
+                        total: total,
+                        onChange: (page) => setCurrentPage(page),
+                        showSizeChanger: false,
+                        showTotal: (total) => `Tổng ${total} người dùng`
+                    }}
+                    locale={{
+                        emptyText: error ? (
+                            <div style={{ padding: '40px 0' }}>
+                                <p style={{ color: '#ff4d4f', marginBottom: 16 }}>{error}</p>
+                                <Button type="primary" onClick={loadUsers}>Thử lại</Button>
                             </div>
-                        )}
-                    </>
-                )}
-            </div>
+                        ) : 'Không tìm thấy người dùng nào'
+                    }}
+                    scroll={{ x: 1200 }}
+                />
+            </Card>
         </div>
     );
 };

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Card, Button, Modal, Form, Input, Popconfirm, Space, Statistic, Row, Col } from 'antd';
+import { PlusOutlined, DeleteOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useMessage } from '../../App';
 import colorService from '../../services/colorService';
-import { Plus, Trash2 } from 'lucide-react';
-import { Modal, Form, Input } from 'antd';
 
 interface Color {
     color_id: number;
@@ -61,50 +61,82 @@ export default function Colors() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Quản lý màu sắc</h1>
-                <button 
+        <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                    <BgColorsOutlined /> Quản lý màu sắc
+                </h1>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
                     onClick={() => {
                         setIsModalOpen(true);
                         setPreviewColor('#000000');
                         form.setFieldValue('hex_code', '#000000');
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    size="large"
                 >
-                    <Plus className="w-4 h-4" />
                     Thêm màu
-                </button>
+                </Button>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="font-semibold mb-4">Tổng: {colors.length} màu</h3>
-                
-                {loading ? (
-                    <div className="text-center py-8">Đang tải...</div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {colors.map((color) => (
-                            <div key={color.color_id} className="border rounded-lg p-4 text-center">
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+                <Col span={24}>
+                    <Card>
+                        <Statistic
+                            title="Tổng màu sắc"
+                            value={colors.length}
+                            prefix={<BgColorsOutlined />}
+                            valueStyle={{ color: '#1890ff' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
+
+            <Card title="Danh sách màu sắc" loading={loading}>
+                <Row gutter={[16, 16]}>
+                    {colors.map((color) => (
+                        <Col key={color.color_id} xs={12} sm={8} md={6} lg={4}>
+                            <Card
+                                size="small"
+                                hoverable
+                                style={{ textAlign: 'center' }}
+                            >
                                 <div 
-                                    className="w-16 h-16 rounded-full mx-auto mb-2 border"
-                                    style={{ backgroundColor: color.hex_code }}
-                                ></div>
-                                <div className="font-medium">{color.name}</div>
-                                <div className="text-xs text-gray-500 mb-2">{color.hex_code}</div>
-                                <div className="flex justify-center gap-2">
-                                    <button 
-                                        onClick={() => handleDelete(color.color_id)}
-                                        className="text-red-600 hover:text-red-800"
+                                    style={{ 
+                                        width: 64, 
+                                        height: 64, 
+                                        borderRadius: '50%', 
+                                        margin: '0 auto 12px',
+                                        backgroundColor: color.hex_code,
+                                        border: '2px solid #e8e8e8',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                    }}
+                                />
+                                <div style={{ fontWeight: 500, marginBottom: 4 }}>{color.name}</div>
+                                <div style={{ fontSize: 12, color: '#999', marginBottom: 8, fontFamily: 'monospace' }}>{color.hex_code}</div>
+                                <Popconfirm
+                                    title="Xóa màu sắc?"
+                                    description="Bạn có chắc muốn xóa màu này?"
+                                    onConfirm={() => handleDelete(color.color_id)}
+                                    okText="Xóa"
+                                    cancelText="Hủy"
+                                    okButtonProps={{ danger: true }}
+                                >
+                                    <Button
+                                        type="text"
+                                        danger
+                                        size="small"
+                                        icon={<DeleteOutlined />}
                                     >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                                        Xóa
+                                    </Button>
+                                </Popconfirm>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            </Card>
 
             <Modal
                 title="Thêm màu mới"

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Card, Table, Button, Space, Statistic, Row, Col, Tag as AntTag, Popconfirm } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, TagOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useMessage } from '../../App';
 import brandService, { type Brand } from '../../services/brandService';
-import { Edit, Plus, Trash2, Check, Tag, CheckCircle } from 'lucide-react';
 import BrandModal from '../../components/admin/BrandModal';
 
 export default function Brands() {
@@ -91,108 +92,133 @@ export default function Brands() {
         }
     };
 
+    const columns = [
+        {
+            title: 'ID',
+            dataIndex: 'id',
+            key: 'id',
+            width: 80,
+        },
+        {
+            title: 'Tên thương hiệu',
+            dataIndex: 'name',
+            key: 'name',
+            render: (name: string, record: Brand) => (
+                <span style={{ 
+                    textDecoration: record.active === 0 ? 'line-through' : 'none',
+                    opacity: record.active === 0 ? 0.5 : 1,
+                    fontWeight: 500
+                }}>
+                    {name}
+                </span>
+            )
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'active',
+            key: 'active',
+            width: 150,
+            render: (active: number) => (
+                <AntTag color={active === 1 ? 'success' : 'error'}>
+                    {active === 1 ? 'Đang hoạt động' : 'Vô hiệu hóa'}
+                </AntTag>
+            )
+        },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            width: 150,
+            render: (date: string) => new Date(date).toLocaleDateString('vi-VN')
+        },
+        {
+            title: 'Thao tác',
+            key: 'actions',
+            width: 150,
+            render: (_: any, record: Brand) => (
+                <Space>
+                    <Button
+                        type="link"
+                        icon={<EditOutlined />}
+                        onClick={() => handleOpenEditModal(record)}
+                    >
+                        Sửa
+                    </Button>
+                    <Popconfirm
+                        title={record.active === 1 ? 'Vô hiệu hóa thương hiệu?' : 'Kích hoạt thương hiệu?'}
+                        description={`Xác nhận ${record.active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} thương hiệu này?`}
+                        onConfirm={() => handleToggleStatus(record.id, record.active)}
+                        okText="Xác nhận"
+                        cancelText="Hủy"
+                    >
+                        <Button
+                            type="link"
+                            danger={record.active === 1}
+                            icon={record.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                        >
+                            {record.active === 1 ? 'Vô hiệu' : 'Kích hoạt'}
+                        </Button>
+                    </Popconfirm>
+                </Space>
+            )
+        }
+    ];
+
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Quản lý thương hiệu</h1>
-                <button
+        <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                    <TagOutlined /> Quản lý thương hiệu
+                </h1>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
                     onClick={handleOpenAddModal}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    size="large"
                 >
-                    <Plus className="w-4 h-4" />
                     Thêm thương hiệu
-                </button>
+                </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Tổng thương hiệu</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                        </div>
-                        <Tag className="w-8 h-8 text-blue-600" />
-                    </div>
-                </div>
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+                <Col span={12}>
+                    <Card>
+                        <Statistic
+                            title="Tổng thương hiệu"
+                            value={stats.total}
+                            prefix={<TagOutlined />}
+                            valueStyle={{ color: '#1890ff' }}
+                        />
+                    </Card>
+                </Col>
+                <Col span={12}>
+                    <Card>
+                        <Statistic
+                            title="Đang hoạt động"
+                            value={stats.active}
+                            prefix={<CheckCircleOutlined />}
+                            valueStyle={{ color: '#52c41a' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Đang hoạt động</p>
-                            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-                        </div>
-                        <CheckCircle className="w-8 h-8 text-green-600" />
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b">
-                    <h3 className="font-semibold">Danh sách thương hiệu</h3>
-                </div>
-
-                {loading ? (
-                    <div className="text-center py-8">Đang tải...</div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên thương hiệu</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {brands.map((brand) => (
-                                    <tr key={brand.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{brand.id}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className={`font-medium text-gray-900 ${brand.active === 0 ? 'opacity-50 line-through' : ''}`}>
-                                                {brand.name}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                brand.active === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                            }`}>
-                                                {brand.active === 1 ? 'Đang hoạt động' : 'Vô hiệu hóa'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {new Date(brand.created_at).toLocaleDateString('vi-VN')}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleOpenEditModal(brand)}
-                                                    className="text-blue-600 hover:text-blue-800 p-1"
-                                                    title="Chỉnh sửa"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleStatus(brand.id, brand.active)}
-                                                    className={`p-1 ${brand.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
-                                                    title={brand.active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                                                >
-                                                    {brand.active === 1 ? <Trash2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        {brands.length === 0 && (
-                            <div className="text-center py-8 text-gray-500">Chưa có thương hiệu nào</div>
-                        )}
-                    </div>
-                )}
-            </div>
+            <Card title="Danh sách thương hiệu">
+                <Table
+                    dataSource={brands}
+                    columns={columns}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: false,
+                        showTotal: (total) => `Tổng ${total} thương hiệu`
+                    }}
+                    locale={{
+                        emptyText: 'Chưa có thương hiệu nào'
+                    }}
+                />
+            </Card>
 
             <BrandModal
                 brand={editingBrand}

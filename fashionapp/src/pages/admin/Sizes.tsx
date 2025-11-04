@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
+import { Card, Button, Modal, Form, Input, Popconfirm, Statistic, Row, Col, Alert } from 'antd';
+import { PlusOutlined, DeleteOutlined, ColumnHeightOutlined } from '@ant-design/icons';
 import { useMessage } from '../../App';
 import sizeService from '../../services/sizeService';
-import { Plus, Trash2 } from 'lucide-react';
-import { Modal, Form, Input } from 'antd';
 
 interface Size {
     size_id: number;
@@ -60,41 +59,66 @@ export default function Sizes() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Quản lý kích cỡ</h1>
-                <button 
+        <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                    <ColumnHeightOutlined /> Quản lý kích cỡ
+                </h1>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
                     onClick={() => setIsModalOpen(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    size="large"
                 >
-                    <Plus className="w-4 h-4" />
                     Thêm size
-                </button>
+                </Button>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="font-semibold mb-4">Tổng: {sizes.length} kích cỡ</h3>
-                
-                {loading ? (
-                    <div className="text-center py-8">Đang tải...</div>
-                ) : (
-                    <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
-                        {sizes.map((size) => (
-                            <div key={size.size_id} className="border rounded-lg p-3 text-center hover:shadow-md transition-shadow">
-                                <div className="font-bold text-lg mb-2">{size.name}</div>
-                                <div className="flex justify-center gap-1">
-                                    <button 
-                                        onClick={() => handleDelete(size.size_id)}
-                                        className="text-red-600 hover:text-red-800 p-1"
-                                    >
-                                        <Trash2 className="w-3 h-3" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+                <Col span={24}>
+                    <Card>
+                        <Statistic
+                            title="Tổng kích cỡ"
+                            value={sizes.length}
+                            prefix={<ColumnHeightOutlined />}
+                            valueStyle={{ color: '#1890ff' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
+
+            <Card title="Danh sách kích cỡ" loading={loading}>
+                <Row gutter={[12, 12]}>
+                    {sizes.map((size) => (
+                        <Col key={size.size_id} xs={6} sm={4} md={3} lg={2}>
+                            <Card
+                                size="small"
+                                hoverable
+                                style={{ textAlign: 'center' }}
+                                bodyStyle={{ padding: '12px 8px' }}
+                            >
+                                <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{size.name}</div>
+                                <Popconfirm
+                                    title="Xóa kích cỡ?"
+                                    description="Bạn có chắc muốn xóa size này?"
+                                    onConfirm={() => handleDelete(size.size_id)}
+                                    okText="Xóa"
+                                    cancelText="Hủy"
+                                    okButtonProps={{ danger: true }}
+                                >
+                                    <Button
+                                        type="text"
+                                        danger
+                                        size="small"
+                                        icon={<DeleteOutlined />}
+                                        style={{ fontSize: 12 }}
+                                    />
+                                </Popconfirm>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+            </Card>
 
             <Modal
                 title="Thêm size mới"
@@ -127,14 +151,19 @@ export default function Sizes() {
                         />
                     </Form.Item>
 
-                    <div className="text-sm text-gray-500 mt-2">
-                        <p>Gợi ý:</p>
-                        <ul className="list-disc ml-5 mt-1">
-                            <li>Quần áo: S, M, L, XL, XXL, 3XL</li>
-                            <li>Giày dép: 35, 36, 37, 38, 39, 40...</li>
-                            <li>Size số: 1, 2, 3...</li>
-                        </ul>
-                    </div>
+                    <Alert
+                        message="Gợi ý size"
+                        description={
+                            <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                                <li>Quần áo: S, M, L, XL, XXL, 3XL</li>
+                                <li>Giày dép: 35, 36, 37, 38, 39, 40...</li>
+                                <li>Size số: 1, 2, 3...</li>
+                            </ul>
+                        }
+                        type="info"
+                        showIcon
+                        style={{ marginTop: 16 }}
+                    />
                 </Form>
             </Modal>
         </div>

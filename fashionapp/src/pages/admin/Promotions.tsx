@@ -391,7 +391,6 @@ export default function Promotions() {
                 </Form>
             </Modal>
 
-            {/* View Detail Modal */}
             <Modal
                 title="Chi tiết khuyến mãi"
                 open={detailModalVisible}

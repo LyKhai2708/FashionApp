@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Card, Button, Space, Statistic, Row, Col, Tag, Collapse, Avatar, Popconfirm } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, FolderOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useMessage } from '../../App';
 import categoryService, { type Category } from '../../services/categoryService';
-import { Edit, Plus, Trash2, ChevronDown, ChevronRight, Check, Folder, CheckCircle } from 'lucide-react';
 import CategoryForm from '../../components/admin/CategoryForm';
 import { getImageUrl } from '../../utils/imageHelper';
+
+const { Panel } = Collapse;
 
 export default function Categories() {
     const message = useMessage();
@@ -115,206 +118,209 @@ export default function Categories() {
         categories.filter(cat => cat.parent_id === parentId);
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div style={{ padding: 24 }}>
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Quản lý danh mục</h1>
-                <button
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                    <FolderOutlined /> Quản lý danh mục
+                </h1>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
                     onClick={handleOpenAddForm}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    size="large"
                 >
-                    <Plus className="w-4 h-4" />
                     Thêm danh mục
-                </button>
+                </Button>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Tổng danh mục</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                        </div>
-                        <div className="text-3xl"><Folder></Folder></div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Đang hoạt động</p>
-                            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-                        </div>
-                        <CheckCircle className="w-8 h-8 text-green-600" />
-                    </div>
-                </div>
-            </div>
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+                <Col span={12}>
+                    <Card>
+                        <Statistic
+                            title="Tổng danh mục"
+                            value={stats.total}
+                            prefix={<FolderOutlined />}
+                            valueStyle={{ color: '#1890ff' }}
+                        />
+                    </Card>
+                </Col>
+                <Col span={12}>
+                    <Card>
+                        <Statistic
+                            title="Đang hoạt động"
+                            value={stats.active}
+                            prefix={<CheckCircleOutlined />}
+                            valueStyle={{ color: '#52c41a' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
             {/* Categories Tree */}
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-4 border-b">
-                    <h3 className="font-semibold">Cây danh mục</h3>
-                </div>
+            <Card title="Cây danh mục" loading={loading}>
+                <Collapse
+                    defaultActiveKey={Array.from(expandedCategories)}
+                    onChange={(keys) => setExpandedCategories(new Set(keys.map(k => Number(k))))}
+                >
+                    {parentCategories.map((parent) => {
+                        const children = getChildCategories(parent.category_id);
 
-                {loading ? (
-                    <div className="text-center py-8">Đang tải...</div>
-                ) : (
-                    <div className="p-4">
-                        {parentCategories.map((parent) => {
-                            const children = getChildCategories(parent.category_id);
-                            const isExpanded = expandedCategories.has(parent.category_id);
-
-                            return (
-                                <div key={parent.category_id} className="mb-2">
-                                    {/* Parent Category */}
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                                        <div className="flex items-center gap-2">
-                                            {children.length > 0 && (
-                                                <button
-                                                    onClick={() => toggleExpand(parent.category_id)}
-                                                    className="text-gray-500 hover:text-gray-700"
-                                                >
-                                                    {isExpanded ? (
-                                                        <ChevronDown className="w-4 h-4" />
-                                                    ) : (
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    )}
-                                                </button>
-                                            )}
-                                            {parent.image_url ? (
-                                                <img 
-                                                    src={getImageUrl(parent.image_url)} 
-                                                    alt={parent.category_name}
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                                    {parent.category_name.charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
-                                            <div>
-                                                <div className={`font-medium text-gray-900 ${parent.active === 0 ? 'opacity-50 line-through' : ''}`}>
-                                                 {parent.category_name} {parent.active === 0 && '(Vô hiệu hóa)'}
-                                                </div>
-                                                <div className="text-xs text-gray-500">
-                                                    {children.length} danh mục con
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-2">
-                                            <button
+                        return (
+                            <Panel
+                                key={parent.category_id}
+                                header={
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                        <Space>
+                                            <Avatar
+                                                src={parent.image_url ? getImageUrl(parent.image_url) : undefined}
+                                                style={{ backgroundColor: '#1890ff' }}
+                                            >
+                                                {!parent.image_url && parent.category_name.charAt(0).toUpperCase()}
+                                            </Avatar>
+                                            <span style={{ 
+                                                textDecoration: parent.active === 0 ? 'line-through' : 'none',
+                                                opacity: parent.active === 0 ? 0.5 : 1,
+                                                fontWeight: 500
+                                            }}>
+                                                {parent.category_name}
+                                            </span>
+                                            {parent.active === 0 && <Tag color="error">Vô hiệu hóa</Tag>}
+                                            <Tag color="blue">{children.length} danh mục con</Tag>
+                                        </Space>
+                                        <Space onClick={(e) => e.stopPropagation()}>
+                                            <Button
+                                                type="link"
+                                                icon={<EditOutlined />}
                                                 onClick={() => handleOpenEditForm(parent)}
-                                                className="text-blue-600 hover:text-blue-800 p-1"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleToggleStatus(parent.category_id, parent.active)}
-                                                className={`p-1 ${parent.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
-                                            >
-                                                {parent.active === 1 ? <Trash2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Child Categories */}
-                                    {isExpanded && children.length > 0 && (
-                                        <div className="ml-6 mt-2 space-y-1">
-                                            {children.map((child) => (
-                                                <div
-                                                    key={child.category_id}
-                                                    className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-1 h-6 bg-gray-300 rounded-full"></div>
-                                                        {child.image_url ? (
-                                                            <img 
-                                                                src={getImageUrl(child.image_url)} 
-                                                                alt={child.category_name}
-                                                                className="w-6 h-6 rounded-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                                                                {child.category_name.charAt(0).toUpperCase()}
-                                                            </div>
-                                                        )}
-                                                        <div>
-                                                            <div className={`font-medium text-gray-900 text-sm ${child.active === 0 ? 'opacity-50 line-through' : ''}`}>
-                                                                 {child.category_name} {child.active === 0 && '(Vô hiệu hóa)'}
-                                                            </div>
-                                                            <div className="text-xs text-gray-500">
-                                                                ID: {child.category_id}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            onClick={() => handleOpenEditForm(child)}
-                                                            className="text-blue-600 hover:text-blue-800 p-1"
-                                                        >
-                                                            <Edit className="w-3 h-3" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleToggleStatus(child.category_id, child.active)}
-                                                            className={`p-1 ${child.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
-                                                        >
-                                                            {child.active === 1 ? <Trash2 className="w-3 h-3" /> : <Check className="w-3 h-3" />}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-
-                        
-                        {categories.filter(cat => cat.parent_id && !categories.find(p => p.category_id === cat.parent_id)).map((orphan) => (
-                            <div key={orphan.category_id} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        {orphan.image_url ? (
-                                            <img 
-                                                src={getImageUrl(orphan.image_url)} 
-                                                alt={orphan.category_name}
-                                                className="w-6 h-6 rounded-full object-cover"
                                             />
-                                        ) : (
-                                            <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                                                {orphan.category_name.charAt(0).toUpperCase()}
-                                            </div>
-                                        )}
-                                        <div>
-                                            <div className="font-medium text-gray-900 text-sm">
-                                                {orphan.category_name}
-                                            </div>
-                                            <div className="text-xs text-yellow-600">
-                                                Danh mục mồ côi (parent không tồn tại)
-                                            </div>
-                                        </div>
+                                            <Popconfirm
+                                                title={parent.active === 1 ? 'Vô hiệu hóa danh mục?' : 'Kích hoạt danh mục?'}
+                                                onConfirm={() => handleToggleStatus(parent.category_id, parent.active)}
+                                                okText="Xác nhận"
+                                                cancelText="Hủy"
+                                            >
+                                                <Button
+                                                    type="link"
+                                                    danger={parent.active === 1}
+                                                    icon={parent.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                                />
+                                            </Popconfirm>
+                                        </Space>
                                     </div>
-                                    
-                                    <div className="flex items-center gap-1">
-                                        <button className="text-blue-600 hover:text-blue-800 p-1">
-                                            <Edit className="w-3 h-3" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleToggleStatus(orphan.category_id, orphan.active)}
-                                            className={`p-1 ${orphan.active === 1 ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
+                                }
+                            >
+                                {children.length > 0 && (
+                                    <Space direction="vertical" style={{ width: '100%', paddingLeft: 24 }}>
+                                        {children.map((child) => (
+                                            <Card
+                                                key={child.category_id}
+                                                size="small"
+                                                style={{ marginBottom: 8 }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <Space>
+                                                        <Avatar
+                                                            size="small"
+                                                            src={child.image_url ? getImageUrl(child.image_url) : undefined}
+                                                            style={{ backgroundColor: '#52c41a' }}
+                                                        >
+                                                            {!child.image_url && child.category_name.charAt(0).toUpperCase()}
+                                                        </Avatar>
+                                                        <div>
+                                                            <div style={{ 
+                                                                textDecoration: child.active === 0 ? 'line-through' : 'none',
+                                                                opacity: child.active === 0 ? 0.5 : 1,
+                                                                fontWeight: 500
+                                                            }}>
+                                                                {child.category_name}
+                                                            </div>
+                                                            <div style={{ fontSize: 12, color: '#999' }}>ID: {child.category_id}</div>
+                                                        </div>
+                                                        {child.active === 0 && <Tag color="error" size="small">Vô hiệu hóa</Tag>}
+                                                    </Space>
+                                                    <Space>
+                                                        <Button
+                                                            type="link"
+                                                            size="small"
+                                                            icon={<EditOutlined />}
+                                                            onClick={() => handleOpenEditForm(child)}
+                                                        />
+                                                        <Popconfirm
+                                                            title={child.active === 1 ? 'Vô hiệu hóa?' : 'Kích hoạt?'}
+                                                            onConfirm={() => handleToggleStatus(child.category_id, child.active)}
+                                                            okText="Xác nhận"
+                                                            cancelText="Hủy"
+                                                        >
+                                                            <Button
+                                                                type="link"
+                                                                size="small"
+                                                                danger={child.active === 1}
+                                                                icon={child.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                                            />
+                                                        </Popconfirm>
+                                                    </Space>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </Space>
+                                )}
+                            </Panel>
+                        );
+                    })}
+                </Collapse>
+
+                {/* Orphan categories */}
+                {categories.filter(cat => cat.parent_id && !categories.find(p => p.category_id === cat.parent_id)).length > 0 && (
+                    <Card
+                        size="small"
+                        style={{ marginTop: 16, backgroundColor: '#fffbe6', borderColor: '#ffe58f' }}
+                        title={<span style={{ color: '#faad14' }}>⚠️ Danh mục mồ côi</span>}
+                    >
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            {categories.filter(cat => cat.parent_id && !categories.find(p => p.category_id === cat.parent_id)).map((orphan) => (
+                                <div key={orphan.category_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Space>
+                                        <Avatar
+                                            size="small"
+                                            src={orphan.image_url ? getImageUrl(orphan.image_url) : undefined}
+                                            style={{ backgroundColor: '#faad14' }}
                                         >
-                                            {orphan.active === 1 ? <Trash2 className="w-3 h-3" /> : <Check className="w-3 h-3" />}
-                                        </button>
-                                    </div>
+                                            {!orphan.image_url && orphan.category_name.charAt(0).toUpperCase()}
+                                        </Avatar>
+                                        <div>
+                                            <div style={{ fontWeight: 500 }}>{orphan.category_name}</div>
+                                            <div style={{ fontSize: 12, color: '#faad14' }}>Parent không tồn tại</div>
+                                        </div>
+                                    </Space>
+                                    <Space>
+                                        <Button
+                                            type="link"
+                                            size="small"
+                                            icon={<EditOutlined />}
+                                            onClick={() => handleOpenEditForm(orphan)}
+                                        />
+                                        <Popconfirm
+                                            title={orphan.active === 1 ? 'Vô hiệu hóa?' : 'Kích hoạt?'}
+                                            onConfirm={() => handleToggleStatus(orphan.category_id, orphan.active)}
+                                            okText="Xác nhận"
+                                            cancelText="Hủy"
+                                        >
+                                            <Button
+                                                type="link"
+                                                size="small"
+                                                danger={orphan.active === 1}
+                                                icon={orphan.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                            />
+                                        </Popconfirm>
+                                    </Space>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </Space>
+                    </Card>
                 )}
-            </div>
+            </Card>
 
             <CategoryForm
                 category={editingCategory}

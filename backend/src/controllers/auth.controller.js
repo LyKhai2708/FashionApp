@@ -138,16 +138,17 @@ async function adminLogin(req, res, next) {
 
 async function refresh(req, res, next) {
     const userRefreshToken = req.cookies.refreshToken;
-    const adminRefreshToken = req.cookies.adminRefreshToken;
     
-    const refreshToken = adminRefreshToken || userRefreshToken;
-    
-    if (!refreshToken) return next(new ApiError(401, 'No refresh token'));
+    if (!userRefreshToken) return next(new ApiError(401, 'No refresh token'));
   
     try {
-      const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+      const decoded = jwt.verify(userRefreshToken, process.env.REFRESH_TOKEN_SECRET);
       const user = await userService.getUserById(decoded.id);
       if (!user) return next(new ApiError(401, 'Invalid user'));
+  
+      if (user.role === 'admin') {
+        return next(new ApiError(403, 'Use admin refresh endpoint'));
+      }
   
       const newAccessToken = authService.generateAccessToken(user);
       return res.json({
@@ -158,6 +159,32 @@ async function refresh(req, res, next) {
       });
     } catch (err) {
       return next(new ApiError(401, 'Invalid or expired refresh token'));
+    }
+}
+
+async function adminRefresh(req, res, next) {
+    const adminRefreshToken = req.cookies.adminRefreshToken;
+    
+    if (!adminRefreshToken) return next(new ApiError(401, 'No admin refresh token'));
+  
+    try {
+      const decoded = jwt.verify(adminRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+      const user = await userService.getUserById(decoded.id);
+      if (!user) return next(new ApiError(401, 'Invalid user'));
+  
+      if (user.role !== 'admin') {
+        return next(new ApiError(403, 'Admin privileges required'));
+      }
+  
+      const newAccessToken = authService.generateAccessToken(user);
+      return res.json({
+        status: "success",
+        data: {
+          token: newAccessToken,
+        },
+      });
+    } catch (err) {
+      return next(new ApiError(401, 'Invalid or expired admin refresh token'));
     }
 }
 
@@ -176,6 +203,7 @@ function adminLogout(req, res) {
 module.exports = {
   adminLogin,
   adminLogout,
+  adminRefresh,
   register,
   login,
   refresh,

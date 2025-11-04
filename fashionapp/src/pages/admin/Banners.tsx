@@ -24,7 +24,8 @@ import {
     DeleteOutlined, 
     EditOutlined,
     UploadOutlined,
-    PictureOutlined
+    PictureOutlined,
+    FileImageOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -267,13 +268,13 @@ export default function Banners() {
             )
         },
         {
-            title: 'Title',
+            title: 'Tiêu đề',
             dataIndex: 'title',
             key: 'title',
             width: 200
         },
         {
-            title: 'Type',
+            title: 'Loại banner',
             dataIndex: 'banner_type',
             key: 'type',
             width: 100,
@@ -288,7 +289,7 @@ export default function Banners() {
             }
         },
         {
-            title: 'Details',
+            title: 'Chi tiết',
             key: 'details',
             width: 180,
             render: (_, record) => {
@@ -312,20 +313,20 @@ export default function Banners() {
             }
         },
         {
-            title: 'Position',
+            title: 'Vị trí',
             dataIndex: 'position',
             key: 'position',
             width: 100
         },
         {
-            title: 'Order',
+            title: 'Thứ tự',
             dataIndex: 'display_order',
             key: 'order',
             width: 80,
             sorter: (a, b) => a.display_order - b.display_order
         },
         {
-            title: 'Date Range',
+            title: 'Ngày bắt đầu - kết thúc',
             key: 'dates',
             width: 150,
             render: (_, record) => {
@@ -380,19 +381,27 @@ export default function Banners() {
     ];
 
     return (
-        <div className="p-6">
-            <Card>
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold">Quản lý Banners</h1>
+        <div style={{ padding: 24 }}>
+            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                    <FileImageOutlined /> Quản lý Banners
+                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ fontSize: 14, color: '#999' }}>
+                        Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{paginate.totalRecords}</span> banners
+                    </div>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={handleCreate}
+                        size="large"
                     >
                         Thêm Banner
                     </Button>
                 </div>
+            </div>
 
+            <Card>
                 <Table
                     columns={columns}
                     dataSource={banners}
@@ -403,7 +412,8 @@ export default function Banners() {
                         current: paginate.page,
                         pageSize: paginate.limit,
                         total: paginate.totalRecords,
-                        onChange: (page, pageSize) => fetchBanners({ page, limit: pageSize })
+                        onChange: (page, pageSize) => fetchBanners({ page, limit: pageSize }),
+                        showTotal: (total) => `Tổng ${total} banners`
                     }}
                 />
             </Card>

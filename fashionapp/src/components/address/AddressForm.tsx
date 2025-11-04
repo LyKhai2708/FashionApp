@@ -140,7 +140,51 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                 onFinish={handleSubmit}
                 className="max-w-md"
             >
-                {/* Thay Input bằng Select cho Province */}
+                <div className="mb-4">
+                    <Title level={5} className="!mb-3">Thông tin người nhận</Title>
+                    
+                    <Form.Item
+                        label="Tên người nhận"
+                        name="receiver_name"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'Vui lòng nhập tên người nhận'
+                            }
+                        ]}
+                    >
+                        <Input placeholder="Nhập tên người nhận" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Số điện thoại người nhận"
+                        name="receiver_phone"
+                        rules={[
+                            {
+                                required: true,
+                                pattern: /^[0-9]{10,11}$/,
+                                message: 'Số điện thoại không hợp lệ (10-11 số)'
+                            }
+                        ]}
+                    >
+                        <Input placeholder="Nhập số điện thoại" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Email người nhận"
+                        name="receiver_email"
+                        rules={[
+                            {
+                                required: true,
+                                type: 'email',
+                                message: 'Email không hợp lệ'
+                            }
+                        ]}
+                    >
+                        <Input placeholder="Nhập email" />
+                    </Form.Item>
+                </div>
+                <Title level={5} className="!mb-3">Thông tin địa chỉ</Title>
                 <Form.Item
                     label="Tỉnh/Thành phố"
                     name="province"
@@ -186,42 +230,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                         placeholder="Số nhà, tên đường..." 
                     />
                 </Form.Item>
-                <div className="mb-4">
-                    <Title level={5} className="!mb-3">Thông tin người nhận (tùy chọn)</Title>
-                    
-                    <Form.Item
-                        label="Tên người nhận"
-                        name="receiver_name"
-                    >
-                        <Input placeholder="Nhập tên người nhận" />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Số điện thoại người nhận"
-                        name="receiver_phone"
-                        rules={[
-                            {
-                                pattern: /^[0-9]{10,11}$/,
-                                message: 'Số điện thoại không hợp lệ (10-11 số)'
-                            }
-                        ]}
-                    >
-                        <Input placeholder="Nhập số điện thoại" />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Email người nhận"
-                        name="receiver_email"
-                        rules={[
-                            {
-                                type: 'email',
-                                message: 'Email không hợp lệ'
-                            }
-                        ]}
-                    >
-                        <Input placeholder="Nhập email" />
-                    </Form.Item>
-                </div>
+                
 
                 {!address && (
                     <Form.Item name="is_default" valuePropName="checked" initialValue={false}>

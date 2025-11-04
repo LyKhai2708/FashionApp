@@ -153,7 +153,7 @@ class AuthService {
   async adminRefreshToken(): Promise<string> {
         console.log('admin refresh token');
         try {
-            const response = await api.post<AuthResponse>('/api/v1/auth/refresh', {}, {
+            const response = await api.post<AuthResponse>('/api/v1/admin/refresh', {}, {
                 withCredentials: true
             });
             

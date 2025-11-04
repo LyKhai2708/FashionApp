@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card, Row, Col, Statistic } from 'antd';
+import { AppstoreOutlined, CheckCircleOutlined, WarningOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { getImageUrl } from '../../utils/imageHelper';
 import { productService } from '../../services/productService';
 import type { Product } from '../../types/product';
 import { useMessage } from '../../App';
 import brandService from '../../services/brandService';
 import categoryService, { type Category } from '../../services/categoryService';
-import { Edit, Eye, Plus, PackageOpen, CheckCircle, AlertTriangle, XCircle, Search } from 'lucide-react';
+import { Edit, Eye, Plus, PackageOpen, Search } from 'lucide-react';
 
 interface Paginate {
     totalRecords: number;
@@ -184,7 +186,6 @@ export default function Products() {
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
-            {/* Header */}
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
                     <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
@@ -199,53 +200,48 @@ export default function Products() {
                 <p className="text-gray-600">Quản lý tất cả sản phẩm trong hệ thống</p>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-blue-100 text-sm">Tổng sản phẩm</p>
-                            <p className="text-3xl font-bold">{stats.total}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-green-100 text-sm">Đang bán</p>
-                            <p className="text-3xl font-bold">{stats.active}</p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <CheckCircle className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-yellow-100 text-sm">Sắp hết hàng</p>
-                            <p className="text-3xl font-bold">{stats.lowStock}</p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <AlertTriangle className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-red-100 text-sm">Hết hàng</p>
-                            <p className="text-3xl font-bold">{stats.outOfStock}</p>
-                        </div>
-                        <div className="bg-white/20 rounded-full p-3">
-                            <XCircle className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+                <Col span={6}>
+                    <Card>
+                        <Statistic
+                            title="Tổng sản phẩm"
+                            value={stats.total}
+                            valueStyle={{ color: '#1890ff' }}
+                            prefix={<AppstoreOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col span={6}>
+                    <Card>
+                        <Statistic
+                            title="Đang bán"
+                            value={stats.active}
+                            valueStyle={{ color: '#52c41a' }}
+                            prefix={<CheckCircleOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col span={6}>
+                    <Card>
+                        <Statistic
+                            title="Sắp hết hàng"
+                            value={stats.lowStock}
+                            valueStyle={{ color: '#faad14' }}
+                            prefix={<WarningOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col span={6}>
+                    <Card>
+                        <Statistic
+                            title="Hết hàng"
+                            value={stats.outOfStock}
+                            valueStyle={{ color: '#cf1322' }}
+                            prefix={<CloseCircleOutlined />}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
             {/* Filters */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -272,7 +268,6 @@ export default function Products() {
                         </div>
                     </form>
 
-                    {/* Category */}
                     <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))}
@@ -286,7 +281,6 @@ export default function Products() {
                         ))}
                     </select>
 
-                    {/* Brand */}
                     <select
                         value={selectedBrand}
                         onChange={(e) => setSelectedBrand(e.target.value === 'all' ? 'all' : Number(e.target.value))}
@@ -300,7 +294,6 @@ export default function Products() {
                         ))}
                     </select>
 
-                    {/* Stock */}
                     <select
                         value={stockFilter}
                         onChange={(e) => setStockFilter(e.target.value as any)}
@@ -312,7 +305,7 @@ export default function Products() {
                         <option value="medium">Trung bình</option>
                     </select>
 
-                    {/* Status */}
+
                     <select
                         value={delFlag}
                         onChange={(e) => setDelFlag(e.target.value as '0' | '1' | 'all')}
@@ -325,7 +318,7 @@ export default function Products() {
                 </div>
             </div>
 
-            {/* Products Table */}
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {loading ? (
                     <div className="flex justify-center items-center py-20">

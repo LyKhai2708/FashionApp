@@ -250,9 +250,11 @@ export default function Inventory() {
 
     return (
         <div style={{ padding: 24 }}>
-            <h1 style={{ marginBottom: 24 }}>
-                <StockOutlined /> Quản lý tồn kho
-            </h1>
+            <div className="mb-4 flex items-center justify-between">
+                <h1 className="text-2xl font-bold">
+                    <StockOutlined /> Quản lý tồn kho
+                </h1>
+            </div>
 
             <Tabs activeKey={activeTab} onChange={setActiveTab}>
                 <TabPane tab="Tổng quan" key="overview">
