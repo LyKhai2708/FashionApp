@@ -394,6 +394,7 @@ export default function Vouchers() {
                     <Form.Item
                         name="description"
                         label="Mô tả"
+                        rules={[{ max: 200, message: 'Mô tả không vượt quá 200 ký tự' }]}
                     >
                         <TextArea rows={3} placeholder="Mô tả chi tiết về voucher" />
                     </Form.Item>

@@ -573,7 +573,11 @@ export default function AddProduct() {
                             <Form.Item
                                 label="Tên sản phẩm"
                                 name="name"
-                                rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
+                                rules={[
+                                    { required: true, message: 'Vui lòng nhập tên sản phẩm' },
+                                    { min: 3, message: 'Tên sản phẩm phải có ít nhất 3 ký tự' },
+                                    { max: 100, message: 'Tên sản phẩm không vượt quá 100 ký tự' }
+                                ]}
                             >
                                 <Input size="large" placeholder="Nhập tên sản phẩm" />
                             </Form.Item>
@@ -581,6 +585,7 @@ export default function AddProduct() {
                             <Form.Item
                                 label="Mô tả"
                                 name="description"
+                                rules={[{ max: 500, message: 'Mô tả không vượt quá 500 ký tự' }]}
                             >
                                 <TextArea
                                     rows={4}

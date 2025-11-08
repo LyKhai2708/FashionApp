@@ -211,7 +211,10 @@ export default function VoucherInput({
                             <Input
                                 placeholder="Nhập mã voucher..."
                                 value={voucherCode}
-                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/[^A-Z0-9]/g, '').toUpperCase();
+                                    setVoucherCode(value);
+                                }}
                                 onKeyPress={handleKeyPress}
                                 disabled={loading}
                                 style={{ textTransform: 'uppercase' }}

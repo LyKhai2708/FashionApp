@@ -7,4 +7,8 @@ module.exports.setup = (app) => {
     app.use('/api/v1/otp', router);
     router.post('/OtpSend', otpController.sendOtpRegister);
     router.post('/OtpVerify', otpController.verifyOtpRegister);
+    
+    // add phone OTP
+    router.post('/sendAddPhoneOtp', authMiddleware, otpController.sendAddPhoneOtp);
+    router.post('/verifyAddPhone', authMiddleware, otpController.verifyAddPhone);
 }

@@ -150,6 +150,14 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                             {
                                 required: true,
                                 message: 'Vui lòng nhập tên người nhận'
+                            },
+                            {
+                                min: 2,
+                                message: 'Tên người nhận phải có ít nhất 2 ký tự'
+                            },
+                            {
+                                max: 100,
+                                message: 'Tên người nhận không vượt quá 100 ký tự'
                             }
                         ]}
                     >
@@ -162,8 +170,8 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                         rules={[
                             {
                                 required: true,
-                                pattern: /^[0-9]{10,11}$/,
-                                message: 'Số điện thoại không hợp lệ (10-11 số)'
+                                pattern: /^(0)[0-9]{9,10}$/,
+                                message: 'Số điện thoại không hợp lệ (phải bắt đầu bằng 0, có 10-11 số)'
                             }
                         ]}
                     >
@@ -178,6 +186,10 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                                 required: true,
                                 type: 'email',
                                 message: 'Email không hợp lệ'
+                            },
+                            {
+                                max: 100,
+                                message: 'Email không vượt quá 100 ký tự'
                             }
                         ]}
                     >
@@ -223,7 +235,11 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                 <Form.Item
                     label="Địa chỉ chi tiết"
                     name="detail_address"
-                    rules={[{ required: true, message: 'Vui lòng nhập địa chỉ chi tiết' }]}
+                    rules={[
+                        { required: true, message: 'Vui lòng nhập địa chỉ chi tiết' },
+                        { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự' },
+                        { max: 200, message: 'Địa chỉ không vượt quá 200 ký tự' }
+                    ]}
                 >
                     <Input.TextArea 
                         rows={3} 

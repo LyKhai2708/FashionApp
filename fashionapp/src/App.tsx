@@ -13,6 +13,9 @@ import { useToast } from './contexts/ToastContext';
 import { AdminAuthProvider } from './contexts/admin/AdminAuthContext';
 import AdminRoutes from './routes/admin/AdminRoutes';
 import { FavoritesProvider } from './contexts/FavoritesContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 
 interface LoadingContextType {
@@ -61,36 +64,38 @@ function App() {
   const [antNotification, notificationContextHolder] = notification.useNotification();
   
   return (
-    <ToastProvider>
-      <NotificationContext.Provider value={antNotification}>
-        {notificationContextHolder}
-        <LoadingContext.Provider  value={{ isLoading, setIsLoading }}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/*" element={
-                <AuthProvider>
-                  <CartProvider>
-                    <FavoritesProvider>
-                      <UserAppContent />
-                    </FavoritesProvider>
-                  </CartProvider>
-                </AuthProvider>
-              } />
-              <Route
-                path="/admin/*"
-                element={
-                  <AdminAuthProvider>
-                    <AdminRoutes />
-                  </AdminAuthProvider>
-                }
-              />
-            </Routes>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <ToastProvider>
+        <NotificationContext.Provider value={antNotification}>
+          {notificationContextHolder}
+          <LoadingContext.Provider  value={{ isLoading, setIsLoading }}>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/*" element={
+                  <AuthProvider>
+                    <CartProvider>
+                      <FavoritesProvider>
+                        <UserAppContent />
+                      </FavoritesProvider>
+                    </CartProvider>
+                  </AuthProvider>
+                } />
+                <Route
+                  path="/admin/*"
+                  element={
+                    <AdminAuthProvider>
+                      <AdminRoutes />
+                    </AdminAuthProvider>
+                  }
+                />
+              </Routes>
 
-          </BrowserRouter>
-          
-        </LoadingContext.Provider>
-      </NotificationContext.Provider>
-    </ToastProvider>
+            </BrowserRouter>
+            
+          </LoadingContext.Provider>
+        </NotificationContext.Provider>
+      </ToastProvider>
+    </GoogleOAuthProvider>
   )
 }
 

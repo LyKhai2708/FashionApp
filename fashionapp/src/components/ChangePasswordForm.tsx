@@ -48,7 +48,8 @@ export default function ChangePasswordForm() {
           name="newPassword"
           rules={[
             { required: true, message: "Vui lòng nhập mật khẩu mới" },
-            { min: 8, message: "Mật khẩu phải có ít nhất 8 ký tự" }
+            { min: 8, message: "Mật khẩu phải có ít nhất 8 ký tự" },
+            { max: 50, message: "Mật khẩu không vượt quá 50 ký tự" }
           ]}
         >
           <Input.Password

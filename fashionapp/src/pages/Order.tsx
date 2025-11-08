@@ -203,7 +203,15 @@ export default function Order() {
                                 className="w-2/3"
                                 label="Họ và tên"
                                 name="fullName"
-                                rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+                                rules={[
+                                    { required: true, message: "Vui lòng nhập họ và tên" },
+                                    { min: 2, message: "Họ và tên phải có ít nhất 2 ký tự" },
+                                    { max: 100, message: "Họ và tên không vượt quá 100 ký tự" },
+                                    {
+                                        pattern: /^[a-zA-Z0-9\s\u0100-\u01B0\u1E00-\u1EFF.'-]+$/,
+                                        message: "Họ và tên chỉ chứa chữ cái, số, dấu cách, dấu chấm, dấu gạch ngang hoặc ngoặc đơn"
+                                    }
+                                ]}
                             >
                                 <Input size="large" className="h-10" placeholder="Nhập họ và tên" />
                             </Form.Item>
@@ -214,6 +222,7 @@ export default function Order() {
                                 rules={[
                                     { required: true, message: "Vui lòng nhập email" },
                                     { type: "email", message: "Email không hợp lệ" },
+                                    { max: 100, message: "Email không vượt quá 100 ký tự" }
                                 ]}
                             >
                                 <Input size="large" className="h-10" placeholder="Nhập email" />
@@ -222,7 +231,10 @@ export default function Order() {
                                 className="w-2/3"
                                 label="Số điện thoại"
                                 name="phone"
-                                rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
+                                rules={[
+                                    { required: true, message: "Vui lòng nhập số điện thoại" },
+                                    { pattern: /^(0)[0-9]{9,10}$/, message: "Số điện thoại không hợp lệ (phải bắt đầu bằng 0, có 10-11 số)" }
+                                ]}
                             >
                                 <Input size="large" className="h-10" placeholder="Nhập số điện thoại" />
                             </Form.Item>
@@ -269,7 +281,15 @@ export default function Order() {
                                 <Form.Item
                                     label="Địa chỉ cụ thể"
                                     name="address"
-                                    rules={[{ required: true, message: "Vui lòng nhập địa chỉ" }]}
+                                    rules={[
+                                        { required: true, message: "Vui lòng nhập địa chỉ" },
+                                        { min: 5, message: "Địa chỉ phải có ít nhất 5 ký tự" },
+                                        { max: 200, message: "Địa chỉ không vượt quá 200 ký tự" },
+                                        {
+                                            pattern: /^[a-zA-Z0-9\s\u0100-\u01B0\u1E00-\u1EFF.,/#()-]+$/,
+                                            message: "Địa chỉ chứa ký tự không hợp lệ"
+                                        }
+                                    ]}
                                     className="md:col-span-2"
                                 >
                                     <Input size="large" placeholder="Nhập địa chỉ cụ thể" />
@@ -278,7 +298,7 @@ export default function Order() {
                             <Divider />
 
                             <Title level={4}>Ghi chú cho đơn hàng</Title>
-                            <Form.Item name="note" rules={[{ required: false, message: "Vui lòng nhập ghi chú" }]}>
+                            <Form.Item name="note" rules={[{ max: 500, message: "Ghi chú không vượt quá 500 ký tự" }]}>
                                 <Input.TextArea rows={4} placeholder="Ghi chú cho đơn hàng" />
                             </Form.Item>
 

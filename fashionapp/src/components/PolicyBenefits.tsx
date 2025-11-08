@@ -1,10 +1,10 @@
-import { Truck, RotateCcw, Phone, MapPin } from 'lucide-react';
+import { RotateCcw, Phone, MapPin, CardSim } from 'lucide-react';
 
 export default function PolicyBenefits() {
     const policies = [
         {
-            icon: <Truck size={32} />,
-            title: 'Free ship cho đơn từ 200k',
+            icon: <CardSim size={32} />,
+            title: 'Thanh toán dễ dàng, an toàn 100%',
         },
         {
             icon: <RotateCcw size={32} />,

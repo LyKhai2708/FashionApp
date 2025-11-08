@@ -328,7 +328,11 @@ export default function Promotions() {
                     <Form.Item
                         name="name"
                         label="Tên khuyến mãi"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên khuyến mãi' }]}
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên khuyến mãi' },
+                            { min: 3, message: 'Tên khuyến mãi phải có ít nhất 3 ký tự' },
+                            { max: 100, message: 'Tên khuyến mãi không vượt quá 100 ký tự' }
+                        ]}
                     >
                         <Input placeholder="VD: Giảm giá mùa hè" />
                     </Form.Item>
@@ -336,6 +340,7 @@ export default function Promotions() {
                     <Form.Item
                         name="description"
                         label="Mô tả"
+                        rules={[{ max: 200, message: 'Mô tả không vượt quá 200 ký tự' }]}
                     >
                         <TextArea rows={3} placeholder="Mô tả chi tiết về khuyến mãi" />
                     </Form.Item>

@@ -26,10 +26,17 @@ function readUser(payload) {
 }
 
 async function getUserById(id) {
-    return usersRepository()
+    const user = await usersRepository()
     .where('users.user_id', id)
     .select('*')
     .first();
+    
+    if (user) {
+        user.has_password = user.password !== null && user.password !== undefined;
+        delete user.password;
+    }
+    
+    return user;
 }
 
 async function getManyUsers(query){

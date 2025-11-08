@@ -98,7 +98,6 @@ export default function Header() {
       { name: "SẢN PHẨM", href: "/products" },
       { name: "HÀNG MỚI VỀ", href: "/products?sort=newest" },
       { name: "HÀNG BÁN CHẠY", href: "/products" },
-      { name: "SALE", href: "/products?promotion=true" },
     ]
 
     useEffect(() => {
@@ -118,7 +117,6 @@ export default function Header() {
     <header className="w-full bg-white shadow sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1320px] flex items-stretch justify-between h-16">
         
-        {/* Menu (mobile) */}
         <button onClick={() => setOpenMenu(true)} className="lg:hidden">
           <MenuIcon className="w-6 h-6 text-gray-700 cursor-pointer" />
         </button>
