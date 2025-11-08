@@ -26,7 +26,30 @@ async function getProductReview(productId,  page = 1, limit = 5, sortBy = 'newes
         'users.email as customer_email',
         'users.phone as customer_phone'
     ]).limit(paginator.limit)
-    .offset(paginator.offset);;
+    .offset(paginator.offset);
+    
+    const reviewIds = result.map(r => r.id);
+    if (reviewIds.length > 0) {
+        const images = await knex('review_images')
+            .whereIn('review_id', reviewIds)
+            .select('review_id', 'image_id', 'image_url');
+        
+        const imagesByReview = {};
+        images.forEach(img => {
+            if (!imagesByReview[img.review_id]) {
+                imagesByReview[img.review_id] = [];
+            }
+            imagesByReview[img.review_id].push({
+                image_id: img.image_id,
+                image_url: img.image_url
+            });
+        });
+        
+        result = result.map(review => ({
+            ...review,
+            images: imagesByReview[review.id] || []
+        }));
+    }
     
     const statsResult = await knex('product_reviews')
         .where('product_id', productId)
@@ -65,7 +88,7 @@ async function getProductReview(productId,  page = 1, limit = 5, sortBy = 'newes
         rating_breakdown:  ratingBreakdownObj,
     }
 }
-async function createProductReview(userId, reviewData){
+async function createProductReview(userId, reviewData, imageFiles = []){
     const {product_id, order_id, rating, comment} = reviewData
 
      const order = await knex('orders')
@@ -103,15 +126,24 @@ async function createProductReview(userId, reviewData){
     if (existingReview) {
         throw new Error('Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi');
     }
-    const [result] = await knex('product_reviews').insert({
+    const [reviewId] = await knex('product_reviews').insert({
         user_id: userId,
         product_id,
         order_id,
         rating,
         comment,
         is_verified_purchase: true
-    })
-    return result;
+    });
+    
+    if (imageFiles && imageFiles.length > 0) {
+        const imageRecords = imageFiles.map(file => ({
+            review_id: reviewId,
+            image_url: `/public/uploads/${file.filename}`
+        }));
+        await knex('review_images').insert(imageRecords);
+    }
+    
+    return reviewId;
 }
 
 async function checkReviewed(userId, productId, orderId) {
@@ -129,9 +161,18 @@ async function getUserReview(userId, productId, orderId){
     const review = await knex('product_reviews')
         .where({ user_id: userId, product_id: productId, order_id: orderId })
         .first();
-    return review || null;
+    
+    if (!review) return null;
+    
+    const images = await knex('review_images')
+        .where('review_id', review.id)
+        .select('image_id', 'image_url');
+    
+    review.images = images;
+    
+    return review;
 }
-async function updateProductReview(reviewId, userId, reviewData, isAdmin = false){
+async function updateProductReview(reviewId, userId, reviewData, imageFiles = [], isAdmin = false){
     const {rating, comment} = reviewData;
     const existing = await knex('product_reviews').where('id', reviewId).first();
     if (!existing) return 0;
@@ -147,15 +188,65 @@ async function updateProductReview(reviewId, userId, reviewData, isAdmin = false
             comment,
             updated_at: knex.fn.now()
         });
+    
+    if (imageFiles && imageFiles.length > 0) {
+        const oldImages = await knex('review_images')
+            .where('review_id', reviewId)
+            .select('image_url');
+        
+        const deletePromises = oldImages.map(async (img) => {
+            if (img.image_url) {
+                const filePath = img.image_url.startsWith('/public/uploads/')
+                    ? `.${img.image_url}`
+                    : `./public${img.image_url}`;
+                try {
+                    await unlink(filePath);
+                    console.log('Deleted review image:', filePath);
+                } catch (err) {
+                    console.error('Failed to delete review image:', filePath, err.message);
+                }
+            }
+        });
+        await Promise.allSettled(deletePromises);
+        
+        await knex('review_images').where('review_id', reviewId).del();
+        
+        const imageRecords = imageFiles.map(file => ({
+            review_id: reviewId,
+            image_url: `/public/uploads/${file.filename}`
+        }));
+        await knex('review_images').insert(imageRecords);
+    }
+    
     return result;
 }
 
 async function deleteProductReview(reviewId, userId, isAdmin){
-    const query = knex('product_reviews').where('id', reviewId)
+
+    const images = await knex('review_images')
+        .where('review_id', reviewId)
+        .select('image_url');
+    
+    const deletePromises = images.map(async (img) => {
+        if (img.image_url) {
+            const filePath = img.image_url.startsWith('/public/uploads/')
+                ? `.${img.image_url}`
+                : `./public${img.image_url}`;
+            try {
+                await unlink(filePath);
+                console.log('Deleted review image:', filePath);
+            } catch (err) {
+                console.error('Failed to delete review image:', filePath, err.message);
+            }
+        }
+    });
+    await Promise.allSettled(deletePromises);
+    
+    const query = knex('product_reviews').where('id', reviewId);
     if(!isAdmin){
-        query = query.where('user_id', userId)
+        query.where('user_id', userId);
     }
-    const result = await query.del()
+    const result = await query.del();
     return result;
 }
 module.exports = {

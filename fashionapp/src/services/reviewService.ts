@@ -14,6 +14,10 @@ export interface Review {
     customer_email: string;
     customer_phone?: string;
     is_verified_purchase: boolean;
+    images?: Array<{
+        image_id: number;
+        image_url: string;
+    }>;
 }
 
 export interface ReviewStats {
@@ -55,11 +59,13 @@ export interface CreateReviewPayload {
     order_id: number;
     rating: number;
     comment: string;
+    images?: File[];
 }
 
 export interface UpdateReviewPayload {
     rating: number;
     comment: string;
+    images?: File[];
 }
 
 
@@ -78,7 +84,22 @@ class ReviewService {
 
     async createReview(productId: number, payload: CreateReviewPayload): Promise<void> {
         try {
-            await api.post(`/api/v1/reviews/products/${productId}`, payload);
+            const formData = new FormData();
+            formData.append('order_id', payload.order_id.toString());
+            formData.append('rating', payload.rating.toString());
+            formData.append('comment', payload.comment);
+            
+            if (payload.images && payload.images.length > 0) {
+                payload.images.forEach((file) => {
+                    formData.append('images', file);
+                });
+            }
+            
+            await api.post(`/api/v1/reviews/products/${productId}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể tạo đánh giá');
         }
@@ -86,7 +107,21 @@ class ReviewService {
 
     async updateReview(reviewId: number, data: UpdateReviewPayload): Promise<void> {
         try {
-            await api.put(`/api/v1/reviews/${reviewId}`, data);
+            const formData = new FormData();
+            formData.append('rating', data.rating.toString());
+            formData.append('comment', data.comment);
+            
+            if (data.images && data.images.length > 0) {
+                data.images.forEach((file) => {
+                    formData.append('images', file);
+                });
+            }
+            
+            await api.put(`/api/v1/reviews/${reviewId}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể cập nhật đánh giá');
         }

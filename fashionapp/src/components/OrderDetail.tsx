@@ -77,7 +77,15 @@ const {
     orderId: number;
     reviewId?: number;
     editMode?: boolean;
-    initialData?: { rating: number; comment: string; order_id: number };
+    initialData?: { 
+      rating: number; 
+      comment: string; 
+      order_id: number;
+      images?: Array<{
+        image_id: number;
+        image_url: string;
+      }>;
+    };
   } | null>(null);
   const [viewModal, setViewModal] = useState<null | { rating: number; comment: string }>(null);
   const [itemReviews, setItemReviews] = useState<Record<number, any>>({}); // productId -> review | null
@@ -98,7 +106,12 @@ const {
       orderId: order!.order_id,
       reviewId: review.id,
       editMode: true,
-      initialData: { rating: review.rating, comment: review.comment, order_id: order!.order_id }
+      initialData: { 
+        rating: review.rating, 
+        comment: review.comment, 
+        order_id: order!.order_id,
+        images: review.images 
+      }
     });
     setReviewModalVisible(true);
   };

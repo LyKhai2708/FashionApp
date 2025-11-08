@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Rate, Avatar, Tag, Button, Popconfirm, message } from 'antd';
+import { Rate, Avatar, Tag, Button, Popconfirm, message, Image } from 'antd';
 import { UserOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -7,6 +7,8 @@ import type { Review } from '../../services/reviewService';
 import reviewService from '../../services/reviewService';
 import authService from '../../services/authService';
 import ReviewForm from './ReviewForm';
+import { getImageUrl } from '../../utils/imageHelper';
+
 interface ReviewItemProps {
     review: Review;
     onUpdate?: () => void;
@@ -68,6 +70,26 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                             {review.comment}
                         </p>
 
+                        {review.images && review.images.length > 0 && (
+                            <div className="mb-3">
+                                <Image.PreviewGroup>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {review.images.map((img) => (
+                                            <Image
+                                                key={img.image_id}
+                                                src={getImageUrl(img.image_url)}
+                                                alt="Review image"
+                                                width={100}
+                                                height={100}
+                                                className="object-cover rounded cursor-pointer"
+                                                style={{ objectFit: 'cover' }}
+                                            />
+                                        ))}
+                                    </div>
+                                </Image.PreviewGroup>
+                            </div>
+                        )}
+
                         {/* Action buttons */}
                         {(canEdit || canDelete) && (
                             <div className="flex gap-2">
@@ -119,7 +141,8 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                 initialData={{
                     rating: review.rating,
                     comment: review.comment,
-                    order_id: review.order_id
+                    order_id: review.order_id,
+                    images: review.images
                 }}
             />
         </>

@@ -50,7 +50,9 @@ async function createReview(req, res, next) {
             comment
         };
         
-        const review = await reviewService.createProductReview(req.user.id, reviewData);
+        const imageFiles = req.files || [];
+        
+        const review = await reviewService.createProductReview(req.user.id, reviewData, imageFiles);
         return res.status(201).json(JSend.success({ review }));
     } catch (err) {
         console.error('Error creating review:', err);
@@ -95,7 +97,9 @@ async function updateReview(req, res, next) {
         const reviewData = { rating, comment };
         const isAdmin = req.user.role === 'admin';
         
-        const review = await reviewService.updateProductReview(req.params.id, req.user.id, reviewData, isAdmin);
+        const imageFiles = req.files || [];
+        
+        const review = await reviewService.updateProductReview(req.params.id, req.user.id, reviewData, imageFiles, isAdmin);
         
         if (review === 0) {
             return next(new ApiError(404, "Review not found or you don't have permission to update it"));

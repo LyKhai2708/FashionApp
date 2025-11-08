@@ -3,6 +3,7 @@ const router = express.Router();
 const reviewController = require('../controllers/review.controller');
 const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
 const { methodNotAllowed } = require('../controllers/errors.controller');
+const { uploadMultiple } = require('../middleware/upload_image.middleware');
 
 /**
  * @swagger
@@ -180,7 +181,7 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.post('/products/:productId',authMiddleware, reviewController.createReview);
+  router.post('/products/:productId', authMiddleware, uploadMultiple('images', 5), reviewController.createReview);
 
   /**
    * @swagger
@@ -241,7 +242,7 @@ module.exports.setup = (app) => {
    */
 
   // Direct review management routes
-  router.put('/:id',authMiddleware, reviewController.updateReview);
+  router.put('/:id', authMiddleware, uploadMultiple('images', 5), reviewController.updateReview);
   
   /**
    * @swagger
