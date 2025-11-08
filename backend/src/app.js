@@ -24,6 +24,7 @@ const otpRouter = require('./routes/otp.router');
 const voucherRouter = require('./routes/voucher.router');
 const bannersRouter = require('./routes/banners.router');
 const inventoryRouter = require('./routes/inventory.router');
+const searchRouter = require('./routes/search.router');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
 const {specs, swaggerUi} = require('./docs/swagger');
@@ -71,6 +72,7 @@ voucherRouter.setup(app);
 bannersRouter.setup(app);
 inventoryRouter.setup(app);
 paymentRouter.setup(app);
+searchRouter.setup(app);
 const voucherService = require('./services/voucher.service');
 
 

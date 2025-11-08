@@ -4,6 +4,7 @@ import { SearchIcon, XIcon, CameraIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
 import ImageSearchModal from './ImageSearchModal';
 import { productService } from '../services/productService';
+import { searchService } from '../services/searchService';
 import type { Product } from '../types/product';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
@@ -20,9 +21,17 @@ export default function SearchBar() {
     const { products: recentProducts } = useRecentlyViewed();
 
     useEffect(() => {
-        setTrendingKeywords([
-            'Áo thun', 'Quần Shorts', 'Áo Polo', 'Áo khoác chống nắng', 'Găng tay chống nắng', 'Quần dài'
-        ]);
+        const fetchTrendingKeywords = async () => {
+            const keywords = await searchService.getTrendingKeywords(6);
+            if (keywords.length > 0) {
+                setTrendingKeywords(keywords);
+            } else {
+                setTrendingKeywords([
+                    'Áo thun', 'Quần Shorts', 'Áo Polo', 'Áo khoác chống nắng', 'Găng tay chống nắng', 'Quần dài'
+                ]);
+            }
+        };
+        fetchTrendingKeywords();
     }, []);
 
     useEffect(() => {
@@ -89,10 +98,12 @@ export default function SearchBar() {
 
     const handleKeywordClick = (keyword: string) => {
         setQuery(keyword);
+        searchService.saveSearchKeyword(keyword);
     };
 
     const handleViewAll = () => {
         if (query.trim()) {
+            searchService.saveSearchKeyword(query);
             navigate(`/search?q=${encodeURIComponent(query)}`);
             setIsOpen(false);
             setQuery('');
