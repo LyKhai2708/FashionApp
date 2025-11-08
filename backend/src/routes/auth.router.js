@@ -373,6 +373,70 @@ module.exports.setup = (app) => {
      *                   example: "Logged out"
      */
     router.post('/logout', authController.logout);
+    
+    /**
+     * @swagger
+     * /api/v1/auth/google:
+     *   post:
+     *     summary: Google OAuth login
+     *     description: Authenticate user with Google ID token
+     *     tags:
+     *       - authentication
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - idToken
+     *             properties:
+     *               idToken:
+     *                 type: string
+     *                 description: Google ID token from OAuth
+     *                 example: "eyJhbGciOiJSUzI1NiIsImtpZCI6..."
+     *     responses:
+     *       200:
+     *         description: Login successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   enum: [success]
+     *                 data:
+     *                   type: object
+     *                   properties:
+     *                     user:
+     *                       type: object
+     *                       properties:
+     *                         id:
+     *                           type: integer
+     *                         username:
+     *                           type: string
+     *                         email:
+     *                           type: string
+     *                         phone:
+     *                           type: string
+     *                           nullable: true
+     *                         role:
+     *                           type: string
+     *                         auth_provider:
+     *                           type: string
+     *                           enum: [local, google]
+     *                         google_id:
+     *                           type: string
+     *                     token:
+     *                       type: string
+     *       400:
+     *         description: Bad request - Missing ID token
+     *       500:
+     *         description: Google authentication failed
+     */
+    router.post('/google', authController.googleLogin);
+    
     router.all('/', methodNotAllowed);
 }
 

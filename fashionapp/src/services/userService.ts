@@ -8,6 +8,7 @@ export interface User {
     role: string;
     is_active?: number;
     created_at: string;
+    has_password?: boolean;
 }
 
 export interface UpdateUserPayload {
@@ -67,6 +68,24 @@ class UserService {
             await api.delete<any>(`/api/v1/users/${userId}`);
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Không thể vô hiệu hóa người dùng');
+        }
+    }
+
+    async sendPhoneOtp(phone: string): Promise<{ message: string; expiresAt: string }> {
+        try {
+            const response = await api.post<any>('/api/v1/otp/sendAddPhoneOtp', { phone });
+            return response.data.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể gửi OTP');
+        }
+    }
+
+    async verifyPhone(phone: string, otp: string): Promise<User> {
+        try {
+            const response = await api.post<any>('/api/v1/otp/verifyAddPhone', { phone, otp });
+            return response.data.data.user;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Xác thực OTP thất bại');
         }
     }
 }

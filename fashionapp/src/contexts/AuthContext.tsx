@@ -52,6 +52,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         
     }
 
+    const googleLogin = async (idToken: string): Promise<void> => {
+        try {
+            dispatch({ type: LOGIN_START });
+            const { user, token } = await authService.googleLogin(idToken);
+            dispatch({ type: LOGIN_SUCCESS, payload: { user, token } });
+        } catch (error: any) {
+            dispatch({ 
+                type: LOGIN_FAILURE, 
+                payload: { error: error.message } 
+            });
+            throw error;
+        }
+    }
+
     const register = async (userData: RegisterRequest): Promise<void> => {
         dispatch({ type: REGISTER_START });
         try {
@@ -146,6 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     const contextValue: AuthContextType = {
         ...state,
         login,
+        googleLogin,
         register,
         logout,
         refreshToken,

@@ -14,10 +14,11 @@ export interface User {
     username: string;
     email: string;
     role: 'customer' | 'admin';
-    phone?: string;
+    phone?: string | null;
     address?: string;
+    auth_provider?: 'local' | 'google';
+    google_id?: string;
 }
-
 
 export interface LoginRequest {
     email: string;
@@ -55,6 +56,7 @@ export interface AuthState {
 
 export interface AuthContextType extends AuthState {
     login: (credentials: LoginRequest) => Promise<void>;
+    googleLogin: (idToken: string) => Promise<void>;
     register: (userData: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
     refreshToken: () => Promise<void>;

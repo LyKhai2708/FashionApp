@@ -19,7 +19,25 @@ class AuthService {
       return { user, token };
       
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Đăng nhập thất bại');
+      const errorMessage = error.response?.data?.data || error.response?.data?.message || 'Đăng nhập thất bại';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async googleLogin(idToken: string): Promise<{ user: User; token: string }> {
+    try {
+      const response = await api.post<AuthResponse>('/api/v1/auth/google', { idToken });
+      
+      const { user, token } = response.data.data;
+      console.log('Google login response:', response.data.data);
+
+      accessTokenStorage.save(token);
+      userStorage.save(user);
+      
+      return { user, token };
+      
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Đăng nhập Google thất bại');
     }
   }
 

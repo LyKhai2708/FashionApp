@@ -66,14 +66,21 @@ async function login(req, res, next) {
     try {
         const { email, password } = req.body;
     if(!email || !password) {
-        return next(new ApiError(400, 'Email and password are required'));
+        return next(new ApiError(400, 'Email/SĐT và mật khẩu là bắt buộc'));
     }
     const result = await authService.login(email, password);
 
 
-    if(!result) {
-        return next(new ApiError(401, 'Invalid email or password'));
+    if(result.error) {
+        if(result.error === 'GOOGLE_ONLY_ACCOUNT') {
+            return next(new ApiError(403, 'GOOGLE_ONLY_ACCOUNT'));
+        }
+        if(result.error === 'USER_NOT_FOUND' || result.error === 'INVALID_PASSWORD') {
+            return next(new ApiError(401, 'Email/SĐT hoặc mật khẩu không đúng'));
+        }
+        return next(new ApiError(401, 'Đăng nhập thất bại'));
     }
+
     const {user, token, refreshToken} = result;
 
     res.cookie('refreshToken', refreshToken, 
@@ -197,6 +204,50 @@ function adminLogout(req, res) {
   res.clearCookie("adminRefreshToken");
   return res.json({ status: "success", message: "Admin logged out" });
 }
+
+async function googleLogin(req, res, next) {
+  try {
+    const { idToken } = req.body;
+    
+    if (!idToken) {
+      return next(new ApiError(400, 'Google ID token is required'));
+    }
+    
+    const result = await authService.googleLogin(idToken);
+    
+    if (!result) {
+      return next(new ApiError(401, 'Google authentication failed'));
+    }
+    
+    const { user, token, refreshToken } = result;
+    
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    
+    return res.json({
+      status: "success",
+      data: {
+        user: {
+          id: user.user_id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          auth_provider: user.auth_provider,
+          google_id: user.google_id
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return next(new ApiError(500, error.message || 'An error occurred during Google login'));
+  }
+}
   
 
 
@@ -206,6 +257,7 @@ module.exports = {
   adminRefresh,
   register,
   login,
+  googleLogin,
   refresh,
   logout,
 };

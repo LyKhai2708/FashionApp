@@ -1,4 +1,5 @@
 const userService = require('../services/user.service');
+const otpService = require('../services/otp.service');
 const ApiError = require('../api-error');
 const JSend = require('../jsend');
 
@@ -87,7 +88,6 @@ async function changePassword(req, res, next) {
       return next(new ApiError(500, err.message));
   }
 }
-
 
 module.exports = {
   findUserByEmail,

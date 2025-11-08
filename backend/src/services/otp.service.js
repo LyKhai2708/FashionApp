@@ -32,7 +32,7 @@ async function sendOtpForRegister(phone) {
 }
 
 
-async function sendOtpForChangePhone(userId, newPhone) {
+async function sendOtpForAddPhone(userId, newPhone) {
     try {
         const existingUser = await knex('users')
             .where({ phone: newPhone })
@@ -43,7 +43,7 @@ async function sendOtpForChangePhone(userId, newPhone) {
         }
 
         await knex('otp_verifications')
-            .where({ phone: newPhone, purpose: 'change_phone', is_verified: false })
+            .where({ phone: newPhone, purpose: 'add_phone', is_verified: false })
             .delete();
 
         const otp = generateOtp();
@@ -52,7 +52,7 @@ async function sendOtpForChangePhone(userId, newPhone) {
         await knex('otp_verifications').insert({
             phone: newPhone,
             otp,
-            purpose: 'change_phone',
+            purpose: 'add_phone',
             user_id: userId,
             expires_at: expiresAt,
             attempts: 0,
@@ -130,12 +130,12 @@ async function verifyOtpForRegister(phone, otp) {
 }
 
 
-async function verifyOtpForChangePhone(userId, newPhone, otp) {
+async function verifyOtpForAddPhone(userId, newPhone, otp) {
     try {
         const record = await knex('otp_verifications')
             .where({
                 phone: newPhone,
-                purpose: 'change_phone',
+                purpose: 'add_phone',
                 user_id: userId,
                 is_verified: false
             })
@@ -159,35 +159,30 @@ async function verifyOtpForChangePhone(userId, newPhone, otp) {
                 .where({ id: record.id })
                 .update({
                     attempts: record.attempts + 1,
-                    updated_at: new Date()
                 });
 
             throw new Error(`OTP không đúng. Còn ${4 - record.attempts} lần thử`);
         }
-        //otp dung
+
         await knex.transaction(async (trx) => {
             await trx('otp_verifications')
                 .where({ id: record.id })
                 .update({
                     is_verified: true,
                     verified_at: new Date(),
-                    updated_at: new Date()
                 });
 
-            //cap nhat so dien thoai moi
             await trx('users')
                 .where({ user_id: userId })
                 .update({
                     phone: newPhone,
-                    updated_at: new Date()
                 });
         });
 
-        console.log(` Đổi số thành công cho user ${userId}: ${newPhone}`);
 
         return {
             success: true,
-            message: 'Đổi số điện thoại thành công',
+            message: 'Thêm số điện thoại thành công',
             newPhone
         };
     } catch (error) {
@@ -216,8 +211,8 @@ async function checkPhoneVerified(phone) {
 module.exports = {
     generateOtp,
     sendOtpForRegister,
-    sendOtpForChangePhone,
     verifyOtpForRegister,
-    verifyOtpForChangePhone,
-    checkPhoneVerified
+    checkPhoneVerified,
+    sendOtpForAddPhone,
+    verifyOtpForAddPhone
 };
