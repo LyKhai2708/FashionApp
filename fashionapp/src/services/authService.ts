@@ -92,6 +92,22 @@ class AuthService {
     }
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    try {
+      await api.post('/api/v1/auth/forgot-password', { email });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Gửi email thất bại');
+    }
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    try {
+      await api.post('/api/v1/auth/reset-password', { token, password });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Đặt lại mật khẩu thất bại');
+    }
+  }
+
 
   getCurrentUser(): User | null {
     return userStorage.get();

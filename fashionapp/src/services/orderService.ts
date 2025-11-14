@@ -52,6 +52,7 @@ export interface Order {
     receiver_phone: string;       
     receiver_email: string;
     order_date: string;
+    processing_at?: string;
     shipped_at?: string;
     delivered_at?: string;
     cancelled_at?: string;
@@ -122,11 +123,19 @@ class OrderService {
         }
     }
 
-    async getUserOrders(page: number = 1, limit: number = 5): Promise<{ orders: Order[]; pagination: { total: number; total_pages: number; current_page: number; per_page: number } }> {
+    async getUserOrders(page: number = 1, limit: number = 5, order_status?: string, payment_status?: string): Promise<{ orders: Order[]; pagination: { total: number; total_pages: number; current_page: number; per_page: number } }> {
         try {
-            const response = await api.get(`/api/v1/orders/me`, {
-                params: { page, limit }
-            });
+            const params: any = { page, limit };
+            
+            if (order_status) {
+                params.order_status = order_status;
+            }
+            
+            if (payment_status) {
+                params.payment_status = payment_status;
+            }
+            
+            const response = await api.get(`/api/v1/orders/me`, { params });
             return {
                 orders: response.data.data.orders || [],
                 pagination: response.data.data.pagination
@@ -160,6 +169,24 @@ class OrderService {
         } catch (error: any) {
             console.error('Cancel order error:', error);
             throw new Error(error.response?.data?.message || 'Không thể hủy đơn hàng');
+        }
+    }
+
+    async updateOrderAddress(orderId: number, addressData: {
+        receiver_name: string;
+        receiver_phone: string;
+        receiver_email: string;
+        shipping_province: string;
+        shipping_province_code: number;
+        shipping_ward: string;
+        shipping_ward_code: number;
+        shipping_detail_address: string;
+    }): Promise<Order> {
+        try {
+            const response = await api.patch(`/api/v1/orders/${orderId}/address`, addressData);
+            return response.data.data.order;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể cập nhật địa chỉ đơn hàng');
         }
     }
 }

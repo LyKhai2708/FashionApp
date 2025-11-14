@@ -1,8 +1,10 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const knex = require('../database/knex');
 const { checkPhoneVerified } = require('./otp.service');
 const { OAuth2Client } = require('google-auth-library');
+const { sendPasswordResetEmail } = require('./email.service');
 
 const {ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, GOOGLE_CLIENT_ID} = process.env;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
@@ -154,7 +156,86 @@ async function googleLogin(idToken) {
     }
 }
 
-module.exports = {login, googleLogin, generateAccessToken, generateRefreshToken, register }
+async function forgotPassword(email) {
+    const user = await usersRepository()
+        .where('email', email)
+        .first();
+    
+    if (!user) {
+        throw new Error('USER_NOT_FOUND');
+    }
+    
+    if (!user.password && user.auth_provider === 'google') {
+        throw new Error('GOOGLE_ONLY_ACCOUNT');
+    }
+    
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    await knex('password_resets')
+        .where('email', email)
+        .delete();
+    
+    // Insert new reset token
+    await knex('password_resets').insert({
+        email: email,
+        token: resetTokenHash,
+        expires_at: resetTokenExpiry
+    });
+    
+    await sendPasswordResetEmail(email, resetToken, user.username);
+    
+    return { success: true };
+}
+
+async function resetPassword(token, newPassword) {
+    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    
+    // Find valid reset token
+    const resetRecord = await knex('password_resets')
+        .where('token', resetTokenHash)
+        .where('expires_at', '>', new Date())
+        .whereNull('used_at')
+        .first();
+    
+    if (!resetRecord) {
+        throw new Error('INVALID_OR_EXPIRED_TOKEN');
+    }
+    
+    // Find user by email
+    const user = await usersRepository()
+        .where('email', resetRecord.email)
+        .first();
+    
+    if (!user) {
+        throw new Error('USER_NOT_FOUND');
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    await usersRepository()
+        .where('user_id', user.user_id)
+        .update({ password: hashedPassword });
+    
+    // Mark token as used
+    await knex('password_resets')
+        .where('id', resetRecord.id)
+        .update({ used_at: new Date() });
+    
+    return { success: true };
+}
+
+module.exports = {
+    login, 
+    googleLogin, 
+    generateAccessToken, 
+    generateRefreshToken, 
+    register,
+    forgotPassword,
+    resetPassword
+}
 
 
 

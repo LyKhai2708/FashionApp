@@ -1,7 +1,13 @@
 const knex = require('../database/knex');
+const otpGenerator = require('otp-generator');
 
 function generateOtp() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return otpGenerator.generate(6, {
+        digits: true,
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false,
+    });
 }
 
 
@@ -23,7 +29,7 @@ async function sendOtpForRegister(phone) {
             is_verified: false
         });
 
-        console.log(`📱 OTP gửi tới ${phone}: ${otp}`);
+        console.log(`OTP gửi tới ${phone}: ${otp}`);
     return { success: true, message: 'OTP đã được gửi', expiresAt };
     } catch (error) {
         console.error('Send OTP register error:', error);

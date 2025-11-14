@@ -14,6 +14,7 @@ import { AdminAuthProvider } from './contexts/admin/AdminAuthContext';
 import AdminRoutes from './routes/admin/AdminRoutes';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import ChatWidget from './components/ChatWidget';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -55,6 +56,7 @@ function UserAppContent() {
       <Spin fullscreen spinning={isLoading} size="large" />
         <ScrollToTop />
         <Routes>{generateRoutes(isAuthenticated)}</Routes>
+        <ChatWidget />
     </>
   );
 }

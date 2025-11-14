@@ -111,7 +111,9 @@ export default function Login() {
                                 </Form.Item>
 
                                 <div className="flex items-center justify-end mb-2">
-                                    <a href="#">Quên mật khẩu</a>
+                                    <Link to="/forgot-password" style={{ color: 'black' }}>
+                                        Quên mật khẩu?
+                                    </Link>
                                 </div>
 
                                 <button

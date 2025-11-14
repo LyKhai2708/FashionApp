@@ -53,8 +53,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
     };
 
     const handleCardClick = () => {
-        const slug = `${product.slug}-${product.product_id}`;
-        navigate(`/products/${slug}`);
+        navigate(`/products/${product.product_id}`);
     };
 
     const handleQuickAddToCart = async (e: React.MouseEvent, size: ProductSize) => {

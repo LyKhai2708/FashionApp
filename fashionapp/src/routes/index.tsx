@@ -12,6 +12,8 @@ type RouteType = {
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 import ProductPage from '../pages/ProductPage';
 import CategoryPage from '../pages/CategoryPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
@@ -30,9 +32,11 @@ const publicRoutes: RouteType[] = [
   { path: '/', component: Home, layout: Fragment },
   { path: '/login', component: Login, layout: null },
   { path: '/register', component: Register, layout: null },
+  { path: '/forgot-password', component: ForgotPassword, layout: null },
+  { path: '/reset-password', component: ResetPassword, layout: null },
   { path: '/products', component: ProductPage },
   { path: '/collection/:categorySlug', component: CategoryPage },
-  { path: '/products/:slug', component: ProductDetailPage },
+  { path: '/products/:id', component: ProductDetailPage },
   { path: '/cart', component: Cart },
   { path: '/search', component: SearchPage },
   { path: '/promotions/:id', component: PromotionDetailPage },

@@ -22,6 +22,9 @@ export default function ProfilePage() {
   const [orderPage, setOrderPage] = useState(1);
   const [orderTotal, setOrderTotal] = useState(0);
   const orderLimit = 5;
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string | null>(null);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string | null>(null);
+  const [orderStatusCounts, setOrderStatusCounts] = useState<Record<string, number>>({});
   const [userInfo, setUserInfo] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -178,7 +181,17 @@ export default function ProfilePage() {
     
     try {
       setLoading(true);
-      const data = await orderService.getUserOrders(orderPage, orderLimit);
+      const params: any = { page: orderPage, limit: orderLimit };
+      
+      if (orderStatusFilter) {
+        params.order_status = orderStatusFilter;
+      }
+      
+      if (paymentStatusFilter) {
+        params.payment_status = paymentStatusFilter;
+      }
+      
+      const data = await orderService.getUserOrders(params.page, params.limit, params.order_status, params.payment_status);
       setOrders(data.orders);
       setOrderTotal(data.pagination.total);
     } catch (error) {
@@ -187,10 +200,45 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
+  
+  const loadOrderCounts = async () => {
+    if (activeTab !== 'orders') return;
+    
+    try {
+      const statuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+      const counts: Record<string, number> = {};
+      
+      try {
+        const allData = await orderService.getUserOrders(1, 1);
+        counts['all'] = allData.pagination.total;
+      } catch (error) {
+        counts['all'] = 0;
+      }
+      
+      await Promise.all(
+        statuses.map(async (status) => {
+          try {
+            const data = await orderService.getUserOrders(1, 1, status);
+            counts[status] = data.pagination.total;
+          } catch (error) {
+            counts[status] = 0;
+          }
+        })
+      );
+      
+      setOrderStatusCounts(counts);
+    } catch (error) {
+      console.error('Error loading order counts:', error);
+    }
+  };
 
   useEffect(() => {
     loadOrders();
-  }, [activeTab, orderPage]);
+  }, [activeTab, orderPage, orderStatusFilter, paymentStatusFilter]);
+  
+  useEffect(() => {
+    loadOrderCounts();
+  }, [activeTab]);
 
   // Load order detail
   useEffect(() => {
@@ -371,6 +419,17 @@ export default function ProfilePage() {
                   currentPage={orderPage}
                   pageSize={orderLimit}
                   onPageChange={setOrderPage}
+                  orderStatusFilter={orderStatusFilter}
+                  paymentStatusFilter={paymentStatusFilter}
+                  onOrderStatusChange={(status) => {
+                    setOrderStatusFilter(status);
+                    setOrderPage(1);
+                  }}
+                  onPaymentStatusChange={(status) => {
+                    setPaymentStatusFilter(status);
+                    setOrderPage(1);
+                  }}
+                  orderStatusCounts={orderStatusCounts}
                 />
               ) : (
                 <OrderDetail order={orderDetail} onBack={() => setSelectedOrderId(null)} />

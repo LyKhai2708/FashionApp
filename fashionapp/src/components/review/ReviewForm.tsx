@@ -229,7 +229,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             </div>
         </Modal>
 
-        {/* Confirm sửa 1 lần */}
         <Modal
             title="Xác nhận sửa đánh giá"
             open={confirmVisible}

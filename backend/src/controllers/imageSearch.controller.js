@@ -25,7 +25,10 @@ async function searchByImage(req, res, next) {
         const absoluteImagePath = path.resolve(uploadedImagePath);
 
         const imageSearchDir = path.join(__dirname, '../../../imageSearch');
-        const pythonProcess = spawn('python', [pythonScript, absoluteImagePath], {
+        
+        const pythonPath = path.join(__dirname, '../../../imageSearch/myenv/Scripts/python.exe');
+        
+        const pythonProcess = spawn(pythonPath, [pythonScript, absoluteImagePath], {
             cwd: imageSearchDir
         });
 

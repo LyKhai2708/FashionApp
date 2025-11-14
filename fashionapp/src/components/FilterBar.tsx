@@ -59,7 +59,6 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
     const [loadingColors, setLoadingColors] = useState(false);
     const [loadingSizes, setLoadingSizes] = useState(false);
 
-    // Fetch colors và sizes khi component mount
     useEffect(() => {
         const fetchColorsAndSizes = async () => {
             try {
@@ -209,7 +208,7 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                             {expandedSections.color && (
                                 <div className="grid grid-cols-5 gap-2">
                                     {loadingColors ? (
-                                        // Loading skeleton
+                                        // skeleton
                                         Array.from({ length: 10 }).map((_, i) => (
                                             <div key={i} className="w-10 h-10 bg-gray-200 rounded animate-pulse" />
                                         ))
@@ -243,7 +242,6 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                             )}
                         </div>
 
-                        {/* Size Filter */}
                         <div className="mb-6">
                             <button
                                 onClick={() => toggleSection('size')}
@@ -283,7 +281,6 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                             )}
                         </div>
 
-                        {/* Price Range Filter */}
                         <div className="mb-6">
                             <button
                                 onClick={() => toggleSection('price')}
@@ -321,7 +318,6 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                             )}
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="flex gap-3 pt-4 border-t border-gray-200">
                             <button
                                 onClick={handleClearFilters}

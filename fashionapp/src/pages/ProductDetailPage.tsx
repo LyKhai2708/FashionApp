@@ -6,7 +6,6 @@ import { useProductDetail } from '../hooks/useProductDetail';
 import { formatVNDPrice } from '../utils/priceFormatter';
 import { getImageUrl } from '../utils/imageHelper';
 import Breadcrumb from '../components/Breadcrumb';
-import { extractProductIdFromSlug } from '../utils/slugUtils';
 import { useCart } from '../contexts/CartContext';
 import ReviewSection from '../components/review/ReviewSection';
 import PolicyBenefits from '../components/PolicyBenefits';
@@ -21,10 +20,10 @@ export default function ProductDetailPage() {
     const { addToCart } = useCart();
     const { addProduct } = useRecentlyViewed();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { slug } = useParams<{ slug: string }>();
+    const { id } = useParams<{ id: string }>();
     const message = useMessage();
     
-    const productId = extractProductIdFromSlug(slug || '');
+    const productId = parseInt(id || '0');
     
     const {
         product,
@@ -210,7 +209,7 @@ export default function ProductDetailPage() {
                                         current: selectedImageIndex,
                                         onVisibleChange: (visible) => {
                                             if (!visible) {
-                                                // Optional: do something when preview closes
+                                                // 
                                             }
                                         }
                                     }}

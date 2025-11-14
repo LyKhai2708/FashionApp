@@ -1,5 +1,5 @@
-import { Button, Divider, Tag, Card, Typography, Space, Modal, Rate } from "antd";
-import { ArrowLeftOutlined, UserOutlined, PhoneOutlined, MailOutlined, HomeOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
+import { Button, Divider, Tag, Card, Typography, Space, Modal, Rate, Steps } from "antd";
+import { ArrowLeftOutlined, UserOutlined, PhoneOutlined, MailOutlined, HomeOutlined, CalendarOutlined, FileTextOutlined, ShoppingCartOutlined, SyncOutlined, CarOutlined, CheckCircleOutlined, CloseCircleOutlined, EditOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import type { Order } from "../services/orderService";
 import { formatVNDPrice } from '../utils/priceFormatter';
@@ -10,6 +10,7 @@ import reviewService from "../services/reviewService";
 import { useRetryPayment } from '../hooks/useRetryPayment';
 import { PaymentCountdown } from '../components/PaymentCountdown';
 import { RetryPaymentButton } from '../components/RetryPaymentButton';
+import OrderEditAddressModal from './OrderEditAddressModal';
 const { Title, Text } = Typography;
 type Props = {
   order: Order | null;
@@ -74,21 +75,14 @@ const {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{
     productId: number;
-    orderId: number;
-    reviewId?: number;
+    orderId?: number;
     editMode?: boolean;
-    initialData?: { 
-      rating: number; 
-      comment: string; 
-      order_id: number;
-      images?: Array<{
-        image_id: number;
-        image_url: string;
-      }>;
-    };
+    reviewId?: number;
+    initialData?: { order_id: number; rating: number; comment: string; images?: { image_id: number; image_url: string; }[] };
   } | null>(null);
-  const [viewModal, setViewModal] = useState<null | { rating: number; comment: string }>(null);
-  const [itemReviews, setItemReviews] = useState<Record<number, any>>({}); // productId -> review | null
+  const [itemReviews, setItemReviews] = useState<{ [key: number]: any }>({});
+  const [viewModal, setViewModal] = useState<{ rating: number; comment: string; images?: { image_id: number; image_url: string; }[] } | null>(null);
+  const [showEditAddressModal, setShowEditAddressModal] = useState(false);
 
   const handleOpenReview = (productId: number) => {
     setSelectedProduct({
@@ -152,50 +146,8 @@ const {
               type="text"
               size="large"
             />
-            <div>
+            <div className="flex-1">
               <Title level={3} className="!mb-1">Đơn hàng #{order.order_code || order.order_id}</Title>
-              <div className="space-y-1">
-                <Text type="secondary" className="flex items-center gap-2">
-                  <CalendarOutlined />
-                  Đặt hàng: {new Date(order.order_date).toLocaleDateString('vi-VN', {
-                    year: 'numeric',
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </Text>
-                {order.shipped_at && (
-                  <Text type="secondary" className="flex items-center gap-2 text-xs">
-                    Đã giao cho vận chuyển: {new Date(order.shipped_at).toLocaleDateString('vi-VN', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </Text>
-                )}
-                {order.delivered_at && (
-                  <Text type="secondary" className="flex items-center gap-2 text-xs">
-                    Đã giao thành công: {new Date(order.delivered_at).toLocaleDateString('vi-VN', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </Text>
-                )}
-                {order.cancelled_at && (
-                  <Text type="secondary" className="flex items-center gap-2 text-xs">
-                    Đã hủy: {new Date(order.cancelled_at).toLocaleDateString('vi-VN', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </Text>
-                )}
-              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -208,11 +160,100 @@ const {
           </div>
         </div>
       </Card>
+      <Card className="shadow-sm" title={<span className="text-base font-medium">Theo dõi đơn hàng</span>}>
+        <Steps
+          current={
+            order.order_status === 'cancelled' ? -1 :
+            order.order_status === 'delivered' ? 4 :
+            order.order_status === 'shipped' ? 3 :
+            order.order_status === 'processing' ? 2 :
+            order.order_status === 'pending' ? 1 : 0
+          }
+          status={order.order_status === 'cancelled' ? 'error' : 'process'}
+          items={[
+            {
+              title: 'Đặt hàng',
+              description: order.order_date ? new Date(order.order_date).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : undefined,
+              icon: <ShoppingCartOutlined />,
+            },
+            {
+              title: 'Chờ duyệt',
+              description: order.order_status === 'pending' ? 'Đang chờ xác nhận' : undefined,
+              icon: <CalendarOutlined />,
+            },
+            {
+              title: 'Đang xử lý',
+              description: order.processing_at ? new Date(order.processing_at).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : undefined,
+              icon: <SyncOutlined spin={order.order_status === 'processing'} />,
+            },
+            {
+              title: 'Đang giao',
+              description: order.shipped_at ? new Date(order.shipped_at).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : undefined,
+              icon: <CarOutlined />,
+            },
+            {
+              title: order.order_status === 'cancelled' ? 'Đã hủy' : 'Hoàn tất',
+              description: order.cancelled_at ? 
+                new Date(order.cancelled_at).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 
+                order.delivered_at ? 
+                  new Date(order.delivered_at).toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : undefined,
+              icon: order.order_status === 'cancelled' ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
+            },
+          ]}
+        />
+        {order.cancel_reason && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <Text type="danger" className="text-sm">
+              <strong>Lý do hủy:</strong> {order.cancel_reason}
+            </Text>
+          </div>
+        )}
+      </Card>
 
-      {/* Order Info */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Receiver Info */}
-        <Card title={<span className="flex items-center gap-2"><UserOutlined /> Thông tin người nhận</span>} className="shadow-sm">
+
+        <Card 
+          title={<span className="flex items-center gap-2"><UserOutlined /> Thông tin người nhận</span>} 
+          className="shadow-sm"
+          extra={
+            order.order_status === 'pending' && (
+              <Button 
+                size="small" 
+                icon={<EditOutlined />}
+                onClick={() => setShowEditAddressModal(true)}
+                className="!text-blue-600 !border-blue-300"
+              >
+                Sửa địa chỉ
+              </Button>
+            )
+          }
+        >
           <Space direction="vertical" size="middle" className="w-full">
             <div className="flex items-center gap-3">
               <UserOutlined className="text-gray-500" />
@@ -271,12 +312,6 @@ const {
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                 <Text strong>Ghi chú:</Text><br/>
                 <Text type="secondary">{order.notes}</Text>
-              </div>
-            )}
-            {order.cancel_reason && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <Text strong className="text-red-600">Lý do hủy:</Text><br/>
-                <Text type="secondary" className="text-red-700">{order.cancel_reason}</Text>
               </div>
             )}
           </Space>
@@ -383,7 +418,7 @@ const {
                         <Button 
                           size="small"
                           type="default"
-                          onClick={() => setViewModal({ rating: r.rating, comment: r.comment })}
+                          onClick={() => setViewModal({ rating: r.rating, comment: r.comment, images: r.images })}
                         >
                           Xem đánh giá
                         </Button>
@@ -428,9 +463,34 @@ const {
           <div className="space-y-3">
             <Rate value={viewModal.rating} disabled />
             <Typography.Paragraph>{viewModal.comment}</Typography.Paragraph>
+            {viewModal.images && viewModal.images.length > 0 && (
+              <div>
+                <Text strong className="block mb-2">Hình ảnh đánh giá:</Text>
+                <div className="grid grid-cols-3 gap-3">
+                  {viewModal.images.map((image) => (
+                    <img 
+                      key={image.image_id}
+                      src={getImageUrl(image.image_url)} 
+                      alt="Review" 
+                      className="w-full h-24 object-cover rounded-lg border"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
+
+      <OrderEditAddressModal
+        visible={showEditAddressModal}
+        onClose={() => setShowEditAddressModal(false)}
+        onSuccess={() => {
+          setShowEditAddressModal(false);
+          onBack();
+        }}
+        order={order!}
+      />
     </div>
   );
 }

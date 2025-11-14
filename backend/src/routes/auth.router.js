@@ -437,6 +437,95 @@ module.exports.setup = (app) => {
      */
     router.post('/google', authController.googleLogin);
     
+    /**
+     * @swagger
+     * /api/v1/auth/forgot-password:
+     *   post:
+     *     summary: Request password reset
+     *     description: Send password reset email to user
+     *     tags:
+     *       - authentication
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - email
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 format: email
+     *                 description: User email address
+     *                 example: "user@example.com"
+     *     responses:
+     *       200:
+     *         description: Reset email sent successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   enum: [success]
+     *                 message:
+     *                   type: string
+     *                   example: "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn."
+     *       400:
+     *         description: Bad request - Invalid email or Google-only account
+     */
+    router.post('/forgot-password', authController.forgotPassword);
+    
+    /**
+     * @swagger
+     * /api/v1/auth/reset-password:
+     *   post:
+     *     summary: Reset password with token
+     *     description: Reset user password using token from email
+     *     tags:
+     *       - authentication
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - token
+     *               - password
+     *             properties:
+     *               token:
+     *                 type: string
+     *                 description: Password reset token from email
+     *                 example: "abc123..."
+     *               password:
+     *                 type: string
+     *                 format: password
+     *                 minLength: 8
+     *                 maxLength: 50
+     *                 description: New password (8-50 characters, must contain uppercase, lowercase, number, and special character)
+     *                 example: "NewPassword123!"
+     *     responses:
+     *       200:
+     *         description: Password reset successful
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   enum: [success]
+     *                 message:
+     *                   type: string
+     *                   example: "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới."
+     *       400:
+     *         description: Bad request - Invalid token or weak password
+     */
+    router.post('/reset-password', authController.resetPassword);
+    
     router.all('/', methodNotAllowed);
 }
 

@@ -444,6 +444,146 @@ module.exports.setup = (app) => {
   
   /**
    * @swagger
+   * /api/v1/orders/{id}/address:
+   *   patch:
+   *     summary: Update order address
+   *     description: Update delivery address of a pending order. Users can only update their own orders.
+   *     tags: [Orders]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - $ref: '#/components/parameters/orderIdParam'
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - receiver_name
+   *               - receiver_phone
+   *               - receiver_email
+   *               - shipping_province
+   *               - shipping_province_code
+   *               - shipping_ward
+   *               - shipping_ward_code
+   *               - shipping_detail_address
+   *             properties:
+   *               receiver_name:
+   *                 type: string
+   *                 description: Receiver name
+   *               receiver_phone:
+   *                 type: string
+   *                 pattern: "^(0)[0-9]{9,10}$"
+   *                 description: Receiver phone number
+   *               receiver_email:
+   *                 type: string
+   *                 format: email
+   *                 description: Receiver email
+   *               shipping_province:
+   *                 type: string
+   *                 description: Province name
+   *               shipping_province_code:
+   *                 type: number
+   *                 description: Province code
+   *               shipping_ward:
+   *                 type: string
+   *                 description: Ward name
+   *               shipping_ward_code:
+   *                 type: number
+   *                 description: Ward code
+   *               shipping_detail_address:
+   *                 type: string
+   *                 description: Detailed address
+   *           example:
+   *             receiver_name: "Nguyen Van A"
+   *             receiver_phone: "0901234567"
+   *             receiver_email: "nguyenvana@email.com"
+   *             shipping_province: "Ho Chi Minh"
+   *             shipping_province_code: 79
+   *             shipping_ward: "Phuong 1"
+   *             shipping_ward_code: 1001
+   *             shipping_detail_address: "123 Nguyen Van Linh"
+   *     responses:
+   *       200:
+   *         description: Order address updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   enum: [success]
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     order:
+   *                       $ref: '#/components/schemas/Order'
+   *                     message:
+   *                       type: string
+   *             example:
+   *               status: success
+   *               data:
+   *                 message: "Cập nhật địa chỉ đơn hàng thành công"
+   *                 order:
+   *                   order_id: 123
+   *                   receiver_name: "Nguyen Van A"
+   *                   receiver_phone: "0901234567"
+   *       400:
+   *         description: Bad request - Invalid input or order cannot be updated
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   enum: [fail]
+   *                 message:
+   *                   type: string
+   *             example:
+   *               status: fail
+   *               message: "Chỉ có thể sửa địa chỉ đơn hàng đang chờ duyệt"
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       403:
+   *         description: Forbidden - No permission to update this order
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   enum: [fail]
+   *                 message:
+   *                   type: string
+   *             example:
+   *               status: fail
+   *               message: "Bạn không có quyền sửa đơn hàng này"
+   *       404:
+   *         description: Order not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   enum: [fail]
+   *                 message:
+   *                   type: string
+   *             example:
+   *               status: fail
+   *               message: "Không tìm thấy đơn hàng"
+   *       500:
+   *         $ref: '#/components/responses/ServerError'
+   */
+  router.patch('/:id/address', authMiddleware, ordersController.updateOrderAddress);
+  
+  /**
+   * @swagger
    * /api/v1/orders/{id}:
    *   delete:
    *     summary: Cancel an order

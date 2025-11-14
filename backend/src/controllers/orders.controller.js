@@ -211,6 +211,50 @@ class OrdersController {
       return next(new ApiError(500, error.message || 'Lỗi khi cập nhật trạng thái thanh toán'));
     }
   }
+//khuc nay chua chac , se sua sau
+  async updateOrderAddress(req, res, next) {
+    try {
+      const { id } = req.params;
+      const addressData = req.body;
+      const userId = req.user.id;
+
+      const requiredFields = [
+        'receiver_name', 
+        'receiver_phone', 
+        'receiver_email',
+        'shipping_province',
+        'shipping_province_code',
+        'shipping_ward',
+        'shipping_ward_code',
+        'shipping_detail_address'
+      ];
+
+      for (const field of requiredFields) {
+        if (!addressData[field]) {
+          return next(new ApiError(400, `${field} không được để trống`));
+        }
+      }
+
+      if (!/^(0)[0-9]{9,10}$/.test(addressData.receiver_phone)) {
+        return next(new ApiError(400, 'Số điện thoại không hợp lệ'));
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(addressData.receiver_email)) {
+        return next(new ApiError(400, 'Email không hợp lệ'));
+      }
+
+      const updatedOrder = await orderService.updateOrderAddress(id, userId, addressData);
+
+      return res.json(JSend.success({ 
+        order: updatedOrder,
+        message: 'Cập nhật địa chỉ đơn hàng thành công' 
+      }));
+    } catch (error) {
+      console.error('Error updating order address:', error);
+      return next(new ApiError(500, error.message || 'Lỗi khi cập nhật địa chỉ đơn hàng'));
+    }
+  }
   
 }
 

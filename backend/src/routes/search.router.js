@@ -68,7 +68,7 @@ module.exports.setup = (app) => {
      *       201:
      *         description: Keyword saved successfully
      */
-    router.post('/', authMiddleware, searchController.saveSearch);
+    router.post('/', searchController.saveSearch);
     
     router.all('/trending', methodNotAllowed);
     router.all('/', methodNotAllowed);

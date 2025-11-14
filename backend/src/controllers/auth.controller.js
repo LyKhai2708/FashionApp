@@ -3,7 +3,7 @@ const ApiError = require('../api-error');
 const JSend = require('../jsend');
 const jwt = require('jsonwebtoken');
 const userService = require('../services/user.service');
-
+const chatService = require('../services/chat.service');
 async function register(req, res, next) {
     try {
         const { username, email, password, phone, role } = req.body;
@@ -82,6 +82,13 @@ async function login(req, res, next) {
     }
 
     const {user, token, refreshToken} = result;
+
+    const guestToken = req.cookies.guest_token;
+    if (guestToken) {
+
+        await chatService.migrateGuestToUser(user.user_id, guestToken);
+        res.clearCookie('guest_token');
+    }
 
     res.cookie('refreshToken', refreshToken, 
         { httpOnly: true,
@@ -221,6 +228,12 @@ async function googleLogin(req, res, next) {
     
     const { user, token, refreshToken } = result;
     
+    const guestToken = req.cookies.guest_token;
+    if (guestToken) {
+        await chatService.migrateGuestToUser(user.user_id, guestToken);
+        res.clearCookie('guest_token');
+    }
+    
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -248,8 +261,83 @@ async function googleLogin(req, res, next) {
     return next(new ApiError(500, error.message || 'An error occurred during Google login'));
   }
 }
-  
 
+async function forgotPassword(req, res, next) {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return next(new ApiError(400, 'Email là bắt buộc'));
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return next(new ApiError(400, 'Email không hợp lệ'));
+    }
+    
+    await authService.forgotPassword(email);
+    
+    return res.json({
+      status: "success",
+      message: "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn."
+    });
+    
+  } catch (error) {
+    console.log(error);
+    
+    if (error.message === 'USER_NOT_FOUND') {
+      return res.json({
+        status: "success",
+        message: "Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn."
+      });
+    }
+    
+    if (error.message === 'GOOGLE_ONLY_ACCOUNT') {
+      return next(new ApiError(400, 'Tài khoản này đăng nhập bằng Google. Vui lòng sử dụng Google để đăng nhập.'));
+    }
+    
+    return next(new ApiError(500, 'Đã xảy ra lỗi khi xử lý yêu cầu'));
+  }
+}
+
+async function resetPassword(req, res, next) {
+  try {
+    const { token, password } = req.body;
+    
+    if (!token || !password) {
+      return next(new ApiError(400, 'Token và mật khẩu mới là bắt buộc'));
+    }
+    
+    if (password.length < 8) {
+      return next(new ApiError(400, 'Mật khẩu phải có ít nhất 8 ký tự'));
+    }
+    
+    if (password.length > 50) {
+      return next(new ApiError(400, 'Mật khẩu không được vượt quá 50 ký tự'));
+    }
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    if (!passwordRegex.test(password)) {
+      return next(new ApiError(400, 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt'));
+    }
+    
+    await authService.resetPassword(token, password);
+    
+    return res.json({
+      status: "success",
+      message: "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới."
+    });
+    
+  } catch (error) {
+    console.log(error);
+    
+    if (error.message === 'INVALID_OR_EXPIRED_TOKEN') {
+      return next(new ApiError(400, 'Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn'));
+    }
+    
+    return next(new ApiError(500, 'Đã xảy ra lỗi khi đặt lại mật khẩu'));
+  }
+}
 
 module.exports = {
   adminLogin,
@@ -260,4 +348,6 @@ module.exports = {
   googleLogin,
   refresh,
   logout,
+  forgotPassword,
+  resetPassword,
 };

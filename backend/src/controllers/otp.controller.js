@@ -71,7 +71,7 @@ async function verifyOtpRegister(req, res) {
 }
 
 
-// Add phone for Google users
+
 async function sendAddPhoneOtp(req, res) {
     try {
         const userId = req.user.id;

@@ -1,6 +1,6 @@
 const knex = require('../database/knex');
 const { v4: uuidv4 } = require('uuid');
-const nodemailer = require('nodemailer');
+const { sendOrderConfirmationEmail } = require('./email.service');
 const voucherService = require('./voucher.service');
 const stockHelper = require('./stock.helper');
 const { SHIPPING } = require('../config/constants');
@@ -19,12 +19,6 @@ async function generateOrderCode(prefix = 'DL') {
   }
   return `${prefix}${dateStr}${String(seq).padStart(3, '0')}`;
 }
-
-
-
-
-
-
 
 async function createOrder(orderData, items) {
   const order_code = await generateOrderCode();
@@ -148,7 +142,7 @@ async function createOrder(orderData, items) {
     };
   });
 
-  // Update voucher usage and insert order_vouchers record
+
   if (orderResult.voucher_id) {
     await voucherService.useVoucher(
       orderResult.voucher_id,
@@ -158,147 +152,46 @@ async function createOrder(orderData, items) {
     );
   }
 
-  sendOrderConfirmationEmail(
-    orderResult.order_id, 
-    { ...orderData, order_code },
-    items, 
-    orderResult.sub_total, 
-    orderResult.shipping_fee, 
-    orderResult.total_amount
-  ).catch(err => {
-    console.error('Email sending failed (non-blocking):', err.message);
-  });
+  (async () => {
+    try {
+      const fullOrderData = await knex('orders')
+        .where('order_id', orderResult.order_id)
+        .first();
+      
+      if (!fullOrderData) {
+        console.warn(`Order #${orderResult.order_id} not found`);
+        return;
+      }
+
+      const orderDetails = await knex('orderdetails')
+        .join('product_variants','orderdetails.product_variant_id', 'product_variants.product_variants_id')
+        .join('products','product_variants.product_id', 'products.product_id')
+        .leftJoin('sizes','product_variants.size_id', 'sizes.size_id')
+        .leftJoin('colors','product_variants.color_id', 'colors.color_id')
+        .where('orderdetails.order_id', orderResult.order_id)
+        .select(
+          'products.name as product_name',
+          'products.thumbnail',
+          'colors.name as color_name',
+          'sizes.name as size_name',
+          'orderdetails.quantity',
+          'orderdetails.price',
+          'orderdetails.sub_total'
+        );
+      
+      if (orderDetails.length === 0) {
+        console.warn(`No order details found for order #${orderResult.order_id}`);
+        return;
+      }
+
+      await sendOrderConfirmationEmail(fullOrderData, orderDetails);
+      console.log(`email xác nhận đã gửi thành công cho đơn hàng #${orderResult.order_id}`);
+    } catch (error) {
+      console.error(`Lỗi gửi email cho đơn hàng #${orderResult.order_id}:`, error.message);
+    }
+  })();
 
   return orderResult;
-}
-
-async function sendOrderConfirmationEmail(orderId, orderData, items, subTotal, shippingFee, totalAmount) {
-  if (!orderData.receiver_email) {
-    console.warn('No receiver_email provided. Skipping email.');
-    return;
-  } 
-  
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email credentials not configured. Skipping email.');
-    return;
-  }
-
-  try {
-    const orderDetails = await knex('orderdetails as od')
-      .join('product_variants as pv', 'od.product_variant_id', 'pv.product_variants_id')
-      .join('products as p', 'pv.product_id', 'p.product_id')
-      .leftJoin('colors as c', 'pv.color_id', 'c.color_id')
-      .leftJoin('sizes as s', 'pv.size_id', 's.size_id')
-      .where('od.order_id', orderId)
-      .select(
-        'p.name as product_name',
-        'p.thumbnail',
-        'c.name as color_name',
-        's.name as size_name',
-        'od.quantity',
-        'od.price',
-        'od.sub_total'
-      );
-
-
-    
-    if (orderDetails.length === 0) {
-      console.warn(`No order details found for order #${orderId}`);
-      return;
-    }
-
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    const itemsHtml = orderDetails.map(item => `
-      <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">
-          ${item.product_name}<br>
-          <small style="color: #666;">${item.color_name ? `Màu: ${item.color_name}` : ''} ${item.size_name ? `| Size: ${item.size_name}` : ''}</small>
-        </td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
-          ${item.price.toLocaleString('vi-VN')}₫<br>
-          <small style="color: #666;">Tổng: ${item.sub_total.toLocaleString('vi-VN')}₫</small>
-        </td>
-      </tr>
-    `).join('');
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: orderData.receiver_email,
-      subject: `Xác nhận đơn hàng #${orderData.order_code} - DELULU Fashion`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #f8f8f8; padding: 20px; text-align: center;">
-            <h1 style="color: #8FD9FB; margin: 0;">DELULU FASHION</h1>
-          </div>
-          
-          <div style="padding: 20px;">
-            <h2>Xin chào ${orderData.receiver_name}!</h2>
-            <p>Cảm ơn bạn đã đặt hàng tại DELULU Fashion. Đơn hàng <strong>#${orderData.order_code}</strong> của bạn đã được đặt thành công và đang trong quá trình xử lý.</p>
-            
-            <h3>Chi tiết đơn hàng:</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: #f8f8f8;">
-                  <th style="padding: 10px; text-align: left;">Sản phẩm</th>
-                  <th style="padding: 10px; text-align: center;">SL</th>
-                  <th style="padding: 10px; text-align: right;">Giá</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-              </tbody>
-            </table>
-            
-            <div style="margin-top: 20px; padding: 15px; background: #f8f8f8; border-radius: 5px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Tạm tính:</span>
-                <strong>${subTotal.toLocaleString('vi-VN')}₫</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Phí vận chuyển:</span>
-                <strong>${shippingFee === 0 ? 'Miễn phí' : shippingFee.toLocaleString('vi-VN') + '₫'}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #ddd;">
-                <span style="font-size: 18px;">Tổng cộng:</span>
-                <strong style="font-size: 18px; color: #ef4444;">${totalAmount.toLocaleString('vi-VN')}₫</strong>
-              </div>
-            </div>
-            
-            <h3>Thông tin giao hàng:</h3>
-            <p>
-              <strong>Người nhận:</strong> ${orderData.receiver_name}<br>
-              <strong>Số điện thoại:</strong> ${orderData.receiver_phone}<br>
-              <strong>Địa chỉ:</strong> ${orderData.shipping_detail_address}, ${orderData.shipping_ward}, ${orderData.shipping_province}
-            </p>
-            
-            <p><strong>Phương thức thanh toán:</strong> ${orderData.payment_method === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng'}</p>
-            
-            <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px;">
-              <p style="margin: 0;">💡 <strong>Lưu ý:</strong> Đơn hàng của bạn sẽ được xử lý trong vòng 24h. Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>08966670687</strong></p>
-            </div>
-          </div>
-          
-          <div style="background: #f8f8f8; padding: 20px; text-align: center; margin-top: 20px;">
-            <p style="margin: 0; color: #666;">© 2025 DELULU Fashion. All rights reserved.</p>
-          </div>
-        </div>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log(`Email xác nhận đã gửi thành công cho đơn hàng #${orderId}`);
-  } catch (error) {
-    console.error(`Lỗi gửi email cho đơn hàng #${orderId}:`, error.message);
-    throw error;
-  }
 }
 
 
@@ -420,7 +313,6 @@ async function getOrderById(orderId) {
 
   if (!order) return null;
 
-  // Lấy chi tiết sản phẩm trong đơn hàng
   const items = await knex('orderdetails')
     .join('product_variants','orderdetails.product_variant_id', 'product_variants.product_variants_id')
     .join('products','product_variants.product_id', 'products.product_id')
@@ -463,6 +355,10 @@ async function updateOrderStatus(orderId, order_status, adminId = null, cancelRe
     patch.updated_by = adminId;
   }
 
+  if (order_status === 'processing') {
+    if (!order.processing_at) patch.processing_at = knex.fn.now();
+  }
+  
   if (order_status === 'shipped') {
     const payment = await knex('payments')
       .where('order_id', orderId)
@@ -623,6 +519,56 @@ async function getEligibleOrdersForReview(userId, productId) {
 
   return orders;
 }
+//sẽ điều chỉnh sau
+async function updateOrderAddress(orderId, userId, addressData) {
+  const {
+    receiver_name,
+    receiver_phone,
+    receiver_email,
+    shipping_province,
+    shipping_province_code,
+    shipping_ward,
+    shipping_ward_code,
+    shipping_detail_address
+  } = addressData;
+
+  const order = await knex('orders')
+    .where('order_id', orderId)
+    .first();
+
+  if (!order) {
+    throw new Error('Không tìm thấy đơn hàng');
+  }
+
+  if (order.user_id !== userId) {
+    throw new Error('Bạn không có quyền sửa đơn hàng này');
+  }
+
+
+  if (order.order_status !== 'pending') {
+    throw new Error('Chỉ có thể sửa địa chỉ đơn hàng đang chờ duyệt');
+  }
+
+  const updated = await knex('orders')
+    .where('order_id', orderId)
+    .update({
+      receiver_name,
+      receiver_phone,
+      receiver_email,
+      shipping_province,
+      shipping_province_code,
+      shipping_ward,
+      shipping_ward_code,
+      shipping_detail_address,
+      updated_at: knex.fn.now()
+    });
+
+  if (updated === 0) {
+    throw new Error('Không thể cập nhật địa chỉ đơn hàng');
+  }
+
+  return await getOrderById(orderId);
+}
 module.exports = {
   createOrder,
   getOrders,
@@ -630,5 +576,6 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   getEligibleOrdersForReview,
-  generateOrderCode
+  generateOrderCode,
+  updateOrderAddress
 };
