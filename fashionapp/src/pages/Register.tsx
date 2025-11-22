@@ -1,46 +1,93 @@
-import { useState } from "react";
-import { Card, Form, Input, Typography, Divider, Row, Col, Button} from "antd";
-import { Link } from "react-router-dom";
-import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined} from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Card, Form, Input, Typography, Divider, Row, Col, Button, Alert } from "antd";
+import { Link, useSearchParams } from "react-router-dom";
+import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from "@ant-design/icons";
 import { Home } from "lucide-react";
 import { useMessage } from '../App'
-import { useEffect } from "react";
-import otpService from "../services/otpService";
-import { authService } from "../services/authService";
+import emailVerificationService from "../services/emailVerificationService";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext'
 import { GoogleLogin } from '@react-oauth/google'
 import type { CredentialResponse } from '@react-oauth/google'
+
 export default function Register() {
   const [form] = Form.useForm();
-  const [otpSent, setOtpSent] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [verificationSent, setVerificationSent] = useState(false);
   const message = useMessage()
   const [loading, setLoading] = useState(false);
-  const [currentPhone, setCurrentPhone] = useState('');
+  const [currentEmail, setCurrentEmail] = useState('');
   const [countdown, setCountdown] = useState(0);
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const { register, googleLogin } = useAuth()
   const navigate = useNavigate();
 
+  // Check for verified email from EmailVerification page
+  useEffect(() => {
+    const urlEmail = searchParams.get('email');
+    const urlVerified = searchParams.get('verified');
+    const storedEmail = localStorage.getItem('verified_email');
+    const verifiedAt = localStorage.getItem('email_verified_at');
+
+    if (urlEmail && urlVerified === 'true' && storedEmail === urlEmail) {
+      // Verify timestamp is within last 5 minutes
+      const fiveMinutes = 5 * 60 * 1000;
+      if (verifiedAt && (Date.now() - parseInt(verifiedAt)) < fiveMinutes) {
+        setEmailVerified(true);
+        setCurrentEmail(urlEmail);
+        form.setFieldValue('email', urlEmail);
+        message.success('Email đã được xác thực thành công!');
+
+        // Clean up localStorage
+        localStorage.removeItem('verified_email');
+        localStorage.removeItem('email_verified_at');
+      }
+    }
+  }, [searchParams, form, message]);
+
+  // Listen for cross-tab email verification (when user verifies in another tab)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // Check if email was verified in another tab
+      if (e.key === 'email_verified_at' && e.newValue) {
+        const verifiedEmail = localStorage.getItem('verified_email');
+        const formEmail = form.getFieldValue('email');
+
+        // If the verified email matches current form email
+        if (verifiedEmail && verifiedEmail === formEmail) {
+          setEmailVerified(true);
+          setCurrentEmail(verifiedEmail);
+          setVerificationSent(false);
+          setCountdown(0);
+          message.success('Email đã được xác thực! Bạn có thể hoàn tất đăng ký.');
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [form, message]);
+
   useEffect(() => {
     if (countdown > 0) {
-        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-        return () => clearTimeout(timer);
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
     }
   }, [countdown]);
+
   const handleFinish = async (values: any) => {
     try {
-      if (!phoneVerified) {
-        message.error('Vui lòng xác thực số điện thoại trước');
+      if (!emailVerified) {
+        message.error('Vui lòng xác thực email trước');
         return;
       }
 
       setLoading(true);
-      const response = await register({
+      await register({
         username: values.username,
-        email: values.email,
+        email: currentEmail,
         password: values.password,
-        phone: currentPhone
+        phone: values.phone || null
       });
 
       message.success('Đăng ký thành công! Vui lòng đăng nhập.');
@@ -52,46 +99,23 @@ export default function Register() {
     }
   };
 
-  const handleSendOtp = async () => {
+  const handleSendVerification = async () => {
     try {
-
-      const phone = form.getFieldValue('phone');
-            
-      if (!phone) {
-        message.error('Vui lòng nhập số điện thoại');
+      const email = form.getFieldValue('email');
+      if (!email) {
+        message.error('Vui lòng nhập email');
         return;
       }
 
       setLoading(true);
-      await otpService.sendOtp(phone);
-            
-      setOtpSent(true);
-      setCurrentPhone(phone);
+      await emailVerificationService.sendVerificationRegister(email);
+      setVerificationSent(true);
+      setCurrentEmail(email);
       setCountdown(60);
-      message.success('OTP đã được gửi đến số điện thoại của bạn');
+      message.success('Email xác nhận đã được gửi. Vui lòng kiểm tra hộp thư của bạn!');
     } catch (err: any) {
-      message.error(err.message || 'Gửi OTP thất bại');
+      message.error(err.message || 'Gửi email xác nhận thất bại');
     } finally {
-      setLoading(false);
-    }
-  }
-  const handleVerifyOtp = async () => {
-    try {
-      const otp = form.getFieldValue('otp');
-
-      if (!otp) {
-        message.error('Vui lòng nhập mã OTP');
-        return;
-      }
-      setLoading(true);
-      await otpService.verifyOtp(currentPhone, otp);
-      setPhoneVerified(true);
-      setOtpSent(false);
-      message.success('Xác thực thành công!');
-
-    } catch (err: any) {
-      message.error(err.message || 'Xác thực thất bại');
-    }finally {
       setLoading(false);
     }
   }
@@ -118,7 +142,6 @@ export default function Register() {
         style={{ borderRadius: 16, overflow: "hidden" }}
       >
         <Row gutter={0}>
-          {/* Bên trái (ảnh) */}
           <Col xs={0} md={12}>
             <div
               className="h-full hidden md:flex flex-col justify-center p-10 text-white"
@@ -144,7 +167,6 @@ export default function Register() {
             </div>
           </Col>
 
-          {/* Bên phải (form) */}
           <Col xs={24} md={12}>
             <div className="p-6 md:p-10">
               <div className="flex justify-start">
@@ -165,9 +187,8 @@ export default function Register() {
                 onFinish={handleFinish}
                 requiredMark={false}
               >
-                <div className="flex gap-2 flex-col md:flex-row">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
-                    className="flex-1"
                     label="Họ và tên"
                     name="username"
                     rules={[
@@ -185,7 +206,6 @@ export default function Register() {
                   </Form.Item>
 
                   <Form.Item
-                    className="flex-1"
                     label="Email"
                     name="email"
                     rules={[
@@ -199,123 +219,116 @@ export default function Register() {
                       placeholder="Nhập email"
                       prefix={<MailOutlined />}
                       autoComplete="email"
+                      disabled={emailVerified}
+                      suffix={
+                        emailVerified ? (
+                          <span className="text-green-500 text-xs whitespace-nowrap">✓ Đã xác thực</span>
+                        ) : (
+                          <Button
+                            type="link"
+                            onClick={handleSendVerification}
+                            loading={loading}
+                            disabled={countdown > 0}
+                            size="small"
+                            className="!p-0"
+                          >
+                            {countdown > 0 ? `${countdown}s` : 'Xác nhận'}
+                          </Button>
+                        )
+                      }
+                    />
+                  </Form.Item>
+                </div>
+
+                {verificationSent && !emailVerified && (
+                  <Alert
+                    message="Email xác nhận đã được gửi"
+                    description={
+                      <div>
+                        Vui lòng kiểm tra email <strong>{currentEmail}</strong> và click vào link để xác nhận.
+                        <br />
+                        <small className="text-gray-500">Link có hiệu lực trong 15 phút</small>
+                      </div>
+                    }
+                    type="info"
+                    showIcon
+                    closable
+                    className="mb-4"
+                  />
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Form.Item
+                    label="Mật khẩu"
+                    name="password"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập mật khẩu" },
+                      { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" },
+                      { max: 50, message: "Mật khẩu không vượt quá 50 ký tự" }
+                    ]}
+                  >
+                    <Input.Password
+                      size="large"
+                      placeholder="Nhập mật khẩu"
+                      prefix={<LockOutlined />}
+                      autoComplete="new-password"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Xác nhận mật khẩu"
+                    name="confirmPassword"
+                    dependencies={["password"]}
+                    rules={[
+                      { required: true, message: "Vui lòng xác nhận mật khẩu" },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue("password") === value) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(
+                            new Error("Mật khẩu xác nhận không khớp!")
+                          );
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input.Password
+                      size="large"
+                      placeholder="Nhập lại mật khẩu"
+                      prefix={<LockOutlined />}
+                      autoComplete="new-password"
                     />
                   </Form.Item>
                 </div>
 
                 <Form.Item
-                  label="Mật khẩu"
-                  name="password"
+                  name="phone"
+                  label="Số điện thoại (tùy chọn)"
                   rules={[
-                    { required: true, message: "Vui lòng nhập mật khẩu" },
-                    { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" },
-                    { max: 50, message: "Mật khẩu không vượt quá 50 ký tự" }
+                    { pattern: /^(0)[0-9]{9,10}$/, message: 'Số điện thoại không hợp lệ (phải bắt đầu bằng 0)' }
                   ]}
                 >
-                  <Input.Password
+                  <Input
+                    prefix={<PhoneOutlined />}
+                    placeholder="Nhập số điện thoại (không bắt buộc)"
                     size="large"
-                    placeholder="Nhập mật khẩu"
-                    prefix={<LockOutlined />}
-                    autoComplete="new-password"
                   />
                 </Form.Item>
 
-                <Form.Item
-                  label="Xác nhận mật khẩu"
-                  name="confirmPassword"
-                  dependencies={["password"]}
-                  rules={[
-                    { required: true, message: "Vui lòng xác nhận mật khẩu" },
-                    ({ getFieldValue }) => ({
-                      validator(_, value) {
-                        if (!value || getFieldValue("password") === value) {
-                          return Promise.resolve();
-                        }
-                        return Promise.reject(
-                          new Error("Mật khẩu xác nhận không khớp!")
-                        );
-                      },
-                    }),
-                  ]}
-                >
-                  <Input.Password
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
                     size="large"
-                    placeholder="Nhập lại mật khẩu"
-                    prefix={<LockOutlined />}
-                    autoComplete="new-password"
-                  />
+                    block
+                    loading={loading}
+                    disabled={!emailVerified}
+                    className="!bg-black !text-white hover:!bg-gray-800"
+                  >
+                    Đăng ký
+                  </Button>
                 </Form.Item>
-
-                <Form.Item
-                        name="phone"
-                        label="Số điện thoại"
-                        rules={[
-                            { required: true, message: 'Vui lòng nhập số điện thoại' },
-                            { pattern: /^(0)[0-9]{9,10}$/, message: 'Số điện thoại không hợp lệ (phải bắt đầu bằng 0)' }
-                        ]}
-                    >
-                        <Input 
-                            prefix={<PhoneOutlined />} 
-                            placeholder="Nhập số điện thoại"
-                            size="large"
-                            disabled={phoneVerified}
-                            suffix={
-                                phoneVerified ? (
-                                    <span className="text-green-500">✓ Đã xác thực</span>
-                                ) : (
-                                    <Button 
-                                        type="link" 
-                                        onClick={handleSendOtp}
-                                        loading={loading}
-                                        disabled={countdown > 0}
-                                    >
-                                        {countdown > 0 ? `${countdown}s` : 'Gửi OTP'}
-                                    </Button>
-                                )
-                            }
-                        />
-                    </Form.Item>
-
-                    {/* OTP Input - Hiện khi đã gửi OTP */}
-                    {otpSent && !phoneVerified && (
-                        <Form.Item
-                            name="otp"
-                            label="Mã OTP"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập mã OTP' },
-                                { len: 6, message: 'OTP phải có 6 số' }
-                            ]}
-                        >
-                            <Input 
-                                placeholder="Nhập mã OTP 6 số"
-                                size="large"
-                                maxLength={6}
-                                suffix={
-                                    <Button 
-                                        type="primary" 
-                                        onClick={handleVerifyOtp}
-                                        loading={loading}
-                                    >
-                                        Xác thực
-                                    </Button>
-                                }
-                            />
-                        </Form.Item>
-                  )}
-
-                    <Form.Item>
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            size="large"
-                            block
-                            loading={loading}
-                            disabled={!phoneVerified}
-                            className="!bg-black !text-white hover:!bg-gray-800"
-                        >
-                            Đăng ký
-                        </Button>
-                    </Form.Item>
 
                 <Divider plain>hoặc</Divider>
 

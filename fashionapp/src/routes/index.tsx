@@ -25,6 +25,7 @@ import NotFound from '../layouts/404Page';
 import SearchPage from '../pages/SearchPage';
 import PromotionDetailPage from '../pages/PromotionDetailPage';
 import FavoritesPage from '../pages/FavoritesPage';
+import EmailVerification from '../pages/EmailVerification';
 
 
 
@@ -32,6 +33,7 @@ const publicRoutes: RouteType[] = [
   { path: '/', component: Home, layout: Fragment },
   { path: '/login', component: Login, layout: null },
   { path: '/register', component: Register, layout: null },
+  { path: '/verify-email', component: EmailVerification, layout: null },
   { path: '/forgot-password', component: ForgotPassword, layout: null },
   { path: '/reset-password', component: ResetPassword, layout: null },
   { path: '/products', component: ProductPage },

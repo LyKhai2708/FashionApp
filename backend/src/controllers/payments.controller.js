@@ -78,10 +78,6 @@ class PaymentController {
 
   async updatePaymentStatus(req, res, next) {
     try {
-      if (req.user.role !== 'admin') {
-        return next(new ApiError(403, 'Chỉ admin mới có quyền thực hiện thao tác này'));
-      }
-
       const { orderId } = req.params;
       const { payment_status, transaction_id } = req.body;
 
@@ -90,11 +86,11 @@ class PaymentController {
       }
 
       const updated = await paymentService.updatePaymentStatus(
-        parseInt(orderId), 
-        payment_status, 
+        parseInt(orderId),
+        payment_status,
         transaction_id
       );
-      
+
       if (!updated) {
         return next(new ApiError(404, 'Không tìm thấy thông tin thanh toán'));
       }

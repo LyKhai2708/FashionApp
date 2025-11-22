@@ -20,24 +20,26 @@ const promotionsRouter = require('./routes/promotions.router');
 const reviewsRouter = require('./routes/review.router');
 const addressRouter = require('./routes/address.router');
 const adminRouter = require('./routes/admin.router');
-const otpRouter = require('./routes/otp.router');
+const roleRouter = require('./routes/role.router');
+const emailVerificationRouter = require('./routes/email-verification.router');
 const voucherRouter = require('./routes/voucher.router');
 const bannersRouter = require('./routes/banners.router');
 const inventoryRouter = require('./routes/inventory.router');
 const searchRouter = require('./routes/search.router');
 const chatRouter = require('./routes/chat.router');
+const voucherService = require('./services/voucher.service');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
-const {specs, swaggerUi} = require('./docs/swagger');
+const { specs, swaggerUi } = require('./docs/swagger');
 const paymentRouter = require('./routes/payments.router');
 const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000')
   .split(',')
   .map(s => s.trim());
 app.use(cors({
-    origin: corsOrigins, 
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+  origin: corsOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(cookieParser());
@@ -45,7 +47,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-    return res.json(JSend.success());
+  return res.json(JSend.success());
 });
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/public', express.static('public'));
@@ -68,14 +70,14 @@ promotionsRouter.setup(app);
 reviewsRouter.setup(app);
 addressRouter.setup(app);
 adminRouter.setup(app);
-otpRouter.setup(app);
+roleRouter.setup(app);
+emailVerificationRouter.setup(app);
 voucherRouter.setup(app);
 bannersRouter.setup(app);
 inventoryRouter.setup(app);
 paymentRouter.setup(app);
 searchRouter.setup(app);
 chatRouter.setup(app);
-const voucherService = require('./services/voucher.service');
 
 
 app.use(resourceNotFound);

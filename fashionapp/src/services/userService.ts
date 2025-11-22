@@ -9,12 +9,16 @@ export interface User {
     is_active?: number;
     created_at: string;
     has_password?: boolean;
+    birth_date?: string;
+    gender?: 'male' | 'female' | 'other';
 }
 
 export interface UpdateUserPayload {
     username?: string;
     email?: string;
     phone?: string;
+    birth_date?: string;
+    gender?: 'male' | 'female' | 'other';
 }
 
 class UserService {
@@ -86,6 +90,21 @@ class UserService {
             return response.data.data.user;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Xác thực OTP thất bại');
+        }
+    }
+
+    async createUser(payload: {
+        username: string;
+        email: string;
+        password: string;
+        phone?: string;
+        role_id: number;
+    }): Promise<User> {
+        try {
+            const response = await api.post<any>('/api/v1/users', payload);
+            return response.data.data.user;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Không thể tạo người dùng');
         }
     }
 }
