@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 const { methodNotAllowed } = require('../controllers/errors.controller');
 const paymentsController = require('../controllers/payments.controller');
 
@@ -161,8 +162,8 @@ module.exports.setup = (app) => {
    *       404:
    *         description: Không tìm thấy thông tin thanh toán
    */
-  router.patch('/admin/status/:orderId', 
-    authorizeRoles(['admin']), 
+  router.patch('/admin/status/:orderId',
+    checkPermission,
     paymentsController.updatePaymentStatus
   );
 

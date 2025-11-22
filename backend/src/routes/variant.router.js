@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const variantController = require("../controllers/variant.controller");
 const { methodNotAllowed } = require("../controllers/errors.controller");
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 
 /**
  * @swagger
@@ -70,7 +71,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.post("/", authMiddleware, authorizeRoles(['admin']), variantController.addVariant);
+    router.post("/", authMiddleware, checkPermission, variantController.addVariant);
 
     /**
      * @swagger
@@ -126,7 +127,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.put("/:variantId", authMiddleware, authorizeRoles(['admin']), variantController.updateVariant);
+    router.put("/:variantId", authMiddleware, checkPermission, variantController.updateVariant);
 
     /**
      * @swagger
@@ -170,7 +171,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete("/:variantId", authMiddleware, authorizeRoles(['admin']), variantController.removeVariant);
+    router.delete("/:variantId", authMiddleware, checkPermission, variantController.removeVariant);
 
     /**
      * @swagger
@@ -214,7 +215,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete("/:variantId/permanent", authMiddleware, authorizeRoles(['admin']), variantController.hardDeleteVariant);
+    router.delete("/:variantId/permanent", authMiddleware, checkPermission, variantController.hardDeleteVariant);
 
     /**
      * @swagger
@@ -258,7 +259,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.patch("/:variantId/restore", authMiddleware, authorizeRoles(['admin']), variantController.restoreVariant);
+    router.patch("/:variantId/restore", authMiddleware, checkPermission, variantController.restoreVariant);
 
     // Method not allowed handlers
     router.all("/", methodNotAllowed);

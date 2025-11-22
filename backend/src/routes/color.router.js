@@ -2,6 +2,8 @@ const express = require('express');
 const colorsController = require('../controllers/colors.controller');
 const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 
 module.exports.setup = (app) => {
     app.use('/api/v1/colors', router);
@@ -128,7 +130,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "An error occurred while creating the color"
      */
-    router.post('/', colorsController.createColor);
+    router.post('/', authMiddleware, checkPermission, colorsController.createColor);
     /**
      * @swagger
      * /api/v1/colors:
@@ -154,7 +156,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "An error occurred while removing all Colors"
      */
-    router.delete('/', colorsController.deleteAllColors);
+    router.delete('/', authMiddleware, checkPermission, colorsController.deleteAllColors);
     router.all('/', methodNotAllowed);
     /**
      * @swagger
@@ -305,7 +307,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "Error updating Color with id=1"
      */
-    router.put('/:id', colorsController.updateColor);
+    router.put('/:id', authMiddleware, checkPermission, colorsController.updateColor);
     /**
      * @swagger
      * /api/v1/colors/{id}:
@@ -346,6 +348,6 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "Could not delete Color with id=1"
      */
-    router.delete('/:id', colorsController.deleteColor);
+    router.delete('/:id', authMiddleware, checkPermission, colorsController.deleteColor);
     router.all('/:id', methodNotAllowed);
 }

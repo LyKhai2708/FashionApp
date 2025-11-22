@@ -2,7 +2,8 @@ const voucherController = require('../controllers/voucher.controller');
 const express = require('express');
 const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 
 /**
  * @swagger
@@ -160,47 +161,47 @@ const { authMiddleware, authorizeRoles } = require('../middleware/auth.middlewar
  */
 
 // Admin routes
-router.get('/admin', 
-    authMiddleware, 
-    authorizeRoles('admin'), 
+router.get('/admin',
+    authMiddleware,
+    checkPermission,
     voucherController.getVouchers
 );
 
-router.get('/admin/:id', 
-    authMiddleware, 
-    authorizeRoles('admin'), 
+router.get('/admin/:id',
+    authMiddleware,
+    checkPermission,
     voucherController.getVoucherById
 );
 
-router.post('/admin', 
-    authMiddleware, 
-    authorizeRoles('admin'), 
+router.post('/admin',
+    authMiddleware,
+    checkPermission,
     voucherController.createVoucher
 );
 
-router.patch('/admin/:id', 
-    authMiddleware, 
-    authorizeRoles('admin'), 
+router.patch('/admin/:id',
+    authMiddleware,
+    checkPermission,
     voucherController.updateVoucher
 );
 
-router.delete('/admin/:id', 
-    authMiddleware, 
-    authorizeRoles('admin'),
+router.delete('/admin/:id',
+    authMiddleware,
+    checkPermission,
     voucherController.deleteVoucher
 );
 
 // Public routes
-router.get('/available', 
+router.get('/available',
     voucherController.getAvailableVouchers
 );
 
-router.get('/history', 
-    authMiddleware, 
+router.get('/history',
+    authMiddleware,
     voucherController.getUserVoucherHistory
 );
 
-router.post('/validate/:code', 
+router.post('/validate/:code',
     voucherController.validateVoucher
 );
 
@@ -557,7 +558,7 @@ module.exports = {
     router,
     setup: (app) => {
         app.use('/api/v1/vouchers', router);
-        
+
         app.use('/api/v1/vouchers', methodNotAllowed);
     }
 };

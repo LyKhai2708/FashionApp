@@ -2,7 +2,8 @@ const promotionController = require('../controllers/promotions.controller');
 const express = require('express');
 const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 
 /**
  * @swagger
@@ -116,7 +117,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.post('/', authMiddleware, authorizeRoles(['admin']), promotionController.createPromotion);
+    router.post('/', authMiddleware, checkPermission, promotionController.createPromotion);
     /**
      * @swagger
      * /api/v1/promotions/{promo_id}/product/{product_id}:
@@ -165,7 +166,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.post('/:promo_id/product/:product_id', authMiddleware, authorizeRoles(['admin']), promotionController.addProductToPromotion);
+    router.post('/:promo_id/product/:product_id', authMiddleware, checkPermission, promotionController.addProductToPromotion);
     /**
      * @swagger
      * /api/v1/promotions/{promo_id}/product/{product_id}:
@@ -214,7 +215,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete('/:promo_id/product/:product_id', authMiddleware, authorizeRoles(['admin']), promotionController.removeProductFromPromotion);
+    router.delete('/:promo_id/product/:product_id', authMiddleware, checkPermission, promotionController.removeProductFromPromotion);
     /**
      * @swagger
      * /api/v1/promotions/{promo_id}/products:
@@ -255,7 +256,7 @@ module.exports.setup = (app) => {
      *         $ref: '#/components/responses/ServerError'
      */
     router.get('/:promo_id/products', promotionController.getProductsInPromotion);
-    
+
     /**
      * @swagger
      * /api/v1/promotions/{promo_id}:
@@ -292,7 +293,7 @@ module.exports.setup = (app) => {
      *         $ref: '#/components/responses/ServerError'
      */
     router.get('/:promo_id', promotionController.getPromotionById);
-    
+
     /**
      * @swagger
      * /api/v1/promotions/{promo_id}:
@@ -335,7 +336,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete('/:promo_id', authMiddleware, authorizeRoles(['admin']), promotionController.deactivatePromotion);
+    router.delete('/:promo_id', authMiddleware, checkPermission, promotionController.deactivatePromotion);
     router.all('/', methodNotAllowed);
     router.all('/:promo_id', methodNotAllowed);
     router.all('/:promo_id/product/:product_id', methodNotAllowed);

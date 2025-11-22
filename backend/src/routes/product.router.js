@@ -3,7 +3,8 @@ const router = express.Router();
 const productController = require("../controllers/products.controller");
 const imageSearchController = require("../controllers/imageSearch.controller");
 const { methodNotAllowed } = require("../controllers/errors.controller");
-const {authMiddleware, authorizeRoles, optionalAuthMiddleware} = require('../middleware/auth.middleware');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 const { uploadSingle, uploadMultiple } = require("../middleware/upload_image.middleware");
 
 /**
@@ -201,7 +202,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.post("/", authMiddleware, authorizeRoles(['admin']), uploadMultiple('images', 30), productController.createProduct);
+    router.post("/", authMiddleware, checkPermission, uploadMultiple('images', 30), productController.createProduct);
 
     /**
      * @swagger
@@ -354,7 +355,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.patch("/:id", authMiddleware, authorizeRoles(['admin']), uploadMultiple('images', 30), productController.updateProduct);
+    router.patch("/:id", authMiddleware, checkPermission, uploadMultiple('images', 30), productController.updateProduct);
 
     /**
      * @swagger
@@ -398,7 +399,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete("/:id", authMiddleware, authorizeRoles(['admin']), productController.deleteProduct);
+    router.delete("/:id", authMiddleware, checkPermission, productController.deleteProduct);
 
     /**
      * @swagger
@@ -442,7 +443,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete("/:id/permanent", authMiddleware, authorizeRoles(['admin']), productController.hardDeleteProduct);
+    router.delete("/:id/permanent", authMiddleware, checkPermission, productController.hardDeleteProduct);
 
     /**
      * @swagger
@@ -486,7 +487,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.put("/:id/restore", authMiddleware, authorizeRoles(['admin']), productController.restoreProduct);
+    router.put("/:id/restore", authMiddleware, checkPermission, productController.restoreProduct);
 
     /**
      * Image Search Endpoint

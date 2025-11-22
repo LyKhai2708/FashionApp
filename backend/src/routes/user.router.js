@@ -3,10 +3,11 @@ const router = express.Router();
 const usersController = require('../controllers/users.controller');
 const { methodNotAllowed } = require('../controllers/errors.controller');
 const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 
 module.exports.setup = (app) => {
     app.use('/api/v1/users', router);
-    
+
     router.get('/profile', authMiddleware, usersController.getMyInformation);
     router.patch('/password', authMiddleware, usersController.changePassword);
     /**
@@ -88,8 +89,52 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error fetching users"
      */
-    router.get('/', authMiddleware, usersController.getUsers);
-    
+
+    /**
+     * @swagger
+     * /api/v1/users:
+     *   post:
+     *     summary: Create a new user
+     *     description: Create a new user and optionally assign a role (admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - username
+     *               - email
+     *               - password
+     *             properties:
+     *               username:
+     *                 type: string
+     *               email:
+     *                 type: string
+     *                 format: email
+     *               password:
+     *                 type: string
+     *                 minLength: 8
+     *               phone:
+     *                 type: string
+     *               role_id:
+     *                 type: integer
+     *                 description: ID của role cần gán (optional)
+     *     responses:
+     *       201:
+     *         description: User created successfully
+     *       400:
+     *         description: Invalid input
+     *       403:
+     *         description: Forbidden
+     */
+    router.post('/', authMiddleware, checkPermission, usersController.createUser);
+
+    router.get('/', authMiddleware, checkPermission, usersController.getUsers);
+
     /**
      * @swagger
      * /api/v1/users/{id}:
@@ -155,7 +200,7 @@ module.exports.setup = (app) => {
      *                   example: "Error fetching user"
      */
     router.get('/:id', authMiddleware, usersController.getUser);
-    
+
     /**
      * @swagger
      * /api/v1/users/{id}:
@@ -227,7 +272,7 @@ module.exports.setup = (app) => {
      *                   example: "Error updating user"
      */
     router.patch('/:id', authMiddleware, usersController.updateUser);
-    
+
     /**
      * @swagger
      * /api/v1/users/{id}:
@@ -292,6 +337,66 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error deleting user"
      */
-    router.delete('/:id', authMiddleware, usersController.deleteUser);
+    router.delete('/:id', authMiddleware, checkPermission, usersController.deleteUser);
+
+    /**
+     * @swagger
+     * /api/v1/users/{id}/role:
+     *   get:
+     *     summary: Get user's role
+     *     description: Get the current role assigned to a user (admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         required: true
+     *         schema:
+     *           type: integer
+     *     responses:
+     *       200:
+     *         description: Success
+     *       404:
+     *         description: User not found
+     */
+    router.get('/:id/role', authMiddleware, checkPermission, usersController.getUserRole);
+
+    /**
+     * @swagger
+     * /api/v1/users/{id}/role:
+     *   put:
+     *     summary: Update user's role
+     *     description: Update the role assigned to a user. Replaces existing role (admin only)
+     *     tags: [Users]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         required: true
+     *         schema:
+     *           type: integer
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               role_id:
+     *                 type: integer
+     *                 description: ID of the role to assign
+     *     responses:
+     *       200:
+     *         description: Role updated successfully
+     *       400:
+     *         description: Invalid input
+     *       404:
+     *         description: User not found
+     */
+    router.put('/:id/role', authMiddleware, checkPermission, usersController.updateUserRole);
+
     router.all('/', methodNotAllowed);
+    router.all('/:id/role', methodNotAllowed);
 }

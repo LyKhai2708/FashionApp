@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const ordersController = require('../controllers/orders.controller');
-const {authMiddleware, authorizeRoles} = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 const { methodNotAllowed } = require('../controllers/errors.controller');
 
 
 
 module.exports.setup = (app) => {
-  
+
   app.use('/api/v1/orders', authMiddleware, router);
 
   router.get('/product/:productId/reviews', ordersController.getEligibleOrdersForReview);
@@ -153,8 +154,8 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.post('/',authMiddleware, ordersController.createOrder);
-  
+  router.post('/', authMiddleware, ordersController.createOrder);
+
   /**
    * @swagger
    * /api/v1/orders:
@@ -260,7 +261,7 @@ module.exports.setup = (app) => {
    *         $ref: '#/components/responses/ServerError'
    */
   router.get('/', authMiddleware, ordersController.getOrders);
-  
+
   /**
    * @swagger
    * /api/v1/orders/{id}:
@@ -343,7 +344,7 @@ module.exports.setup = (app) => {
    *         $ref: '#/components/responses/ServerError'
    */
   router.get('/:id', authMiddleware, ordersController.getOrderById);
-  
+
   /**
    * @swagger
    * /api/v1/orders/{id}/status:
@@ -440,8 +441,8 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.patch('/:id/status', authMiddleware, authorizeRoles(['admin']), ordersController.updateOrderStatus);
-  
+  router.patch('/:id/status', authMiddleware, checkPermission, ordersController.updateOrderStatus);
+
   /**
    * @swagger
    * /api/v1/orders/{id}/address:
@@ -581,7 +582,7 @@ module.exports.setup = (app) => {
    *         $ref: '#/components/responses/ServerError'
    */
   router.patch('/:id/address', authMiddleware, ordersController.updateOrderAddress);
-  
+
   /**
    * @swagger
    * /api/v1/orders/{id}:

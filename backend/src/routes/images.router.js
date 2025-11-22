@@ -3,7 +3,8 @@ const router = express.Router();
 const imagesController = require('../controllers/images.controller');
 const { methodNotAllowed } = require('../controllers/errors.controller');
 const { uploadSingle } = require('../middleware/upload_image.middleware');
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 
 /**
  * @swagger
@@ -149,7 +150,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.post('/', authMiddleware, authorizeRoles(['admin']), uploadSingle('imageFile'), imagesController.addImage);
+    router.post('/', authMiddleware, checkPermission, uploadSingle('imageFile'), imagesController.addImage);
 
     /**
      * @swagger
@@ -206,7 +207,7 @@ module.exports.setup = (app) => {
      *       500:
      *         $ref: '#/components/responses/ServerError'
      */
-    router.delete('/:id', authMiddleware, authorizeRoles(['admin']), imagesController.removeImage);
+    router.delete('/:id', authMiddleware, checkPermission, imagesController.removeImage);
 
     // Method not allowed handlers
     router.all('/', methodNotAllowed);

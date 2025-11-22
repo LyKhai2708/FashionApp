@@ -1,44 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Input, Select, Button, Space, Tag, Popconfirm, Statistic, Row, Col } from 'antd';
-import { UserOutlined, SearchOutlined, ReloadOutlined, CheckOutlined, StopOutlined } from '@ant-design/icons';
+import { Card, Table, Input, Select, Button, Space, Tag, Popconfirm, Modal, Form, message } from 'antd';
+import { UserOutlined, SearchOutlined, ReloadOutlined, CheckOutlined, StopOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import userService, { type User } from '../../services/userService';
+import roleService, { type Role } from '../../services/roleService';
 
 const Users: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    
+
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const limit = 10;
 
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [form] = Form.useForm();
+
     useEffect(() => {
         loadUsers();
+        fetchRoles();
     }, [currentPage, roleFilter, statusFilter]);
+
+    const fetchRoles = async () => {
+        try {
+            const data = await roleService.getRoles();
+            setRoles(data);
+        } catch (err: any) {
+            console.error('Failed to fetch roles:', err);
+            message.error('Không thể tải danh sách vai trò');
+        }
+    };
 
     const loadUsers = async () => {
         try {
             setLoading(true);
             setError('');
-            
+
             const params: any = {
                 page: currentPage,
                 limit,
             };
-            
+
             if (roleFilter) params.role = roleFilter;
             if (statusFilter !== '') params.is_active = Number(statusFilter);
             if (searchTerm) params.name = searchTerm;
-            
+
             const data = await userService.getAllUsers(params);
             setUsers(data.users);
-            setTotalPages(data.metadata.totalPages);
             setTotal(data.metadata.totalRecords);
         } catch (err: any) {
             setError(err.message || 'Không thể tải danh sách người dùng');
@@ -83,6 +99,21 @@ const Users: React.FC = () => {
         });
     };
 
+    const handleCreateUser = async (values: any) => {
+        try {
+            setIsCreating(true);
+            await userService.createUser(values);
+            message.success('Tạo người dùng thành công!');
+            setIsModalOpen(false);
+            form.resetFields();
+            await loadUsers();
+        } catch (err: any) {
+            message.error(err.message || 'Không thể tạo người dùng');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
     const columns: ColumnsType<User> = [
         {
             title: 'ID',
@@ -116,11 +147,21 @@ const Users: React.FC = () => {
             dataIndex: 'role',
             key: 'role',
             width: 100,
-            render: (role: string) => (
-                <Tag color={role === 'admin' ? 'purple' : 'blue'}>
-                    {role === 'admin' ? 'Admin' : 'Customer'}
-                </Tag>
-            )
+            render: (roleName: string) => {
+                const defaultColors: Record<string, string> = {
+                    admin: 'purple',
+                    manager: 'blue',
+                    staff: 'cyan',
+                    customer: 'green'
+                };
+                const color = defaultColors[roleName] || 'default';
+
+                return (
+                    <Tag color={color}>
+                        {roleName.charAt(0).toUpperCase() + roleName.slice(1)}
+                    </Tag>
+                );
+            }
         },
         {
             title: 'Trạng thái',
@@ -172,12 +213,22 @@ const Users: React.FC = () => {
     return (
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <UserOutlined /> Quản lý người dùng
-                </h1>
-                <div style={{ fontSize: 14, color: '#999' }}>
-                    Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{total}</span> người dùng
+                <div>
+                    <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
+                        <UserOutlined /> Quản lý người dùng
+                    </h1>
+                    <div style={{ fontSize: 14, color: '#999', marginTop: 8 }}>
+                        Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{total}</span> người dùng
+                    </div>
                 </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setIsModalOpen(true)}
+                    size="large"
+                >
+                    Tạo người dùng mới
+                </Button>
             </div>
 
             <Card style={{ marginBottom: 24 }}>
@@ -203,8 +254,11 @@ const Users: React.FC = () => {
                             placeholder="Tất cả"
                             allowClear
                         >
-                            <Select.Option value="customer">Customer</Select.Option>
-                            <Select.Option value="admin">Admin</Select.Option>
+                            {roles.map(role => (
+                                <Select.Option key={role.role_id} value={role.role_name}>
+                                    {role.role_name.charAt(0).toUpperCase() + role.role_name.slice(1)}
+                                </Select.Option>
+                            ))}
                         </Select>
                     </div>
 
@@ -267,6 +321,100 @@ const Users: React.FC = () => {
                     scroll={{ x: 1200 }}
                 />
             </Card>
+
+            <Modal
+                title="Tạo người dùng mới"
+                open={isModalOpen}
+                onCancel={() => {
+                    setIsModalOpen(false);
+                    form.resetFields();
+                }}
+                footer={null}
+                width={600}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleCreateUser}
+                    style={{ marginTop: 24 }}
+                >
+                    <Form.Item
+                        label="Tên người dùng"
+                        name="username"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên người dùng' },
+                            { min: 3, message: 'Tên người dùng phải có ít nhất 3 ký tự' }
+                        ]}
+                    >
+                        <Input placeholder="Nhập tên người dùng" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Email"
+                        name="email"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập email' },
+                            { type: 'email', message: 'Email không hợp lệ' }
+                        ]}
+                    >
+                        <Input placeholder="Nhập email" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Mật khẩu"
+                        name="password"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mật khẩu' },
+                            { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
+                        ]}
+                    >
+                        <Input.Password placeholder="Nhập mật khẩu" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Số điện thoại (tùy chọn)"
+                        name="phone"
+                        rules={[
+                            { pattern: /^[0-9]{10}$/, message: 'Số điện thoại phải gồm 10 chữ số' }
+                        ]}
+                    >
+                        <Input placeholder="Nhập số điện thoại" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Vai trò"
+                        name="role_id"
+                        initialValue={2}
+                        rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
+                    >
+                        <Select placeholder="Chọn vai trò">
+                            {roles.map(role => (
+                                <Select.Option key={role.role_id} value={role.role_id}>
+                                    {role.role_name.charAt(0).toUpperCase() + role.role_name.slice(1)}
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
+                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                            <Button onClick={() => {
+                                setIsModalOpen(false);
+                                form.resetFields();
+                            }}>
+                                Hủy
+                            </Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={isCreating}
+                            >
+                                Tạo người dùng
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 };

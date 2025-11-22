@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const sizesController = require('../controllers/sizes.controller');
 const { methodNotAllowed } = require('../controllers/errors.controller');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 module.exports.setup = (app) => {
     app.use('/api/v1/sizes', router);
-    
+
     /**
      * @swagger
      * /api/v1/sizes:
@@ -60,7 +62,7 @@ module.exports.setup = (app) => {
      *                   example: "An error occurred while fetching sizes"
      */
     router.get('/', sizesController.getSizesByFilter);
-    
+
     /**
      * @swagger
      * /api/v1/sizes:
@@ -137,8 +139,8 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "An error occurred while creating the size"
      */
-    router.post('/', sizesController.createSize);
-    
+    router.post('/', authMiddleware, checkPermission, sizesController.createSize);
+
     /**
      * @swagger
      * /api/v1/sizes:
@@ -178,9 +180,9 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "An error occurred while removing all Sizes"
      */
-    router.delete('/', sizesController.deleteAllSizes);
+    router.delete('/', authMiddleware, checkPermission, sizesController.deleteAllSizes);
     router.all('/', methodNotAllowed);
-    
+
     /**
      * @swagger
      * /api/v1/sizes/{id}:
@@ -246,7 +248,7 @@ module.exports.setup = (app) => {
      *                   example: "Error retrieving Size with id=1"
      */
     router.get('/:id', sizesController.getSize);
-    
+
     /**
      * @swagger
      * /api/v1/sizes/{id}:
@@ -346,8 +348,8 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error updating Size with id=1"
      */
-    router.put('/:id', sizesController.updateSize);
-    
+    router.put('/:id', authMiddleware, checkPermission, sizesController.updateSize);
+
     /**
      * @swagger
      * /api/v1/sizes/{id}:
@@ -410,6 +412,6 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Could not delete Size with id=1"
      */
-    router.delete('/:id', sizesController.deleteSize);
+    router.delete('/:id', authMiddleware, checkPermission, sizesController.deleteSize);
     router.all('/:id', methodNotAllowed);
 }

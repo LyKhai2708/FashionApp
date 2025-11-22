@@ -14,7 +14,6 @@ const { uploadMultiple } = require('../middleware/upload_image.middleware');
 
 module.exports.setup = (app) => {
 
-  // app.use('/api/v1/products/:productId/reviews', router);
   app.use('/api/v1/reviews', router);
 
   /**
@@ -243,7 +242,7 @@ module.exports.setup = (app) => {
 
   // Direct review management routes
   router.put('/:id', authMiddleware, uploadMultiple('images', 5), reviewController.updateReview);
-  
+
   /**
    * @swagger
    * /api/v1/reviews/{id}:
@@ -290,9 +289,9 @@ module.exports.setup = (app) => {
    *       500:
    *         $ref: '#/components/responses/ServerError'
    */
-  router.delete('/:id',authMiddleware, reviewController.deleteReview);
-  router.get('/reviewCheck/product/:productId/order/:orderId',authMiddleware, reviewController.checkReviewed);
-  router.get('/my/product/:productId/order/:orderId',authMiddleware, reviewController.getMyReview);
+  router.delete('/:id', authMiddleware, reviewController.deleteReview);
+  router.get('/reviewCheck/product/:productId/order/:orderId', authMiddleware, reviewController.checkReviewed);
+  router.get('/my/product/:productId/order/:orderId', authMiddleware, reviewController.getMyReview);
   // Method not allowed handlers
   router.all('/', methodNotAllowed);
   router.all('/:id', methodNotAllowed);

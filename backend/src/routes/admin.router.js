@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 const adminController = require('../controllers/admin.controller');
 const authController = require('../controllers/auth.controller');
 const requireAdmin = [
     authMiddleware,
-    authorizeRoles(['admin'])
+    checkPermission
 ];
 module.exports.setup = (app) => {
     app.use('/api/v1/admin', router);

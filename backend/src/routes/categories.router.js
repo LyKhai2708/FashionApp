@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
 const categoryController = require('../controllers/categories.controller');
-const {authMiddleware, authorizeRoles} = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 const { uploadSingle } = require("../middleware/upload_image.middleware");
 module.exports.setup = (app) => {
     app.use('/api/v1/categories', router);
@@ -147,7 +148,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "An error occurred while creating category"
      */
-    router.post('/', authMiddleware, authorizeRoles('admin'), uploadSingle('image'), categoryController.createCategory);
+    router.post('/', authMiddleware, checkPermission, uploadSingle('image'), categoryController.createCategory);
     /**
      * @swagger
      * /api/v1/categories:
@@ -179,7 +180,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "Error deleting all categories"
      */
-    router.delete('/',authMiddleware,authorizeRoles('admin'), categoryController.deleteAllCategories);
+    router.delete('/', authMiddleware, checkPermission, categoryController.deleteAllCategories);
     router.all('/', methodNotAllowed);
     /**
      * @swagger
@@ -260,7 +261,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "Error updating category"
      */
-    router.put('/:category_id', authMiddleware, authorizeRoles('admin'), uploadSingle('image'), categoryController.updateCategory);
+    router.put('/:category_id', authMiddleware, checkPermission, uploadSingle('image'), categoryController.updateCategory);
     /**
      * @swagger
      * /api/v1/categories/{category_id}:
@@ -320,7 +321,7 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   example: "Error deleting category"
      */
-    router.delete('/:category_id',authMiddleware,authorizeRoles('admin'), categoryController.deleteCategory);
+    router.delete('/:category_id', authMiddleware, checkPermission, categoryController.deleteCategory);
     /**
      * @swagger
      * /api/v1/categories/{id}:

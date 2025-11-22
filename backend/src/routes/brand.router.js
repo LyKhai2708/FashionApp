@@ -3,7 +3,8 @@ const multer = require('multer');
 const brandController = require('../controllers/brand.controller');
 const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
-const { authMiddleware, authorizeRoles } = require('../middleware/auth.middleware');
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { checkPermission } = require('../middleware/permission.middleware');
 const upload = multer();
 module.exports.setup = (app) => {
     app.use('/api/v1/brands', router);
@@ -69,7 +70,7 @@ module.exports.setup = (app) => {
      *                 data:
      *                   type: object
      *                   nullable: true
-     */                    
+     */
     router.get('/', brandController.getBrandbyFilter);
     /**
      * @swagger
@@ -123,7 +124,7 @@ module.exports.setup = (app) => {
      *         500:
      *           description: Internal Server Error (An error occurred while creating the brand)
     */
-    router.post('/', authMiddleware, authorizeRoles(['admin']), upload.none(), brandController.createBrand);
+    router.post('/', authMiddleware, checkPermission, upload.none(), brandController.createBrand);
     /**
      * @swagger
      * /api/v1/brands:
@@ -151,9 +152,9 @@ module.exports.setup = (app) => {
      *                   type: string
      *                   description: A human-readable error message
      *                   example: "An error occurred while removing all brands"
-     */      
+     */
 
-    router.delete('/', authMiddleware, authorizeRoles(['admin']), brandController.deleteAllBrands);
+    router.delete('/', authMiddleware, checkPermission, brandController.deleteAllBrands);
     router.all('/', methodNotAllowed);
     /**
      * @swagger
@@ -268,7 +269,7 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error updating brand with id 0"
      */
-    router.put('/:id', authMiddleware, authorizeRoles(['admin']), brandController.updateBrand);
+    router.put('/:id', authMiddleware, checkPermission, brandController.updateBrand);
     /**
      * @swagger
      * /api/v1/brands/{id}:
@@ -313,6 +314,6 @@ module.exports.setup = (app) => {
      *                   description: A human-readable error message
      *                   example: "Error deleting brand with id 0"
      */
-    router.delete('/:id', authMiddleware, authorizeRoles(['admin']), brandController.deleteBrand);
+    router.delete('/:id', authMiddleware, checkPermission, brandController.deleteBrand);
     router.all('/:id', methodNotAllowed);
 }
