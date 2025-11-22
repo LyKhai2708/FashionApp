@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
-import { Breadcrumb, Spin } from 'antd';
+import { Breadcrumb, Spin, Pagination } from 'antd';
 import { Calendar, Tag } from 'lucide-react';
-import ProductListLayout from '../components/ProductListLayout';
+import ProductList from '../components/ProductList';
 import Countdown from '../components/promotion/CountDown';
 import promotionService from '../services/promotionService';
 import type { Promotion } from '../services/promotionService';
@@ -17,13 +17,12 @@ const PromotionDetailPage = () => {
     const [productsLoading, setProductsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
 
-    // Fetch promotion details
+
     useEffect(() => {
         const fetchPromotionDetail = async () => {
             if (!id) return;
-            
+
             try {
                 setLoading(true);
                 const promo = await promotionService.getPromotionById(parseInt(id));
@@ -38,10 +37,9 @@ const PromotionDetailPage = () => {
         fetchPromotionDetail();
     }, [id]);
 
-    // Fetch products in promotion
-    const fetchProducts = useCallback(async (page: number = 1, reset: boolean = false) => {
+    const fetchProducts = useCallback(async (page: number = 1) => {
         if (!id) return;
-        
+
         try {
             setProductsLoading(true);
             const response = await promotionService.getPromotionProducts(parseInt(id), {
@@ -49,16 +47,9 @@ const PromotionDetailPage = () => {
                 limit: 12
             });
 
-
-            if (reset) {
-                setProducts(response.products);
-            } else {
-                setProducts(prev => [...prev, ...response.products]);
-            }
-
+            setProducts(response.products);
             setTotalCount(response.metadata.totalRecords);
             setCurrentPage(response.metadata.page);
-            setHasMore(response.metadata.page < response.metadata.lastPage);
         } catch (error) {
             console.error('Error fetching products:', error);
         } finally {
@@ -68,14 +59,14 @@ const PromotionDetailPage = () => {
 
     useEffect(() => {
         if (id) {
-            fetchProducts(1, true);
+            fetchProducts(1);
         }
     }, [id, fetchProducts]);
 
-    const handleLoadMore = useCallback(() => {
-        if (!hasMore || productsLoading) return;
-        fetchProducts(currentPage + 1, false);
-    }, [hasMore, productsLoading, currentPage, fetchProducts]);
+    const handlePageChange = useCallback((page: number) => {
+        fetchProducts(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [fetchProducts]);
 
     if (loading) {
         return (
@@ -90,7 +81,7 @@ const PromotionDetailPage = () => {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold mb-4">Không tìm thấy chương trình khuyến mãi</h2>
-                    <button 
+                    <button
                         onClick={() => navigate('/')}
                         className="text-blue-600 hover:underline"
                     >
@@ -126,48 +117,48 @@ const PromotionDetailPage = () => {
                 </div>
             </div>
 
-            
+
             <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
                 <div className="container mx-auto px-4 py-12">
                     <div className="max-w-4xl mx-auto text-center">
-                   
+
                         <div className="inline-block bg-yellow-400 text-red-600 px-6 py-2 rounded-full font-bold text-2xl mb-4">
                             GIẢM {promotion.discount_percent}%
                         </div>
-                        
-                   
+
+
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
                             {promotion.name}
                         </h1>
-                        
-                        
+
+
                         {promotion.description && (
                             <p className="text-xl mb-6 text-white/90">
                                 {promotion.description}
                             </p>
                         )}
 
-                        
+
                         <div className="flex items-center justify-center gap-2 mb-6 text-white/90">
                             <Calendar className="w-5 h-5" />
                             <span className="text-lg">
-                                {new Date(promotion.start_date).toLocaleDateString('vi-VN')} 
+                                {new Date(promotion.start_date).toLocaleDateString('vi-VN')}
                                 {' - '}
                                 {new Date(promotion.end_date).toLocaleDateString('vi-VN')}
                             </span>
                         </div>
 
-                        
+
                         <div className="flex justify-center">
                             <div className="bg-white/10 backdrop-blur-sm rounded-lg px-8 py-4">
-                                <Countdown 
-                                    endDate={promotion.end_date} 
+                                <Countdown
+                                    endDate={promotion.end_date}
                                     className="text-white text-xl"
                                 />
                             </div>
                         </div>
 
-                        
+
                         {promotion.product_count !== undefined && (
                             <div className="mt-6 flex items-center justify-center gap-2 text-white/90">
                                 <Tag className="w-5 h-5" />
@@ -180,18 +171,37 @@ const PromotionDetailPage = () => {
                 </div>
             </div>
 
-            
+
             <div className="container mx-auto px-4 py-8">
-                <ProductListLayout
+                <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Sản phẩm trong chương trình</h2>
+                    {totalCount > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">
+                            Showing {((currentPage - 1) * 12) + 1}-{Math.min(currentPage * 12, totalCount)} of {totalCount} products
+                        </p>
+                    )}
+                </div>
+
+                <ProductList
                     products={products}
                     loading={productsLoading}
-                    totalCount={totalCount}
-                    title="Sản phẩm trong chương trình"
-                    breadcrumbs={[]}
-                    onLoadMore={handleLoadMore}
-                    hasMore={hasMore}
-                    loadingMore={productsLoading && currentPage > 1}
+                    gridColumns={4}
                 />
+
+                {totalCount > 12 && !productsLoading && (
+                    <div className="flex justify-center mt-8">
+                        <Pagination
+                            current={currentPage}
+                            total={totalCount}
+                            pageSize={12}
+                            onChange={handlePageChange}
+                            showSizeChanger={false}
+                            showTotal={(total, range) =>
+                                `${range[0]}-${range[1]} of ${total} products`
+                            }
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

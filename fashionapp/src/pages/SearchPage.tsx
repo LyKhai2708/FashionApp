@@ -7,7 +7,7 @@ export default function SearchPage() {
     const [searchParams] = useSearchParams();
     const searchTerm = searchParams.get('q') || '';
 
-    const { products, totalCount, loading, loadingMore, hasMore, loadMore, setFilters } = useSearchProducts(searchTerm);
+    const { products, totalCount, loading, setFilters } = useSearchProducts(searchTerm);
 
     useEffect(() => {
         if (searchTerm) {
@@ -16,6 +16,7 @@ export default function SearchPage() {
     }, [searchTerm, setFilters]);
 
     const breadcrumbs = [
+        { label: 'Trang chủ', href: '/' },
         { label: 'Sản phẩm', href: '/products' },
         { label: `Tìm kiếm: "${searchTerm}"`, href: `/search?q=${encodeURIComponent(searchTerm)}` }
     ];
@@ -28,11 +29,6 @@ export default function SearchPage() {
                 totalCount={totalCount}
                 title={`Kết quả tìm kiếm cho "${searchTerm}"`}
                 breadcrumbs={breadcrumbs}
-                onFilterChange={null}
-                onSortChange={null} 
-                onLoadMore={loadMore}
-                hasMore={hasMore}
-                loadingMore={loadingMore}
                 currentFilters={{ limit: 8, search: searchTerm }}
             />
         </div>

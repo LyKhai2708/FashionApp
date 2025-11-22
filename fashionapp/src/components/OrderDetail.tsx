@@ -62,16 +62,16 @@ const getPaymentStatusText = (status: string) => {
 export default function OrderDetail({ order, onBack }: Props) {
 
   const showRetryButton =
-  order?.order_status === 'pending' &&
-  order?.payment_method === 'payos' &&
-  (order?.payment_status === 'failed' || order?.payment_status === 'pending');
+    order?.order_status === 'pending' &&
+    order?.payment_method === 'payos' &&
+    (order?.payment_status === 'failed' || order?.payment_status === 'pending');
 
-const {
-  retryPayment,
-  loading: retryLoading,
-  canRetry,
-  timeLeft
-} = useRetryPayment(order?.order_id || 0);
+  const {
+    retryPayment,
+    loading: retryLoading,
+    canRetry,
+    timeLeft
+  } = useRetryPayment(order?.order_id || 0);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{
     productId: number;
@@ -100,11 +100,11 @@ const {
       orderId: order!.order_id,
       reviewId: review.id,
       editMode: true,
-      initialData: { 
-        rating: review.rating, 
-        comment: review.comment, 
+      initialData: {
+        rating: review.rating,
+        comment: review.comment,
         order_id: order!.order_id,
-        images: review.images 
+        images: review.images
       }
     });
     setReviewModalVisible(true);
@@ -140,8 +140,8 @@ const {
       <Card className="shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button 
-              icon={<ArrowLeftOutlined />} 
+            <Button
+              icon={<ArrowLeftOutlined />}
               onClick={onBack}
               type="text"
               size="large"
@@ -164,10 +164,10 @@ const {
         <Steps
           current={
             order.order_status === 'cancelled' ? -1 :
-            order.order_status === 'delivered' ? 4 :
-            order.order_status === 'shipped' ? 3 :
-            order.order_status === 'processing' ? 2 :
-            order.order_status === 'pending' ? 1 : 0
+              order.order_status === 'delivered' ? 4 :
+                order.order_status === 'shipped' ? 3 :
+                  order.order_status === 'processing' ? 2 :
+                    order.order_status === 'pending' ? 1 : 0
           }
           status={order.order_status === 'cancelled' ? 'error' : 'process'}
           items={[
@@ -208,14 +208,14 @@ const {
             },
             {
               title: order.order_status === 'cancelled' ? 'Đã hủy' : 'Hoàn tất',
-              description: order.cancelled_at ? 
+              description: order.cancelled_at ?
                 new Date(order.cancelled_at).toLocaleDateString('vi-VN', {
                   day: '2-digit',
                   month: '2-digit',
                   hour: '2-digit',
                   minute: '2-digit'
-                }) : 
-                order.delivered_at ? 
+                }) :
+                order.delivered_at ?
                   new Date(order.delivered_at).toLocaleDateString('vi-VN', {
                     day: '2-digit',
                     month: '2-digit',
@@ -238,13 +238,13 @@ const {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <Card 
-          title={<span className="flex items-center gap-2"><UserOutlined /> Thông tin người nhận</span>} 
+        <Card
+          title={<span className="flex items-center gap-2"><UserOutlined /> Thông tin người nhận</span>}
           className="shadow-sm"
           extra={
             order.order_status === 'pending' && (
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 icon={<EditOutlined />}
                 onClick={() => setShowEditAddressModal(true)}
                 className="!text-blue-600 !border-blue-300"
@@ -264,7 +264,7 @@ const {
             <div className="flex items-start gap-3">
               <HomeOutlined className="text-gray-500 mt-1" />
               <div>
-                <Text>{order.shipping_detail_address}</Text><br/>
+                <Text>{order.shipping_detail_address}</Text><br />
                 <Text type="secondary">{order.shipping_ward}, {order.shipping_province}</Text>
               </div>
             </div>
@@ -310,7 +310,7 @@ const {
             </div>
             {order.notes && (
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <Text strong>Ghi chú:</Text><br/>
+                <Text strong>Ghi chú:</Text><br />
                 <Text type="secondary">{order.notes}</Text>
               </div>
             )}
@@ -326,7 +326,7 @@ const {
               <FileTextOutlined />
               <span className="font-semibold text-lg">Đơn hàng chưa thanh toán</span>
             </div>
-            
+
             <div className="p-4 bg-orange-50 rounded-lg">
               <Text className="text-orange-800">
                 Đơn hàng của bạn chưa được thanh toán. Vui lòng hoàn tất thanh toán để đơn hàng được xử lý.
@@ -334,7 +334,7 @@ const {
             </div>
 
             <PaymentCountdown timeLeft={timeLeft} size="default" />
-            
+
             <RetryPaymentButton
               onRetry={retryPayment}
               loading={retryLoading}
@@ -347,36 +347,36 @@ const {
       )}
 
       {/* Order Items */}
-      <Card 
-        title={<span className="text-lg font-semibold">Sản phẩm đã đặt ({order.items?.length || 0} sản phẩm)</span>} 
+      <Card
+        title={<span className="text-lg font-semibold">Sản phẩm đã đặt ({order.items?.length || 0} sản phẩm)</span>}
         className="shadow-sm"
       >
         <div className="space-y-4">
           {(order.items || []).map((item, idx) => (
             <div key={idx} className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow">
               <div className="relative">
-                <img 
-                  src={getImageUrl(item.image_url)} 
-                  alt={item.product_name} 
-                  className="w-20 h-20 object-cover rounded-lg" 
+                <img
+                  src={getImageUrl(item.image_url)}
+                  alt={item.product_name}
+                  className="w-20 h-20 object-cover rounded-lg"
                 />
                 <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
                   {item.quantity}
                 </div>
               </div>
-              
+
               <div className="flex-1">
                 <Title level={5} className="!mb-2">{item.product_name}</Title>
                 <div className="flex items-center gap-4 mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" style={{backgroundColor: item.color_name?.toLowerCase()}}></div>
+                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" style={{ backgroundColor: item.color_name?.toLowerCase() }}></div>
                     <Text type="secondary">Màu: {item.color_name}</Text>
                   </div>
                   <Text type="secondary">Size: {item.size_name}</Text>
                 </div>
                 <Text type="secondary">Số lượng: {item.quantity}</Text>
               </div>
-              
+
               <div className="text-right">
                 <div className="text-lg font-semibold text-red-600 mb-2">
                   {formatVNDPrice(item.price * item.quantity)}
@@ -384,14 +384,14 @@ const {
                 <Text type="secondary" className="text-sm">
                   {formatVNDPrice(item.price)} x {item.quantity}
                 </Text>
-                
+
                 {isDelivered && (
                   <div className="mt-3">
                     {(() => {
                       const r = itemReviews[item.product_id];
                       if (!r) {
                         return (
-                          <Button 
+                          <Button
                             size="small"
                             type="primary"
                             onClick={() => handleOpenReview(item.product_id)}
@@ -404,7 +404,7 @@ const {
                       const isFirstEditAllowed = r.created_at === r.updated_at;
                       if (isFirstEditAllowed) {
                         return (
-                          <Button 
+                          <Button
                             size="small"
                             type="default"
                             onClick={() => handleOpenEdit(item.product_id)}
@@ -415,7 +415,7 @@ const {
                         );
                       }
                       return (
-                        <Button 
+                        <Button
                           size="small"
                           type="default"
                           onClick={() => setViewModal({ rating: r.rating, comment: r.comment, images: r.images })}
@@ -468,10 +468,10 @@ const {
                 <Text strong className="block mb-2">Hình ảnh đánh giá:</Text>
                 <div className="grid grid-cols-3 gap-3">
                   {viewModal.images.map((image) => (
-                    <img 
+                    <img
                       key={image.image_id}
-                      src={getImageUrl(image.image_url)} 
-                      alt="Review" 
+                      src={getImageUrl(image.image_url)}
+                      alt="Review"
                       className="w-full h-24 object-cover rounded-lg border"
                     />
                   ))}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Tabs } from 'antd';
-import { Zap, ChevronRight } from 'lucide-react';
+import { Flame, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductSlider from '../ProductSlider';
 import Countdown from './CountDown';
@@ -22,18 +22,18 @@ const PromotionTabsSection = () => {
                 setInitialLoading(true);
                 const promos = await promotionService.getCurrentPromotions(10);
                 setPromotions(promos);
-                
+
 
                 const promosWithProducts: Promotion[] = [];
                 const newProductsCache: Record<number, Product[]> = {};
-                
+
                 for (const promo of promos) {
                     try {
-                        const response = await promotionService.getPromotionProducts(promo.promo_id, { 
-                            limit: 8 
+                        const response = await promotionService.getPromotionProducts(promo.promo_id, {
+                            limit: 8
                         });
                         const { products } = response;
-                        
+
 
                         if (products && products.length > 0) {
                             promosWithProducts.push(promo);
@@ -43,10 +43,10 @@ const PromotionTabsSection = () => {
                         console.error(`Error fetching products for promotion ${promo.promo_id}:`, error);
                     }
                 }
-                
+
                 setFilteredPromotions(promosWithProducts);
                 setProductsCache(newProductsCache);
-                
+
                 // Auto-select first promotion
                 if (promosWithProducts.length > 0) {
                     setActiveKey('0');
@@ -68,12 +68,12 @@ const PromotionTabsSection = () => {
 
         setLoading(true);
         try {
-            const response = await promotionService.getPromotionProducts(promoId, { 
-                limit: 8 
+            const response = await promotionService.getPromotionProducts(promoId, {
+                limit: 8
             });
-            
+
             const { products } = response;
-            
+
             setProductsCache(prev => ({
                 ...prev,
                 [promoId]: products || []
@@ -100,7 +100,7 @@ const PromotionTabsSection = () => {
                     <div className="h-8 bg-gray-200 rounded w-48 mb-6"></div>
                     <div className="h-12 bg-gray-200 rounded mb-4"></div>
                     <div className="grid grid-cols-4 gap-4">
-                        {[1,2,3,4].map(i => (
+                        {[1, 2, 3, 4].map(i => (
                             <div key={i} className="h-64 bg-gray-200 rounded"></div>
                         ))}
                     </div>
@@ -117,75 +117,58 @@ const PromotionTabsSection = () => {
     const currentProducts = currentPromo ? productsCache[currentPromo.promo_id] || [] : [];
 
     return (
-        <section className="container mx-auto px-4 py-8">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                    <Zap className="w-6 h-6 text-red-600" />
-                    <h2 className="text-2xl font-bold">KHUYẾN MÃI HOT</h2>
+        <section className="container mx-auto px-4 py-12">
+            <div className="border-2 border-red-200 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-6">
+                    <Flame className="w-7 h-7 text-red-500" fill="currentColor" />
+                    <h2 className="text-2xl font-extrabold text-gray-900">KHUYẾN MÃI HOT</h2>
                 </div>
-            </div>
-
-            {/* Tabs */}
-            <Tabs
-                activeKey={activeKey}
-                onChange={handleTabChange}
-                type="card"
-                className="promotion-tabs"
-                items={filteredPromotions.map((promo, index) => ({
-                    key: index.toString(),
-                    label: (
-                        <div className="flex items-center gap-2 px-2">
-                            <span className="font-medium text-black text-sm md:text-base truncate max-w-[120px] md:max-w-none">
+                <Tabs
+                    activeKey={activeKey}
+                    onChange={handleTabChange}
+                    className="promotion-tabs"
+                    items={filteredPromotions.map((promo, index) => ({
+                        key: index.toString(),
+                        label: (
+                            <span className="text-sm md:text-base font-medium">
                                 {promo.name}
                             </span>
-                            <span className="text-red-600 font-bold text-xs md:text-sm whitespace-nowrap">
-                                -{promo.discount_percent}%
-                            </span>
-                        </div>
-                    ),
-                    children: (
-                        <div className="py-6">
-                            {/* Promotion Info */}
-                            <div className="mb-6">
-                                <h3 className="text-lg md:text-xl font-bold mb-2">
-                                    {promo.name} - Giảm đến {promo.discount_percent}%
-                                </h3>
-                                {promo.description && (
-                                    <p className="text-gray-600 mb-3 text-sm md:text-base">
-                                        {promo.description}
-                                    </p>
-                                )}
-                                <Countdown endDate={promo.end_date} />
-                            </div>
-
-                            {/* Products Slider */}
-                            <ProductSlider 
-                                products={currentProducts}
-                                loading={loading}
-                                slidesPerView={{
-                                    mobile: 2,
-                                    tablet: 3,
-                                    desktop: 4
-                                }}
-                            />
-
-                            {/* View All Link */}
-                            {currentProducts.length > 0 && (
-                                <div className="text-center mt-6">
-                                    <Link
-                                        to={`/promotions/${promo.promo_id}`}
-                                        className="inline-flex items-center gap-2 text-blue-600 hover:underline font-medium"
-                                    >
-                                        Xem tất cả sản phẩm trong chương trình
-                                        <ChevronRight className="w-4 h-4" />
-                                    </Link>
+                        ),
+                        children: (
+                            <div className="pt-6">
+                                <div className="bg-gray-50 rounded-xl p-5 mb-6">
+                                    <h3 className="text-base md:text-lg font-bold text-gray-900 mb-3">
+                                        {promo.name} - Giảm đến {promo.discount_percent}%
+                                    </h3>
+                                    <Countdown endDate={promo.end_date} />
                                 </div>
-                            )}
-                        </div>
-                    )
-                }))}
-            />
+
+                                <ProductSlider
+                                    products={currentProducts}
+                                    loading={loading}
+                                    slidesPerView={{
+                                        mobile: 2,
+                                        tablet: 3,
+                                        desktop: 4
+                                    }}
+                                />
+
+                                {currentProducts.length > 0 && (
+                                    <div className="text-center mt-8">
+                                        <Link
+                                            to={`/promotions/${promo.promo_id}`}
+                                            className="inline-flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
+                                        >
+                                            Xem tất cả sản phẩm trong chương trình
+                                            <ArrowRight className="w-4 h-4" />
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    }))}
+                />
+            </div>
         </section>
     );
 };

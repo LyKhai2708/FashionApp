@@ -1,10 +1,12 @@
 @import "tailwindcss";
+
 .custom-select .ant-select-selector {
   border-radius: 6px !important;
   height: 40px !important;
   display: flex;
   align-items: center;
 }
+
 .ant-message {
   z-index: 9999 !important;
 }
@@ -15,6 +17,7 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -26,6 +29,7 @@
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(100%);
     opacity: 0;
@@ -39,12 +43,14 @@
 .animate-slide-out-right {
   animation: slideOutRight 0.3s ease-in;
 }
+
 @theme {
   --font-*: initial;
-  --font-sans: Montserrat, sans-serif; 
+  --font-sans: Montserrat, sans-serif;
 
 
 }
+
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -57,120 +63,89 @@ input[type=number] {
 }
 
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .promotion-tabs .ant-tabs-nav {
-    margin-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .promotion-tabs .ant-tabs-nav-list {
-    gap: 8px;
+  gap: 24px;
 }
 
-/* Individual Tab */
 .promotion-tabs .ant-tabs-tab {
-    border-radius: 12px 12px 0 0;
-    border: 2px solid #e5e7eb;
-    border-bottom: none;
-    background: white;
-    transition: all 0.3s ease;
-    padding: 12px 20px;
-    margin: 0;
+  border: none;
+  background: transparent;
+  padding: 12px 4px;
+  margin: 0;
+  transition: all 0.2s ease;
 }
 
 .promotion-tabs .ant-tabs-tab:hover {
-    border-color: #ef4444;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+  background: transparent;
 }
 
-/* Active Tab */
+.promotion-tabs .ant-tabs-tab-btn {
+  color: #6b7280;
+  font-weight: 500;
+}
+
 .promotion-tabs .ant-tabs-tab-active {
-    border-color: #ef4444 !important;
-    border-bottom-color: white !important;
-    background: white;
-    position: relative;
-    z-index: 2;
-}
-
-.promotion-tabs .ant-tabs-tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: white;
+  background: transparent !important;
 }
 
 .promotion-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: #ef4444;
-    font-weight: 600;
+  color: #ef4444 !important;
+  font-weight: 600;
 }
 
-/* Tab Content Container */
-.promotion-tabs .ant-tabs-content-holder {
-    border: 2px solid #ef4444;
-    border-top: none;
-    border-radius: 0 0 12px 12px;
-    padding: 0 24px;
-    background: white;
-}
-
-/* Ink Bar (underline) - Hide it */
 .promotion-tabs .ant-tabs-ink-bar {
-    display: none;
+  background: #ef4444;
+  height: 3px;
 }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .promotion-tabs .ant-tabs-nav-list {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; 
-        -ms-overflow-style: none; 
-        gap: 4px;
-    }
-    
-    .promotion-tabs .ant-tabs-nav-list::-webkit-scrollbar {
-        display: none; 
-    }
-    
-    .promotion-tabs .ant-tabs-tab {
-        flex-shrink: 0;
-        padding: 8px 12px;
-        font-size: 14px;
-    }
-    
-    .promotion-tabs .ant-tabs-content-holder {
-        padding: 0 12px;
-    }
-}
-
-
-@media (min-width: 769px) and (max-width: 1024px) {
-    .promotion-tabs .ant-tabs-tab {
-        padding: 10px 16px;
-    }
-    
-    .promotion-tabs .ant-tabs-content-holder {
-        padding: 0 16px;
-    }
+.promotion-tabs .ant-tabs-content-holder {
+  border: none;
+  padding: 0;
+  background: transparent;
 }
 
 .promotion-tabs .ant-tabs-tabpane {
-    animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.3s ease-in;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@media (max-width: 768px) {
+  .promotion-tabs .ant-tabs-nav-list {
+    gap: 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .promotion-tabs .ant-tabs-nav-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .promotion-tabs .ant-tabs-tab {
+    flex-shrink: 0;
+    padding: 8px 4px;
+    font-size: 14px;
+  }
 }
+
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -255,4 +230,3 @@ a {
 a:hover {
   color: inherit;
 }
-

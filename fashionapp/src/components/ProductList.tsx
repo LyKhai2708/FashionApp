@@ -5,6 +5,7 @@ interface ProductListProps {
     products?: Product[];
     loading?: boolean;
     limit?: number;
+    gridColumns?: 3 | 4;
 }
 
 const ProductSkeleton = () => (
@@ -25,11 +26,15 @@ const ProductSkeleton = () => (
     </div>
 );
 
-export default function ProductList({ products = [], loading = false, limit }: ProductListProps) {
+export default function ProductList({ products = [], loading = false, limit, gridColumns = 4 }: ProductListProps) {
+    const gridClass = gridColumns === 3
+        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        : "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4";
+
     if (loading) {
         const skeletonCount = limit || 8;
         return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className={gridClass}>
                 {Array.from({ length: skeletonCount }).map((_, index) => (
                     <ProductSkeleton key={index} />
                 ))}
@@ -46,15 +51,15 @@ export default function ProductList({ products = [], loading = false, limit }: P
         );
     }
 
-    // Áp dụng limit nếu có
+
     const displayProducts = limit ? products.slice(0, limit) : products;
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className={gridClass}>
             {displayProducts.map((product, index) => (
-                <ProductCard 
-                    key={`${product.product_id}-${index}`} 
-                    product={product} 
+                <ProductCard
+                    key={`${product.product_id}-${index}`}
+                    product={product}
                 />
             ))}
         </div>

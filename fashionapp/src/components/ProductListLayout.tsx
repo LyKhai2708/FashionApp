@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { Pagination } from "antd";
 import ProductList from "./ProductList";
 import Breadcrumb from "./Breadcrumb";
 import FilterBar from "./FilterBar";
@@ -18,9 +18,9 @@ interface ProductListLayoutProps {
     breadcrumbs?: BreadcrumbItem[];
     onFilterChange?: (filters: ProductsParams) => void;
     onSortChange?: (sort: string) => void;
-    onLoadMore?: () => void;
-    hasMore?: boolean;
-    loadingMore?: boolean;
+    onPageChange?: (page: number) => void;
+    currentPage?: number;
+    pageSize?: number;
     currentFilters?: ProductsParams;
 }
 
@@ -32,83 +32,73 @@ export default function ProductListLayout({
     breadcrumbs = [],
     onFilterChange,
     onSortChange,
-    onLoadMore,
-    hasMore = false,
-    loadingMore = false,
+    onPageChange,
+    currentPage = 1,
+    pageSize = 12,
     currentFilters
 }: ProductListLayoutProps) {
-    const observerTarget = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!onLoadMore) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-                    onLoadMore();
-                }
-            },
-            { threshold: 0.1, rootMargin: '100px' }
-        );
-
-        if (observerTarget.current) {
-            observer.observe(observerTarget.current);
-        }
-
-        return () => {
-            if (observerTarget.current) {
-                observer.unobserve(observerTarget.current);
-            }
-        };
-    }, [hasMore, loadingMore, loading, onLoadMore]);
-
-    // Scroll to top khi filter/sort thay đổi
-    useEffect(() => {
-        if (!loading) return;
+    const handlePageChange = (page: number) => {
+        onPageChange?.(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [loading]);
+    };
 
     return (
         <div className="min-h-screen">
-            {/* Breadcrumb */}
-            <Breadcrumb items={breadcrumbs} />
+            <div className="container mx-auto px-4 py-6">
+                <Breadcrumb items={breadcrumbs} />
 
-            {/* Header with title and controls */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="text-xl font-semibold">
-                    {title} {totalCount > 0 ? <span>({totalCount} sản phẩm)</span> : null}
-                </div>
-                
-                <div className="flex items-center justify-end gap-4 flex-wrap">
-                    {onFilterChange && <FilterBar onFilterChange={onFilterChange} currentFilters={currentFilters} />}
-                    {onSortChange && <SortDropdown onSortChange={onSortChange} currentSort={currentFilters?.sort} />}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
+                    {onFilterChange && (
+                        <aside className="lg:col-span-1">
+                            <FilterBar
+                                onFilterChange={onFilterChange}
+                                currentFilters={currentFilters}
+                            />
+                        </aside>
+                    )}
+
+                    <main className={onFilterChange ? "lg:col-span-3" : "lg:col-span-4"}>
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+                                    {totalCount > 0 && (
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} products
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    {onSortChange && (
+                                        <SortDropdown
+                                            onSortChange={onSortChange}
+                                            currentSort={currentFilters?.sort}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+
+                            <ProductList products={products} loading={loading} gridColumns={3} />
+
+                            {totalCount > pageSize && !loading && (
+                                <div className="flex justify-center mt-8 pt-6 border-t border-gray-200">
+                                    <Pagination
+                                        current={currentPage}
+                                        total={totalCount}
+                                        pageSize={pageSize}
+                                        onChange={handlePageChange}
+                                        showSizeChanger={false}
+                                        showTotal={(total, range) =>
+                                            `${range[0]}-${range[1]} of ${total} products`
+                                        }
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </main>
                 </div>
             </div>
-
-            {/* Product List */}
-            <ProductList products={products} loading={loading} />
-
-            {/* Loading More Indicator */}
-            {loadingMore && (
-                <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
-                    <span className="ml-3 text-gray-600">Đang tải thêm...</span>
-                </div>
-            )}
-
-            {/* Intersection Observer Target */}
-            {hasMore && !loadingMore && (
-                <div ref={observerTarget} className="h-20 flex justify-center items-center">
-                    <span className="text-gray-400 text-sm">Cuộn xuống để xem thêm</span>
-                </div>
-            )}
-
-            {/* End Message */}
-            {!hasMore && products.length > 0 && !loading && (
-                <div className="text-center py-8 text-gray-500">
-                    Đã hiển thị tất cả {totalCount} sản phẩm
-                </div>
-            )}
         </div>
     );
 }

@@ -8,7 +8,7 @@ import CategoryService, { type Category } from "../services/categoryService";
 
 export default function CategoryPage() {
     const { getFiltersFromUrl, saveFiltersToUrl, clearUrlFilters } = useUrlFilters();
-    
+
     const [category, setCategory] = useState<{
         category_id: number;
         category_name: string;
@@ -17,7 +17,7 @@ export default function CategoryPage() {
         active: number;
         children: Category[];
     } | null>(null);
-    
+
     const { categorySlug } = useParams<{ categorySlug: string }>();
 
     // Fetch category từ slug
@@ -51,7 +51,8 @@ export default function CategoryPage() {
         const urlFilters = getFiltersFromUrl();
         return {
             limit: 12,
-            ...urlFilters 
+            page: 1,
+            ...urlFilters
         };
     }, [getFiltersFromUrl]);
 
@@ -61,9 +62,6 @@ export default function CategoryPage() {
         totalCount,
         setFilters,
         setSort,
-        loadMore,
-        hasMore,
-        loadingMore,
         currentFilters,
         error
     } = useProductList({
@@ -73,27 +71,34 @@ export default function CategoryPage() {
     });
 
     const breadcrumbs = [
+        { label: "Trang chủ", href: "/" },
         { label: "Sản phẩm", href: "/products" },
         { label: category?.category_name || "Danh mục", href: `/collection/${categorySlug}` }
     ];
 
     const handleFilterChange = (filters: ProductsParams) => {
-        
+
         if (Object.keys(filters).length === 0) {
             clearUrlFilters();
         } else {
             saveFiltersToUrl(filters);
         }
-        
+
         setFilters(filters);
     };
 
     const handleSortChange = (sort: string) => {
-        
-        const newFilters = { ...currentFilters, sort: sort as ProductsParams['sort'] };
+
+        const newFilters = { ...currentFilters, sort: sort as ProductsParams['sort'], page: 1 };
         saveFiltersToUrl(newFilters);
-        
+
         setSort(sort);
+    };
+
+    const handlePageChange = (page: number) => {
+        const newFilters = { ...currentFilters, page };
+        saveFiltersToUrl(newFilters);
+        setFilters(newFilters);
     };
 
     if (error) {
@@ -102,7 +107,7 @@ export default function CategoryPage() {
                 <div className="text-center">
                     <h2 className="text-xl font-semibold mb-2">Có lỗi xảy ra</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
-                    <button 
+                    <button
                         onClick={() => window.location.reload()}
                         className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
                     >
@@ -134,9 +139,9 @@ export default function CategoryPage() {
             breadcrumbs={breadcrumbs}
             onFilterChange={handleFilterChange}
             onSortChange={handleSortChange}
-            onLoadMore={loadMore}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
+            onPageChange={handlePageChange}
+            currentPage={currentFilters?.page || 1}
+            pageSize={currentFilters?.limit || 12}
             currentFilters={currentFilters}
         />
     );

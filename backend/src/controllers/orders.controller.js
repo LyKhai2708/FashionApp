@@ -1,12 +1,13 @@
 const orderService = require('../services/order.service');
 const ApiError = require('../api-error');
 const JSend = require('../jsend');
+const { getUserPermissions } = require('../helpers/permission.helper');
 
 class OrdersController {
   async createOrder(req, res, next) {
     try {
       const { items, ...orderData } = req.body;
-      
+
       if (!items || !Array.isArray(items) || items.length === 0) {
         throw new ApiError(400, 'Danh sách sản phẩm không được để trống');
       }
@@ -15,7 +16,7 @@ class OrdersController {
       orderData.user_id = req.user.id;
 
       const order = await orderService.createOrder(orderData, items);
-      
+
       return res.status(201).json(JSend.success({ order }));
     } catch (error) {
       console.error('Error creating order:', error);
@@ -25,15 +26,15 @@ class OrdersController {
 
   async getMyOrders(req, res, next) {
     try {
-      const { 
+      const {
         user_id,
-        order_status, 
-        payment_status, 
+        order_status,
+        payment_status,
         payment_method,
         start_date,
         end_date,
-        page = 1, 
-        limit = 10 
+        page = 1,
+        limit = 10
       } = req.query;
 
       const filters = { ...req.query };
@@ -54,14 +55,14 @@ class OrdersController {
 
   async getOrders(req, res, next) {
     try {
-      const { 
+      const {
         order_status,
         payment_status,
         payment_method,
-        start_date, 
-        end_date, 
-        page = 1, 
-        limit = 10 
+        start_date,
+        end_date,
+        page = 1,
+        limit = 10
       } = req.query;
 
       const filters = {
@@ -111,10 +112,6 @@ class OrdersController {
 
   async updateOrderStatus(req, res, next) {
     try {
-      if (req.user.role !== 'admin') {
-        return next(new ApiError(403, 'Chỉ admin mới có quyền thực hiện thao tác này'));
-      }
-
       const { id } = req.params;
       const { order_status } = req.body;
 
@@ -124,7 +121,7 @@ class OrdersController {
 
       const adminId = req.user?.user_id || null;
       const updated = await orderService.updateOrderStatus(id, order_status, adminId);
-      
+
       if (!updated) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
@@ -147,12 +144,16 @@ class OrdersController {
       }
 
       const order = await orderService.getOrderById(id);
-      
+
       if (!order) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+      const isOwner = order.user_id === req.user.id;
+      const userPermissions = await getUserPermissions(req.user.user_id);
+      const hasPermission = userPermissions.includes('orders.cancel');
+
+      if (!isOwner && !hasPermission) {
         return next(new ApiError(403, 'Bạn không có quyền hủy đơn hàng này'));
       }
 
@@ -168,11 +169,11 @@ class OrdersController {
     try {
       const { productId } = req.params;
       const userId = req.user.id;
-  
+
       if (!productId || isNaN(productId)) {
         return next(new ApiError(400, "Product ID không hợp lệ"));
       }
-  
+
       const orders = await orderService.getEligibleOrdersForReview(userId, parseInt(productId));
       return res.json(JSend.success({ orders }));
     } catch (err) {
@@ -200,7 +201,7 @@ class OrdersController {
       }
 
       const updated = await orderService.updatePaymentStatus(id, payment_status);
-      
+
       if (!updated) {
         return next(new ApiError(404, 'Không tìm thấy thông tin thanh toán'));
       }
@@ -211,7 +212,7 @@ class OrdersController {
       return next(new ApiError(500, error.message || 'Lỗi khi cập nhật trạng thái thanh toán'));
     }
   }
-//khuc nay chua chac , se sua sau
+  //khuc nay chua chac , se sua sau
   async updateOrderAddress(req, res, next) {
     try {
       const { id } = req.params;
@@ -219,8 +220,8 @@ class OrdersController {
       const userId = req.user.id;
 
       const requiredFields = [
-        'receiver_name', 
-        'receiver_phone', 
+        'receiver_name',
+        'receiver_phone',
         'receiver_email',
         'shipping_province',
         'shipping_province_code',
@@ -246,16 +247,16 @@ class OrdersController {
 
       const updatedOrder = await orderService.updateOrderAddress(id, userId, addressData);
 
-      return res.json(JSend.success({ 
+      return res.json(JSend.success({
         order: updatedOrder,
-        message: 'Cập nhật địa chỉ đơn hàng thành công' 
+        message: 'Cập nhật địa chỉ đơn hàng thành công'
       }));
     } catch (error) {
       console.error('Error updating order address:', error);
       return next(new ApiError(500, error.message || 'Lỗi khi cập nhật địa chỉ đơn hàng'));
     }
   }
-  
+
 }
 
 module.exports = new OrdersController();

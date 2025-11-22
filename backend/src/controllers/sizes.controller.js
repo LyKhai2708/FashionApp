@@ -6,7 +6,7 @@ const JSend = require('../jsend');
 
 async function createSize(req, res, next) {
   const { name } = req.body;
-  
+
   if (!req.body?.name || typeof req.body.name !== 'string') {
     return next(new ApiError(400, 'Color name should be a non-empty string'));
   }
@@ -74,8 +74,8 @@ async function getSize(req, res, next) {
 }
 
 async function updateSize(req, res, next) {
-  const {size_id} = req.params;
-  const {name} = req.body;
+  const { id: size_id } = req.params;
+  const { name } = req.body;
 
   if (Object.keys(req.body).length === 0) {
     return next(new ApiError(400, 'Data for update cannot be empty'));
@@ -92,7 +92,7 @@ async function updateSize(req, res, next) {
     if (!updatedSize) {
       return next(new ApiError(404, 'Size not found'));
     }
-    
+
 
     return res.json(JSend.success({ size: updatedSize }));
   } catch (error) {
@@ -102,7 +102,7 @@ async function updateSize(req, res, next) {
 }
 
 async function deleteSize(req, res, next) {
-  const { size_id } = req.params;
+  const { id: size_id } = req.params;
 
   try {
     const deletedSize = await sizeService.deleteSize(size_id);
@@ -129,7 +129,7 @@ async function deleteAllSizes(req, res, next) {
 }
 
 module.exports = {
-    
+
   createSize,
   getSizesByFilter,
   getSize,
