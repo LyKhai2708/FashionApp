@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import orderService from '../../services/orderService';
+import orderService, { type Order } from '../../services/orderService';
 import { getImageUrl } from '../../utils/imageHelper';
 import OrderStatusBadge from '../../components/admin/OrderStatusBadge';
 import PaymentStatusBadge from '../../components/admin/PaymentStatusBadge';
+
 
 const OrderDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -214,8 +215,8 @@ const OrderDetail: React.FC = () => {
                             <div>
                                 <p className="text-sm text-gray-500">Địa chỉ</p>
                                 <p className="font-medium">
-                                    {order.shipping_full_address || 
-                                     `${order.shipping_detail_address}, ${order.shipping_ward}, ${order.shipping_province}`}
+                                    {order.shipping_full_address ||
+                                        `${order.shipping_detail_address}, ${order.shipping_ward}, ${order.shipping_province}`}
                                 </p>
                             </div>
                             {order.notes && (
@@ -262,11 +263,11 @@ const OrderDetail: React.FC = () => {
                                 <p className="text-sm text-gray-500">Phương thức thanh toán</p>
                                 <p className="font-medium">
                                     {order.payment_method === 'cod' ? 'COD' :
-                                     order.payment_method === 'bank_transfer' ? 'Chuyển khoản' :
-                                     order.payment_method === 'payos' ? 'PayOS' :
-                                     order.payment_method === 'momo' ? 'MoMo' :
-                                     order.payment_method === 'vnpay' ? 'VNPay' :
-                                     order.payment_method}
+                                        order.payment_method === 'bank_transfer' ? 'Chuyển khoản' :
+                                            order.payment_method === 'payos' ? 'PayOS' :
+                                                order.payment_method === 'momo' ? 'MoMo' :
+                                                    order.payment_method === 'vnpay' ? 'VNPay' :
+                                                        order.payment_method}
                                 </p>
                             </div>
                             <div>

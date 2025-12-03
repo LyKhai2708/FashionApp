@@ -18,18 +18,18 @@ async function createSize(payload) {
 }
 
 async function getSizeByName(name, size_id = null) {
-  const query = sizesRepository()
-    .whereRaw('LOWER(name) = LOWER(?)', [name]);
-  
-  if (size_id) {
-    query.andWhere('size_id', '!=', size_id);
-  }
+    const query = sizesRepository()
+        .whereRaw('LOWER(name) = LOWER(?)', [name]);
 
-  return query.first();
+    if (size_id) {
+        query.andWhere('size_id', '!=', size_id);
+    }
+
+    return query.first();
 }
 
 async function getManySizes(query) {
-    const { name, page = 1, limit = 100  } = query;
+    const { name, page = 1, limit = 100 } = query;
     const paginator = new Paginator(page, limit);
     let results = await sizesRepository()
         .where((builder) => {
@@ -51,7 +51,7 @@ async function getManySizes(query) {
         delete result.recordCount;
         return result;
     });
-    return {       
+    return {
         metadata: paginator.getMetadata(totalRecords),
         sizes: results,
     };
@@ -71,8 +71,17 @@ async function updateSize(id, payload) {
 
     const updatedSize = readSize(payload);
     await sizesRepository().where('size_id', id).update(updatedSize);
-    
+
     return { ...existingSize, ...updatedSize };
+}
+
+async function checkSizeInUse(size_id) {
+    const variants = await knex('product_variants')
+        .where('size_id', size_id)
+        .count('* as count')
+        .first();
+
+    return variants.count > 0;
 }
 
 
@@ -80,6 +89,11 @@ async function deleteSize(id) {
     const size = await sizesRepository().where('size_id', id).select('*').first();
     if (!size) {
         return null;
+    }
+
+    const isInUse = await checkSizeInUse(id);
+    if (isInUse) {
+        throw new Error('Không thể xóa kích cỡ này vì đang có sản phẩm sử dụng');
     }
 
     await sizesRepository().where('size_id', id).del();
@@ -99,4 +113,5 @@ module.exports = {
     updateSize,
     deleteSize,
     deleteAllSizes,
+    checkSizeInUse,
 };

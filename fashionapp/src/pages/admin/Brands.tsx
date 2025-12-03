@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, TagOutlined,
 import { useMessage } from '../../App';
 import brandService, { type Brand } from '../../services/brandService';
 import BrandModal from '../../components/admin/BrandModal';
+import { PermissionGate } from '../../components/PermissionGate';
 
 export default function Brands() {
     const message = useMessage();
@@ -48,7 +49,7 @@ export default function Brands() {
     const handleToggleStatus = async (brandId: number, currentStatus: number) => {
         const action = currentStatus === 1 ? 'vô hiệu hóa' : 'kích hoạt';
         if (!window.confirm(`Xác nhận ${action} thương hiệu này?`)) return;
-        
+
         try {
             await brandService.toggleBrandStatus(brandId);
             message.success(`${action === 'vô hiệu hóa' ? 'Vô hiệu hóa' : 'Kích hoạt'} thành công`);
@@ -104,7 +105,7 @@ export default function Brands() {
             dataIndex: 'name',
             key: 'name',
             render: (name: string, record: Brand) => (
-                <span style={{ 
+                <span style={{
                     textDecoration: record.active === 0 ? 'line-through' : 'none',
                     opacity: record.active === 0 ? 0.5 : 1,
                     fontWeight: 500
@@ -137,28 +138,32 @@ export default function Brands() {
             width: 150,
             render: (_: any, record: Brand) => (
                 <Space>
-                    <Button
-                        type="link"
-                        icon={<EditOutlined />}
-                        onClick={() => handleOpenEditModal(record)}
-                    >
-                        Sửa
-                    </Button>
-                    <Popconfirm
-                        title={record.active === 1 ? 'Vô hiệu hóa thương hiệu?' : 'Kích hoạt thương hiệu?'}
-                        description={`Xác nhận ${record.active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} thương hiệu này?`}
-                        onConfirm={() => handleToggleStatus(record.id, record.active)}
-                        okText="Xác nhận"
-                        cancelText="Hủy"
-                    >
+                    <PermissionGate permission="brands.edit">
                         <Button
                             type="link"
-                            danger={record.active === 1}
-                            icon={record.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                            icon={<EditOutlined />}
+                            onClick={() => handleOpenEditModal(record)}
                         >
-                            {record.active === 1 ? 'Vô hiệu' : 'Kích hoạt'}
+                            Sửa
                         </Button>
-                    </Popconfirm>
+                    </PermissionGate>
+                    <PermissionGate permission="brands.delete">
+                        <Popconfirm
+                            title={record.active === 1 ? 'Vô hiệu hóa thương hiệu?' : 'Kích hoạt thương hiệu?'}
+                            description={`Xác nhận ${record.active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} thương hiệu này?`}
+                            onConfirm={() => handleToggleStatus(record.id, record.active)}
+                            okText="Xác nhận"
+                            cancelText="Hủy"
+                        >
+                            <Button
+                                type="link"
+                                danger={record.active === 1}
+                                icon={record.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                            >
+                                {record.active === 1 ? 'Vô hiệu' : 'Kích hoạt'}
+                            </Button>
+                        </Popconfirm>
+                    </PermissionGate>
                 </Space>
             )
         }
@@ -170,14 +175,16 @@ export default function Brands() {
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
                     <TagOutlined /> Quản lý thương hiệu
                 </h1>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleOpenAddModal}
-                    size="large"
-                >
-                    Thêm thương hiệu
-                </Button>
+                <PermissionGate permission="brands.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleOpenAddModal}
+                        size="large"
+                    >
+                        Thêm thương hiệu
+                    </Button>
+                </PermissionGate>
             </div>
 
             <Row gutter={16} style={{ marginBottom: 24 }}>

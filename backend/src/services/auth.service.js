@@ -266,6 +266,18 @@ async function resetPassword(token, newPassword) {
     return { success: true };
 }
 
+
+async function getUserPermissions(userId) {
+    const permissions = await knex('role_permissions AS rp')
+        .join('user_roles AS ur', 'ur.role_id', 'rp.role_id')
+        .join('permissions AS p', 'p.permission_id', 'rp.permission_id')
+        .where('ur.user_id', userId)
+        .select('p.permission_name')
+        .distinct();
+
+    return permissions.map(p => p.permission_name);
+}
+
 module.exports = {
     login,
     googleLogin,
@@ -273,7 +285,8 @@ module.exports = {
     generateRefreshToken,
     register,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    getUserPermissions
 }
 
 

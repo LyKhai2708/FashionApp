@@ -4,6 +4,7 @@ import { UserOutlined, SearchOutlined, ReloadOutlined, CheckOutlined, StopOutlin
 import type { ColumnsType } from 'antd/es/table';
 import userService, { type User } from '../../services/userService';
 import roleService, { type Role } from '../../services/roleService';
+import { PermissionGate } from '../../components/PermissionGate';
 
 const Users: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -189,22 +190,38 @@ const Users: React.FC = () => {
             render: (_, record) => {
                 if (record.role === 'admin') return null;
                 return (
-                    <Popconfirm
-                        title={record.is_active === 1 ? 'Vô hiệu hóa người dùng?' : 'Kích hoạt người dùng?'}
-                        description={`Xác nhận ${record.is_active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} người dùng này?`}
-                        onConfirm={() => handleToggleStatus(record.user_id, record.is_active || 0)}
-                        okText="Xác nhận"
-                        cancelText="Hủy"
-                        okButtonProps={{ danger: record.is_active === 1 }}
+                    <PermissionGate
+                        permission="users.edit"
+                        showTooltip={true}
+                        tooltipMessage="Bạn không có quyền chỉnh sửa người dùng"
+                        fallback={
+                            <Button
+                                type="link"
+                                disabled
+                                icon={record.is_active === 1 ? <StopOutlined /> : <CheckOutlined />}
+                                style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                            >
+                                {record.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                            </Button>
+                        }
                     >
-                        <Button
-                            type="link"
-                            danger={record.is_active === 1}
-                            icon={record.is_active === 1 ? <StopOutlined /> : <CheckOutlined />}
+                        <Popconfirm
+                            title={record.is_active === 1 ? 'Vô hiệu hóa người dùng?' : 'Kích hoạt người dùng?'}
+                            description={`Xác nhận ${record.is_active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} người dùng này?`}
+                            onConfirm={() => handleToggleStatus(record.user_id, record.is_active || 0)}
+                            okText="Xác nhận"
+                            cancelText="Hủy"
+                            okButtonProps={{ danger: record.is_active === 1 }}
                         >
-                            {record.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                        </Button>
-                    </Popconfirm>
+                            <Button
+                                type="link"
+                                danger={record.is_active === 1}
+                                icon={record.is_active === 1 ? <StopOutlined /> : <CheckOutlined />}
+                            >
+                                {record.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                            </Button>
+                        </Popconfirm>
+                    </PermissionGate>
                 );
             }
         }
@@ -221,14 +238,16 @@ const Users: React.FC = () => {
                         Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{total}</span> người dùng
                     </div>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => setIsModalOpen(true)}
-                    size="large"
-                >
-                    Tạo người dùng mới
-                </Button>
+                <PermissionGate permission="users.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsModalOpen(true)}
+                        size="large"
+                    >
+                        Tạo người dùng mới
+                    </Button>
+                </PermissionGate>
             </div>
 
             <Card style={{ marginBottom: 24 }}>

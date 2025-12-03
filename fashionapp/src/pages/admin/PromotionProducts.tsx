@@ -391,14 +391,14 @@ export default function PromotionProducts() {
                             filterOption={false}
                             optionLabelProp="label"
                             notFoundContent={
-                                searchLoading ? <Spin size="small" /> : 
-                                searchKeyword.length < 2 ? 'Nhập tối thiểu 2 ký tự để tìm kiếm' :
-                                'Không tìm thấy sản phẩm'
+                                searchLoading ? <Spin size="small" /> :
+                                    searchKeyword.length < 2 ? 'Nhập tối thiểu 2 ký tự để tìm kiếm' :
+                                        'Không tìm thấy sản phẩm'
                             }
                         >
                             {searchProducts.map((product) => (
-                                <Option 
-                                    key={product.product_id} 
+                                <Option
+                                    key={product.product_id}
                                     value={product.product_id}
                                     label={product.name}
                                 >
@@ -406,10 +406,10 @@ export default function PromotionProducts() {
                                         <img
                                             src={getImageUrl(product.thumbnail)}
                                             alt={product.name}
-                                            style={{ 
-                                                width: '40px', 
-                                                height: '40px', 
-                                                objectFit: 'cover', 
+                                            style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                objectFit: 'cover',
                                                 borderRadius: '4px',
                                                 flexShrink: 0
                                             }}

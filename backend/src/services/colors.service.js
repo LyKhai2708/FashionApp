@@ -19,18 +19,18 @@ async function createColor(payload) {
 }
 
 async function getColorByName(name, color_id = null) {
-  const query = colorsRepository()
-    .whereRaw('LOWER(name) = LOWER(?)', [name]);
-  
-  if (color_id) {
-    query.andWhere('color_id', '!=', color_id);
-  }
+    const query = colorsRepository()
+        .whereRaw('LOWER(name) = LOWER(?)', [name]);
 
-  return query.first();
+    if (color_id) {
+        query.andWhere('color_id', '!=', color_id);
+    }
+
+    return query.first();
 }
 
 async function getManyColors(query) {
-    const { name, page = 1, limit = 100  } = query;
+    const { name, page = 1, limit = 100 } = query;
     const paginator = new Paginator(page, limit);
     let results = await colorsRepository()
         .where((builder) => {
@@ -53,7 +53,7 @@ async function getManyColors(query) {
         delete result.recordCount;
         return result;
     });
-    return {       
+    return {
         metadata: paginator.getMetadata(totalRecords),
         colors: results,
     };
@@ -73,8 +73,17 @@ async function updateColor(id, payload) {
 
     const updatedColor = readColor(payload);
     await colorsRepository().where('color_id', id).update(updatedColor);
-    
+
     return { ...existingColor, ...updatedColor };
+}
+
+async function checkColorInUse(color_id) {
+    const variants = await knex('product_variants')
+        .where('color_id', color_id)
+        .count('* as count')
+        .first();
+
+    return variants.count > 0;
 }
 
 
@@ -82,6 +91,11 @@ async function deleteColor(id) {
     const color = await colorsRepository().where('color_id', id).select('*').first();
     if (!color) {
         return null;
+    }
+
+    const isInUse = await checkColorInUse(id);
+    if (isInUse) {
+        throw new Error('Không thể xóa màu này vì đang có sản phẩm sử dụng');
     }
 
     await colorsRepository().where('color_id', id).del();
@@ -101,4 +115,5 @@ module.exports = {
     updateColor,
     deleteColor,
     deleteAllColors,
+    checkColorInUse,
 };

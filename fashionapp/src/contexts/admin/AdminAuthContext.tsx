@@ -17,7 +17,7 @@ type AdminAuthAction =
     | { type: 'ADMIN_LOGIN_SUCCESS'; payload: { user: User; token: string } }
     | { type: 'ADMIN_LOGIN_FAILURE'; payload: { error: string } }
     | { type: 'ADMIN_LOGOUT' }
-    | { type: 'ADMIN_REFRESH_TOKEN_SUCCESS'; payload: { token: string } }
+    | { type: 'ADMIN_REFRESH_TOKEN_SUCCESS'; payload: { token: string; user?: User } }
     | { type: 'ADMIN_CLEAR_ERROR' };
 
 
@@ -33,7 +33,7 @@ const adminAuthReducer = (state: AdminAuthState, action: AdminAuthAction): Admin
     switch (action.type) {
         case 'ADMIN_LOGIN_START':
             return { ...state, isLoading: true, error: null };
-        
+
         case 'ADMIN_LOGIN_SUCCESS':
             return {
                 ...state,
@@ -43,7 +43,7 @@ const adminAuthReducer = (state: AdminAuthState, action: AdminAuthAction): Admin
                 isLoading: false,
                 error: null,
             };
-        
+
         case 'ADMIN_LOGIN_FAILURE':
             return {
                 ...state,
@@ -53,7 +53,7 @@ const adminAuthReducer = (state: AdminAuthState, action: AdminAuthAction): Admin
                 isLoading: false,
                 error: action.payload.error,
             };
-        
+
         case 'ADMIN_LOGOUT':
             return {
                 ...state,
@@ -63,16 +63,17 @@ const adminAuthReducer = (state: AdminAuthState, action: AdminAuthAction): Admin
                 isLoading: false,
                 error: null,
             };
-        
+
         case 'ADMIN_REFRESH_TOKEN_SUCCESS':
             return {
                 ...state,
                 token: action.payload.token,
+                user: action.payload.user || state.user,  // Update user if provided
             };
-        
+
         case 'ADMIN_CLEAR_ERROR':
             return { ...state, error: null };
-        
+
         default:
             return state;
     }
@@ -132,8 +133,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
 
     const refreshToken = useCallback(async (): Promise<void> => {
         try {
-            const newToken = await authService.adminRefreshToken();
-            dispatch({ type: 'ADMIN_REFRESH_TOKEN_SUCCESS', payload: { token: newToken } });
+            const { token: newToken, user } = await authService.adminRefreshToken();
+            dispatch({ type: 'ADMIN_REFRESH_TOKEN_SUCCESS', payload: { token: newToken, user } });
         } catch (error) {
             dispatch({ type: 'ADMIN_LOGOUT' });
             throw error;
@@ -174,11 +175,11 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
     useEffect(() => {
         const admin = authService.getCurrentAdmin();
         const token = authService.getAdminToken();
-        
+
         if (admin && token) {
-            dispatch({ 
-                type: 'ADMIN_LOGIN_SUCCESS', 
-                payload: { user: admin, token } 
+            dispatch({
+                type: 'ADMIN_LOGIN_SUCCESS',
+                payload: { user: admin, token }
             });
         }
 

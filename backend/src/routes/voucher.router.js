@@ -191,6 +191,12 @@ router.delete('/admin/:id',
     voucherController.deleteVoucher
 );
 
+router.put('/admin/:id/toggle-active',
+    authMiddleware,
+    checkPermission,
+    voucherController.toggleVoucherActive
+);
+
 // Public routes
 router.get('/available',
     voucherController.getAvailableVouchers

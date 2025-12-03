@@ -202,6 +202,48 @@ const PERMISSION_ROUTES = {
         description: 'Điều chỉnh tồn kho'
     },
 
+    // ========== SUPPLIER MANAGEMENT ==========
+    'suppliers.view': {
+        paths: ['GET /api/v1/suppliers', 'GET /api/v1/suppliers/:id'],
+        description: 'Xem danh sách nhà cung cấp'
+    },
+    'suppliers.create': {
+        paths: ['POST /api/v1/suppliers'],
+        description: 'Tạo nhà cung cấp mới'
+    },
+    'suppliers.edit': {
+        paths: ['PUT /api/v1/suppliers/:id'],
+        description: 'Sửa thông tin nhà cung cấp'
+    },
+    'suppliers.delete': {
+        paths: ['DELETE /api/v1/suppliers/:id'],
+        description: 'Xóa nhà cung cấp'
+    },
+
+    // ========== PURCHASE ORDER MANAGEMENT ==========
+    'purchase_orders.view': {
+        paths: ['GET /api/v1/purchase-orders', 'GET /api/v1/purchase-orders/:id'],
+        description: 'Xem danh sách phiếu nhập'
+    },
+    'purchase_orders.create': {
+        paths: ['POST /api/v1/purchase-orders'],
+        description: 'Tạo phiếu nhập kho'
+    },
+    'purchase_orders.approve': {
+        paths: ['PATCH /api/v1/purchase-orders/:id/status'],
+        description: 'Duyệt/Hoàn tất nhập kho'
+    },
+    'purchase_orders.cancel': {
+        paths: ['DELETE /api/v1/purchase-orders/:id'],
+        description: 'Hủy phiếu nhập'
+    },
+
+
+    'payments.manage': {
+        paths: ['PATCH /api/v1/payments/admin/status/:orderId'],
+        description: 'Quản lý trạng thái thanh toán (Admin/Manager)'
+    },
+
     // ========== ROLE MANAGEMENT ==========
     'roles.manage': {
         paths: [

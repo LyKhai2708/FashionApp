@@ -5,6 +5,7 @@ import inventoryService, { type LowStockProduct, type StockHistoryItem } from '.
 import StockAdjustmentModal from '../../components/admin/StockAdjustmentModal';
 import { getImageUrl } from '../../utils/imageHelper';
 import dayjs from 'dayjs';
+import { PermissionGate } from '../../components/PermissionGate';
 
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
@@ -157,14 +158,31 @@ export default function Inventory() {
             key: 'actions',
             width: 120,
             render: (_: any, record: LowStockProduct) => (
-                <Button
-                    type="primary"
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={() => handleAdjustStock(record)}
+                <PermissionGate
+                    permission="inventory.adjust"
+                    showTooltip={true}
+                    tooltipMessage="Bạn không có quyền điều chỉnh tồn kho"
+                    fallback={
+                        <Button
+                            type="primary"
+                            size="small"
+                            icon={<EditOutlined />}
+                            disabled
+                            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                        >
+                            Điều chỉnh
+                        </Button>
+                    }
                 >
-                    Điều chỉnh
-                </Button>
+                    <Button
+                        type="primary"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleAdjustStock(record)}
+                    >
+                        Điều chỉnh
+                    </Button>
+                </PermissionGate>
             )
         }
     ];
@@ -222,7 +240,7 @@ export default function Inventory() {
             render: (_: any, record: StockHistoryItem) => (
                 <div>
                     <span style={{ color: '#666' }}>{record.quantity_before}</span>
-                    <span style={{ 
+                    <span style={{
                         margin: '0 8px',
                         color: record.quantity_change > 0 ? 'green' : 'red',
                         fontWeight: 'bold'
@@ -232,6 +250,26 @@ export default function Inventory() {
                     <span style={{ fontWeight: 'bold' }}>{record.quantity_after}</span>
                 </div>
             )
+        },
+        {
+            title: 'Nguồn gốc',
+            key: 'source',
+            width: 180,
+            render: (_: any, record: StockHistoryItem) => {
+                if (record.action_type === 'sale' && record.customer_name) {
+                    return <div style={{ fontSize: 12 }}>
+                        <div style={{ color: '#666' }}>Khách hàng:</div>
+                        <div style={{ fontWeight: 500 }}>{record.customer_name}</div>
+                    </div>;
+                }
+                if (record.action_type === 'restock' && record.supplier_name) {
+                    return <div style={{ fontSize: 12 }}>
+                        <div style={{ color: '#666' }}>Nhà cung cấp:</div>
+                        <div style={{ fontWeight: 500 }}>{record.supplier_name}</div>
+                    </div>;
+                }
+                return <span style={{ color: '#999' }}>---</span>;
+            }
         },
         {
             title: 'Lý do',

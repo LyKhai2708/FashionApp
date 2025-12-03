@@ -1,35 +1,35 @@
 import { useState, useEffect } from 'react';
-import { 
-    Table, 
-    Button, 
-    Space, 
-    Tag, 
-    Modal, 
-    Form, 
-    Input, 
-    InputNumber, 
-    DatePicker, 
-    Switch, 
-    Select, 
-    message,
+import {
+    Table,
+    Button,
+    Space,
+    Tag,
+    Modal,
+    Form,
+    Input,
+    InputNumber,
+    DatePicker,
+    Switch,
+    Select,
     Popconfirm,
     Card,
     Statistic,
     Row,
     Col
 } from 'antd';
-import { 
-    PlusOutlined, 
-    EditOutlined, 
-    DeleteOutlined, 
+import {
+    PlusOutlined,
+    EditOutlined,
+    DeleteOutlined,
     EyeOutlined,
     GiftOutlined,
     DollarOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import voucherService, { type Voucher, type VoucherCreateRequest, type VoucherUpdateRequest } from '../../services/voucherService';
+import voucherService, { type Voucher } from '../../services/voucherService';
 import dayjs from 'dayjs';
-
+import { PermissionGate } from '../../components/PermissionGate';
+import { useMessage } from '../../App';
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -43,6 +43,7 @@ interface Paginate {
 }
 
 export default function Vouchers() {
+    const message = useMessage();
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [paginate, setPaginate] = useState<Paginate>({
         totalRecords: 0,
@@ -106,7 +107,19 @@ export default function Vouchers() {
             message.success('Xóa voucher thành công');
             fetchVouchers();
         } catch (error: any) {
+            console.log('🔴 Delete error:', error); // ← Thêm dòng này
+            console.log('🔴 Error message:', error.message);
             message.error(error.message || 'Không thể xóa voucher');
+        }
+    };
+
+    const handleToggleActive = async (voucherId: number, currentActive: boolean) => {
+        try {
+            await voucherService.toggleVoucherActive(voucherId);
+            message.success(currentActive ? 'Đã vô hiệu hóa voucher' : 'Đã kích hoạt voucher');
+            fetchVouchers();
+        } catch (error: any) {
+            message.error(error.message || 'Không thể cập nhật trạng thái voucher');
         }
     };
 
@@ -131,10 +144,11 @@ export default function Vouchers() {
                 message.success('Cập nhật voucher thành công');
             } else {
                 payload.code = values.code;
+                payload.active = true;
                 await voucherService.createVoucher(payload);
                 message.success('Tạo voucher thành công');
             }
-            
+
             setModalVisible(false);
             form.resetFields();
             fetchVouchers();
@@ -246,6 +260,28 @@ export default function Vouchers() {
             ),
         },
         {
+            title: 'Trạng thái',
+            key: 'active',
+            align: 'center' as const,
+            render: (_, record) => (
+                <PermissionGate permission="vouchers.edit">
+                    <Popconfirm
+                        title={record.active ? 'Vô hiệu hóa voucher?' : 'Kích hoạt voucher?'}
+                        description={record.active ? 'Voucher sẽ không thể sử dụng nữa' : 'Voucher sẽ có thể sử dụng lại'}
+                        onConfirm={() => handleToggleActive(record.voucher_id, record.active)}
+                        okText="Xác nhận"
+                        cancelText="Hủy"
+                    >
+                        <Switch
+                            checked={record.active}
+                            checkedChildren="Hoạt động"
+                            unCheckedChildren="Vô hiệu"
+                        />
+                    </Popconfirm>
+                </PermissionGate>
+            ),
+        },
+        {
             title: 'Thao tác',
             key: 'actions',
             render: (_, record) => (
@@ -255,25 +291,29 @@ export default function Vouchers() {
                         icon={<EyeOutlined />}
                         onClick={() => handleView(record)}
                     />
-                    <Button
-                        type="text"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                    />
-                    <Popconfirm
-                        title="Xóa voucher này?"
-                        description="Bạn có chắc chắn muốn xóa voucher này không?"
-                        onConfirm={() => handleDelete(record.voucher_id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                        okType="danger"
-                    >
+                    <PermissionGate permission="vouchers.edit">
                         <Button
                             type="text"
-                            danger
-                            icon={<DeleteOutlined />}
+                            icon={<EditOutlined />}
+                            onClick={() => handleEdit(record)}
                         />
-                    </Popconfirm>
+                    </PermissionGate>
+                    <PermissionGate permission="vouchers.delete">
+                        <Popconfirm
+                            title="Xóa voucher này?"
+                            description="Bạn có chắc chắn muốn xóa voucher này không?"
+                            onConfirm={() => handleDelete(record.voucher_id)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            okType="danger"
+                        >
+                            <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                            />
+                        </Popconfirm>
+                    </PermissionGate>
                 </Space>
             ),
         },
@@ -290,13 +330,15 @@ export default function Vouchers() {
                     <h1 className="text-2xl font-bold text-gray-900">Quản lý Voucher</h1>
                     <p className="text-gray-600 mt-1">Tổng số: {paginate.totalRecords} voucher</p>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleCreate}
-                >
-                    Tạo voucher mới
-                </Button>
+                <PermissionGate permission="vouchers.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleCreate}
+                    >
+                        Tạo voucher mới
+                    </Button>
+                </PermissionGate>
             </div>
 
             <Row gutter={16}>
@@ -371,8 +413,8 @@ export default function Vouchers() {
                             { min: 3, max: 50, message: 'Mã voucher từ 3-50 ký tự' }
                         ]}
                     >
-                        <Input 
-                            placeholder="VD: SUMMER20" 
+                        <Input
+                            placeholder="VD: SUMMER20"
                             style={{ textTransform: 'uppercase' }}
                             disabled={!!editingVoucher}
                         />
@@ -502,15 +544,6 @@ export default function Vouchers() {
                         <RangePicker style={{ width: '100%' }} />
                     </Form.Item>
 
-                    <Form.Item
-                        name="active"
-                        label="Trạng thái"
-                        valuePropName="checked"
-                        initialValue={true}
-                    >
-                        <Switch checkedChildren="Hoạt động" unCheckedChildren="Vô hiệu" />
-                    </Form.Item>
-
                     <Form.Item className="mb-0">
                         <Space>
                             <Button type="primary" htmlType="submit">
@@ -542,7 +575,7 @@ export default function Vouchers() {
                                 {viewingVoucher.code}
                             </Tag>
                         </div>
-                        
+
                         <div>
                             <h3 className="text-lg font-semibold text-gray-900">{viewingVoucher.name}</h3>
                             {viewingVoucher.description && (
@@ -562,7 +595,7 @@ export default function Vouchers() {
                             <div>
                                 <span className="text-gray-500">Giá trị:</span>
                                 <div className="font-semibold">
-                                    {viewingVoucher.discount_type === 'percentage' 
+                                    {viewingVoucher.discount_type === 'percentage'
                                         ? `${viewingVoucher.discount_value}%`
                                         : `${viewingVoucher.discount_value.toLocaleString('vi-VN')} VNĐ`
                                     }
@@ -574,7 +607,7 @@ export default function Vouchers() {
                             <div>
                                 <span className="text-gray-500">Đơn hàng tối thiểu:</span>
                                 <div>
-                                    {viewingVoucher.min_order_amount > 0 
+                                    {viewingVoucher.min_order_amount > 0
                                         ? `${viewingVoucher.min_order_amount.toLocaleString('vi-VN')} VNĐ`
                                         : 'Không'
                                     }
@@ -583,7 +616,7 @@ export default function Vouchers() {
                             <div>
                                 <span className="text-gray-500">Giảm tối đa:</span>
                                 <div>
-                                    {viewingVoucher.max_discount_amount 
+                                    {viewingVoucher.max_discount_amount
                                         ? `${viewingVoucher.max_discount_amount.toLocaleString('vi-VN')} VNĐ`
                                         : 'Không giới hạn'
                                     }

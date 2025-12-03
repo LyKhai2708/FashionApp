@@ -3,6 +3,7 @@ import { Card, Button, Modal, Form, Input, Popconfirm, Statistic, Row, Col, Aler
 import { PlusOutlined, DeleteOutlined, ColumnHeightOutlined } from '@ant-design/icons';
 import { useMessage } from '../../App';
 import sizeService from '../../services/sizeService';
+import { PermissionGate } from '../../components/PermissionGate';
 
 interface Size {
     size_id: number;
@@ -39,7 +40,7 @@ export default function Sizes() {
             message.success('Xóa thành công');
             fetchSizes();
         } catch (error: any) {
-            message.error('Không thể xóa');
+            message.error(error.message || 'Không thể xóa');
         }
     };
 
@@ -64,14 +65,16 @@ export default function Sizes() {
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
                     <ColumnHeightOutlined /> Quản lý kích cỡ
                 </h1>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => setIsModalOpen(true)}
-                    size="large"
-                >
-                    Thêm size
-                </Button>
+                <PermissionGate permission="sizes.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsModalOpen(true)}
+                        size="large"
+                    >
+                        Thêm size
+                    </Button>
+                </PermissionGate>
             </div>
 
             <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -98,22 +101,24 @@ export default function Sizes() {
                                 bodyStyle={{ padding: '12px 8px' }}
                             >
                                 <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{size.name}</div>
-                                <Popconfirm
-                                    title="Xóa kích cỡ?"
-                                    description="Bạn có chắc muốn xóa size này?"
-                                    onConfirm={() => handleDelete(size.size_id)}
-                                    okText="Xóa"
-                                    cancelText="Hủy"
-                                    okButtonProps={{ danger: true }}
-                                >
-                                    <Button
-                                        type="text"
-                                        danger
-                                        size="small"
-                                        icon={<DeleteOutlined />}
-                                        style={{ fontSize: 12 }}
-                                    />
-                                </Popconfirm>
+                                <PermissionGate permission="sizes.delete">
+                                    <Popconfirm
+                                        title="Xóa kích cỡ?"
+                                        description="Bạn có chắc muốn xóa size này?"
+                                        onConfirm={() => handleDelete(size.size_id)}
+                                        okText="Xóa"
+                                        cancelText="Hủy"
+                                        okButtonProps={{ danger: true }}
+                                    >
+                                        <Button
+                                            type="text"
+                                            danger
+                                            size="small"
+                                            icon={<DeleteOutlined />}
+                                            style={{ fontSize: 12 }}
+                                        />
+                                    </Popconfirm>
+                                </PermissionGate>
                             </Card>
                         </Col>
                     ))}
@@ -145,8 +150,8 @@ export default function Sizes() {
                             { max: 10, message: 'Tên size không quá 10 ký tự' }
                         ]}
                     >
-                        <Input 
-                            placeholder="VD: S, M, L, XL, XXL, 39, 40..." 
+                        <Input
+                            placeholder="VD: S, M, L, XL, XXL, 39, 40..."
                             maxLength={10}
                         />
                     </Form.Item>

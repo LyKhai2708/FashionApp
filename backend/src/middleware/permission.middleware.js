@@ -1,15 +1,7 @@
 const { getRequiredPermission, getUserPermissions, getUserRoles } = require('../helpers/permission.helper');
 const ApiError = require('../api-error');
 
-/**
- * Middleware check quyền tự động
- * 
- * CHỈ áp dụng cho routes được define trong PERMISSION_ROUTES
- * Routes không có trong config sẽ pass through (chỉ check auth)
- * 
- * Cách dùng: Thêm vào route cần check quyền
- * VD: router.post('/', authMiddleware, checkPermission, controller.create);
- */
+
 const checkPermission = async (req, res, next) => {
     try {
         const method = req.method;

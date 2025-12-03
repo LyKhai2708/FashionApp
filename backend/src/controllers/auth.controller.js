@@ -136,6 +136,9 @@ async function adminLogin(req, res, next) {
       return next(new ApiError(403, 'Tài khoản không có quyền truy cập admin panel'));
     }
 
+    // Fetch user permissions
+    const permissions = await authService.getUserPermissions(user.user_id);
+
     res.cookie('adminRefreshToken', refreshToken,
       {
         httpOnly: true,
@@ -147,7 +150,13 @@ async function adminLogin(req, res, next) {
     return res.json({
       status: "success",
       data: {
-        user: { id: user.user_id, email: user.email, role: user.role },
+        user: {
+          id: user.user_id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          permissions: permissions
+        },
         token,
       },
     });
@@ -199,10 +208,20 @@ async function adminRefresh(req, res, next) {
     }
 
     const newAccessToken = authService.generateAccessToken(user);
+
+    const permissions = await authService.getUserPermissions(user.user_id);
+
     return res.json({
       status: "success",
       data: {
         token: newAccessToken,
+        user: {
+          id: user.user_id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          permissions: permissions
+        }
       },
     });
   } catch (err) {

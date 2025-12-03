@@ -114,6 +114,9 @@ async function deleteSize(req, res, next) {
     return res.json(JSend.success());
   } catch (error) {
     console.log(error);
+    if (error.message && error.message.includes('đang có sản phẩm sử dụng')) {
+      return next(new ApiError(400, error.message));
+    }
     return next(new ApiError(500, `Could not delete Size with id=${size_id}`));
   }
 }

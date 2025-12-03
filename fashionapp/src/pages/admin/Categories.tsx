@@ -5,6 +5,7 @@ import { useMessage } from '../../App';
 import categoryService, { type Category } from '../../services/categoryService';
 import CategoryForm from '../../components/admin/CategoryForm';
 import { getImageUrl } from '../../utils/imageHelper';
+import { PermissionGate } from '../../components/PermissionGate';
 
 const { Panel } = Collapse;
 
@@ -28,7 +29,7 @@ export default function Categories() {
         try {
             const response = await categoryService.getAllCategoriesIncludeInactive();
             setCategories(response || []);
-            
+
             const parentIds = (response || [])
                 .filter(cat => !cat.parent_id)
                 .map(cat => cat.category_id);
@@ -60,7 +61,7 @@ export default function Categories() {
     const handleToggleStatus = async (categoryId: number, currentStatus: number) => {
         const action = currentStatus === 1 ? 'vô hiệu hóa' : 'kích hoạt';
         if (!window.confirm(`Xác nhận ${action} danh mục này?`)) return;
-        
+
         try {
             await categoryService.toggleCategoryStatus(categoryId);
             message.success(`${action === 'vô hiệu hóa' ? 'Vô hiệu hóa' : 'Kích hoạt'} thành công`);
@@ -114,7 +115,7 @@ export default function Categories() {
     };
 
     const parentCategories = categories.filter(cat => !cat.parent_id);
-    const getChildCategories = (parentId: number) => 
+    const getChildCategories = (parentId: number) =>
         categories.filter(cat => cat.parent_id === parentId);
 
     return (
@@ -124,14 +125,16 @@ export default function Categories() {
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
                     <FolderOutlined /> Quản lý danh mục
                 </h1>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleOpenAddForm}
-                    size="large"
-                >
-                    Thêm danh mục
-                </Button>
+                <PermissionGate permission="categories.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleOpenAddForm}
+                        size="large"
+                    >
+                        Thêm danh mục
+                    </Button>
+                </PermissionGate>
             </div>
 
             {/* Stats */}
@@ -179,7 +182,7 @@ export default function Categories() {
                                             >
                                                 {!parent.image_url && parent.category_name.charAt(0).toUpperCase()}
                                             </Avatar>
-                                            <span style={{ 
+                                            <span style={{
                                                 textDecoration: parent.active === 0 ? 'line-through' : 'none',
                                                 opacity: parent.active === 0 ? 0.5 : 1,
                                                 fontWeight: 500
@@ -190,23 +193,27 @@ export default function Categories() {
                                             <Tag color="blue">{children.length} danh mục con</Tag>
                                         </Space>
                                         <Space onClick={(e) => e.stopPropagation()}>
-                                            <Button
-                                                type="link"
-                                                icon={<EditOutlined />}
-                                                onClick={() => handleOpenEditForm(parent)}
-                                            />
-                                            <Popconfirm
-                                                title={parent.active === 1 ? 'Vô hiệu hóa danh mục?' : 'Kích hoạt danh mục?'}
-                                                onConfirm={() => handleToggleStatus(parent.category_id, parent.active)}
-                                                okText="Xác nhận"
-                                                cancelText="Hủy"
-                                            >
+                                            <PermissionGate permission="categories.edit">
                                                 <Button
                                                     type="link"
-                                                    danger={parent.active === 1}
-                                                    icon={parent.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                                    icon={<EditOutlined />}
+                                                    onClick={() => handleOpenEditForm(parent)}
                                                 />
-                                            </Popconfirm>
+                                            </PermissionGate>
+                                            <PermissionGate permission="categories.delete">
+                                                <Popconfirm
+                                                    title={parent.active === 1 ? 'Vô hiệu hóa danh mục?' : 'Kích hoạt danh mục?'}
+                                                    onConfirm={() => handleToggleStatus(parent.category_id, parent.active)}
+                                                    okText="Xác nhận"
+                                                    cancelText="Hủy"
+                                                >
+                                                    <Button
+                                                        type="link"
+                                                        danger={parent.active === 1}
+                                                        icon={parent.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                                    />
+                                                </Popconfirm>
+                                            </PermissionGate>
                                         </Space>
                                     </div>
                                 }
@@ -229,7 +236,7 @@ export default function Categories() {
                                                             {!child.image_url && child.category_name.charAt(0).toUpperCase()}
                                                         </Avatar>
                                                         <div>
-                                                            <div style={{ 
+                                                            <div style={{
                                                                 textDecoration: child.active === 0 ? 'line-through' : 'none',
                                                                 opacity: child.active === 0 ? 0.5 : 1,
                                                                 fontWeight: 500
@@ -241,25 +248,29 @@ export default function Categories() {
                                                         {child.active === 0 && <Tag color="error" size="small">Vô hiệu hóa</Tag>}
                                                     </Space>
                                                     <Space>
-                                                        <Button
-                                                            type="link"
-                                                            size="small"
-                                                            icon={<EditOutlined />}
-                                                            onClick={() => handleOpenEditForm(child)}
-                                                        />
-                                                        <Popconfirm
-                                                            title={child.active === 1 ? 'Vô hiệu hóa?' : 'Kích hoạt?'}
-                                                            onConfirm={() => handleToggleStatus(child.category_id, child.active)}
-                                                            okText="Xác nhận"
-                                                            cancelText="Hủy"
-                                                        >
+                                                        <PermissionGate permission="categories.edit">
                                                             <Button
                                                                 type="link"
                                                                 size="small"
-                                                                danger={child.active === 1}
-                                                                icon={child.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                                                icon={<EditOutlined />}
+                                                                onClick={() => handleOpenEditForm(child)}
                                                             />
-                                                        </Popconfirm>
+                                                        </PermissionGate>
+                                                        <PermissionGate permission="categories.delete">
+                                                            <Popconfirm
+                                                                title={child.active === 1 ? 'Vô hiệu hóa?' : 'Kích hoạt?'}
+                                                                onConfirm={() => handleToggleStatus(child.category_id, child.active)}
+                                                                okText="Xác nhận"
+                                                                cancelText="Hủy"
+                                                            >
+                                                                <Button
+                                                                    type="link"
+                                                                    size="small"
+                                                                    danger={child.active === 1}
+                                                                    icon={child.active === 1 ? <DeleteOutlined /> : <CheckOutlined />}
+                                                                />
+                                                            </Popconfirm>
+                                                        </PermissionGate>
                                                     </Space>
                                                 </div>
                                             </Card>

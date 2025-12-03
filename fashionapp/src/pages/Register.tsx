@@ -304,14 +304,14 @@ export default function Register() {
 
                 <Form.Item
                   name="phone"
-                  label="Số điện thoại (tùy chọn)"
+                  label="Số điện thoại"
                   rules={[
                     { pattern: /^(0)[0-9]{9,10}$/, message: 'Số điện thoại không hợp lệ (phải bắt đầu bằng 0)' }
                   ]}
                 >
                   <Input
                     prefix={<PhoneOutlined />}
-                    placeholder="Nhập số điện thoại (không bắt buộc)"
+                    placeholder="Nhập số điện thoại"
                     size="large"
                   />
                 </Form.Item>

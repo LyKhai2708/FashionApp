@@ -106,9 +106,7 @@ export interface VoucherResponse {
 }
 
 class VoucherService {
-    /**
-     * Lấy danh sách vouchers (Admin)
-     */
+
     async getVouchers(params?: VoucherParams): Promise<VouchersResponse['data']> {
         try {
             const response = await api.get<VouchersResponse>('/api/v1/vouchers/admin', {
@@ -121,9 +119,6 @@ class VoucherService {
         }
     }
 
-    /**
-     * Lấy chi tiết voucher theo ID (Admin)
-     */
     async getVoucherById(voucherId: number): Promise<Voucher> {
         try {
             const response = await api.get<VoucherResponse>(`/api/v1/vouchers/admin/${voucherId}`);
@@ -134,9 +129,7 @@ class VoucherService {
         }
     }
 
-    /**
-     * Tạo voucher mới (Admin)
-     */
+
     async createVoucher(data: VoucherCreateRequest): Promise<Voucher> {
         try {
             const response = await api.post<VoucherResponse>('/api/v1/vouchers/admin', data);
@@ -147,9 +140,7 @@ class VoucherService {
         }
     }
 
-    /**
-     * Cập nhật voucher (Admin)
-     */
+
     async updateVoucher(voucherId: number, data: VoucherUpdateRequest): Promise<Voucher> {
         try {
             const response = await api.patch<VoucherResponse>(`/api/v1/vouchers/admin/${voucherId}`, data);
@@ -160,9 +151,7 @@ class VoucherService {
         }
     }
 
-    /**
-     * Xóa voucher (Admin)
-     */
+
     async deleteVoucher(voucherId: number): Promise<{ success: boolean }> {
         try {
             const response = await api.delete<{ status: 'success'; data: { success: boolean } }>(
@@ -175,9 +164,18 @@ class VoucherService {
         }
     }
 
-    /**
-     * Lấy danh sách vouchers có sẵn cho user
-     */
+
+    async toggleVoucherActive(voucherId: number): Promise<Voucher> {
+        try {
+            const response = await api.put<VoucherResponse>(`/api/v1/vouchers/admin/${voucherId}/toggle-active`);
+            return response.data.data.voucher;
+        } catch (error: any) {
+            console.error('Error toggling voucher active:', error);
+            throw new Error(error.response?.data?.message || 'Không thể cập nhật trạng thái voucher');
+        }
+    }
+
+
     async getAvailableVouchers(orderAmount?: number): Promise<Voucher[]> {
         try {
             const params = orderAmount ? { order_amount: orderAmount } : {};
@@ -192,9 +190,7 @@ class VoucherService {
         }
     }
 
-    /**
-     * Validate và áp dụng voucher
-     */
+
     async validateVoucher(code: string, orderAmount: number, shippingFee?: number): Promise<VoucherValidationResponse> {
         try {
             const response = await api.post<{ status: 'success'; data: VoucherValidationResponse }>(
@@ -211,9 +207,6 @@ class VoucherService {
         }
     }
 
-    /**
-     * Lấy lịch sử sử dụng voucher của user
-     */
     async getUserVoucherHistory(page: number = 1, limit: number = 10): Promise<{
         metadata: {
             totalRecords: number;
@@ -253,9 +246,7 @@ class VoucherService {
 
 
 
-    /**
-     * Format discount type text
-     */
+
     formatDiscountType(discountType: string): string {
         switch (discountType) {
             case 'percentage':
@@ -269,9 +260,7 @@ class VoucherService {
         }
     }
 
-    /**
-     * Format discount value text
-     */
+
     formatDiscountValue(voucher: Voucher): string {
         switch (voucher.discount_type) {
             case 'percentage':
@@ -285,9 +274,6 @@ class VoucherService {
         }
     }
 
-    /**
-     * Tính số ngày còn lại của voucher
-     */
     getDaysLeft(endDate: string): number {
         const end = new Date(endDate);
         const now = new Date();
@@ -295,9 +281,7 @@ class VoucherService {
         return Math.ceil(diff / (1000 * 60 * 60 * 24));
     }
 
-    /**
-     * Format ngày tháng
-     */
+
     formatDate(date: string): string {
         return new Date(date).toLocaleDateString('vi-VN', {
             day: '2-digit',
@@ -307,6 +291,5 @@ class VoucherService {
     }
 }
 
-// Export singleton instance
 export const voucherService = new VoucherService();
 export default voucherService;

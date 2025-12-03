@@ -18,7 +18,7 @@ async function sendPasswordResetEmail(email, resetToken, username) {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"DELULU Fashion" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: 'Đặt lại mật khẩu - DELULU Fashion',
         html: `
@@ -54,7 +54,7 @@ async function sendPasswordResetEmail(email, resetToken, username) {
                     
                     <p style="color: #999; font-size: 12px; text-align: center;">
                         Email này được gửi tự động, vui lòng không trả lời.<br>
-                        © 2024 DELULU Fashion. All rights reserved.
+                        © ${new Date().getFullYear()} DELULU Fashion. All rights reserved.
                     </p>
                 </div>
             </div>
@@ -171,7 +171,7 @@ async function sendOrderConfirmationEmail(orderData, orderDetails) {
     `).join('');
 
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"DELULU Fashion" <${process.env.EMAIL_USER}>`,
         to: orderData.receiver_email,
         subject: `Xác nhận đơn hàng #${orderData.order_code} - DELULU Fashion`,
         html: `
@@ -224,7 +224,7 @@ async function sendOrderConfirmationEmail(orderData, orderDetails) {
                     
                     <p style="color: #999; font-size: 12px; text-align: center;">
                         Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi.<br>
-                        © 2024 DELULU Fashion. All rights reserved.
+                        © ${new Date().getFullYear()} DELULU Fashion. All rights reserved.
                     </p>
                 </div>
             </div>

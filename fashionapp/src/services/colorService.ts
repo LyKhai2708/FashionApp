@@ -14,13 +14,13 @@ export interface ColorsResponse {
 }
 
 class ColorService {
-  
+
 
   async getColors(): Promise<Color[]> {
     try {
       const response = await api.get<ColorsResponse>('/api/v1/colors');
       return response.data.data.colors;
-      
+
     } catch (error: any) {
       console.error('Get colors error:', error);
       throw new Error(error.response?.data?.message || 'Không thể tải màu sắc');
@@ -32,7 +32,7 @@ class ColorService {
     try {
       const colors = await this.getColors();
       return colors.find(color => color.color_id === id) || null;
-      
+
     } catch (error: any) {
       console.error('Get color by id error:', error);
       throw new Error(error.response?.data?.message || 'Không thể tải màu sắc');
@@ -43,10 +43,10 @@ class ColorService {
   async searchColors(searchTerm: string): Promise<Color[]> {
     try {
       const colors = await this.getColors();
-      return colors.filter(color => 
+      return colors.filter(color =>
         color.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      
+
     } catch (error: any) {
       console.error('Search colors error:', error);
       throw new Error(error.response?.data?.message || 'Không thể tìm kiếm màu sắc');
@@ -57,7 +57,7 @@ class ColorService {
     try {
       await api.delete(`/api/v1/colors/${id}`);
     } catch (error: any) {
-      console.error('Delete color error:', error);
+      console.error('Delete color error:', error.response?.data?.message);
       throw new Error(error.response?.data?.message || 'Không thể xóa màu sắc');
     }
   }

@@ -23,6 +23,7 @@ export default function ProductPage() {
         totalCount,
         setFilters,
         setSort,
+        setPage,
         currentFilters,
         error
     } = useProductList({
@@ -55,14 +56,13 @@ export default function ProductPage() {
     const handlePageChange = (page: number) => {
         const newFilters = { ...currentFilters, page };
         saveFiltersToUrl(newFilters);
-        setFilters(newFilters);
+        setPage(page);
     };
 
     if (error) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="text-6xl mb-4">😞</div>
                     <h2 className="text-xl font-semibold mb-2">Có lỗi xảy ra</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button

@@ -101,9 +101,9 @@ export default function EditProduct() {
 
     const [currentThumbnail, setCurrentThumbnail] = useState<string>('');
     const [newThumbnailFile, setNewThumbnailFile] = useState<UploadFile[]>([]);
-    
+
     const [colorVariants, setColorVariants] = useState<ColorVariants[]>([]);
-    
+
     const [colorImages, setColorImages] = useState<ColorImages[]>([]);
     const [deletedImages, setDeletedImages] = useState<string[]>([]);
 
@@ -134,7 +134,7 @@ export default function EditProduct() {
         };
 
         loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const loadProduct = async (productId: number) => {
@@ -484,7 +484,7 @@ export default function EditProduct() {
                 key: 'stock_quantity',
                 render: (_: any, record: Variant) => {
                     const isExisting = record.variant_id !== undefined;
-                    
+
                     if (isExisting) {
                         return (
                             <Tooltip title="Chỉ có thể chỉnh sửa tồn kho trong trang Quản lý tồn kho">
@@ -509,7 +509,7 @@ export default function EditProduct() {
                 width: 150,
                 render: (_: any, record: Variant) => {
                     const isExisting = record.variant_id !== undefined;
-                    
+
                     if (isExisting) {
                         return (
                             <Switch
@@ -535,7 +535,7 @@ export default function EditProduct() {
             }
         ];
 
-        const availableSizes = sizes.filter(size => 
+        const availableSizes = sizes.filter(size =>
             !cv.variants.some(v => v.size_id === size.size_id)
         );
 

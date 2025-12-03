@@ -27,6 +27,8 @@ const bannersRouter = require('./routes/banners.router');
 const inventoryRouter = require('./routes/inventory.router');
 const searchRouter = require('./routes/search.router');
 const chatRouter = require('./routes/chat.router');
+const supplierRouter = require('./routes/supplier.router');
+const purchaseOrderRouter = require('./routes/purchase-order.router');
 const voucherService = require('./services/voucher.service');
 const app = express();
 const { resourceNotFound, handleError } = require('./controllers/errors.controller');
@@ -78,6 +80,8 @@ inventoryRouter.setup(app);
 paymentRouter.setup(app);
 searchRouter.setup(app);
 chatRouter.setup(app);
+supplierRouter.setup(app);
+purchaseOrderRouter.setup(app);
 
 
 app.use(resourceNotFound);

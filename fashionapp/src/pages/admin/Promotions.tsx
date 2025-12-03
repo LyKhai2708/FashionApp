@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import { 
-    Table, 
-    Button, 
-    Space, 
-    Tag, 
-    Modal, 
-    Form, 
-    Input, 
-    InputNumber, 
-    DatePicker, 
-    Switch, 
+import {
+    Table,
+    Button,
+    Space,
+    Tag,
+    Modal,
+    Form,
+    Input,
+    InputNumber,
+    DatePicker,
+    Switch,
     message,
     Popconfirm,
     Card,
@@ -18,9 +18,9 @@ import {
     Col,
     Badge
 } from 'antd';
-import { 
-    PlusOutlined, 
-    DeleteOutlined, 
+import {
+    PlusOutlined,
+    DeleteOutlined,
     EyeOutlined,
     GiftOutlined,
     PercentageOutlined,
@@ -30,6 +30,7 @@ import type { ColumnsType } from 'antd/es/table';
 import promotionService, { type Promotion } from '../../services/promotionService';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
+import { PermissionGate } from '../../components/PermissionGate';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;
@@ -123,7 +124,7 @@ export default function Promotions() {
                 await promotionService.createPromotion(payload);
                 message.success('Tạo khuyến mãi thành công');
             }
-            
+
             setModalVisible(false);
             form.resetFields();
             fetchPromotions();
@@ -137,7 +138,7 @@ export default function Promotions() {
         const now = dayjs();
         const startDate = dayjs(promotion.start_date);
         const endDate = dayjs(promotion.end_date);
-        
+
         if (now.isBefore(startDate)) return 'blue';
         if (now.isAfter(endDate)) return 'red';
         if (now.diff(endDate, 'day') >= -3) return 'orange';
@@ -149,7 +150,7 @@ export default function Promotions() {
         const now = dayjs();
         const startDate = dayjs(promotion.start_date);
         const endDate = dayjs(promotion.end_date);
-        
+
         if (now.isBefore(startDate)) return 'Sắp diễn ra';
         if (now.isAfter(endDate)) return 'Đã kết thúc';
         return 'Đang diễn ra';
@@ -216,21 +217,23 @@ export default function Promotions() {
                         onClick={() => handleViewProducts(record)}
                         title="Xem sản phẩm"
                     />
-                    <Popconfirm
-                        title="Xóa khuyến mãi này?"
-                        description="Bạn có chắc chắn muốn xóa khuyến mãi này không?"
-                        onConfirm={() => handleDelete(record.promo_id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                        okType="danger"
-                    >
-                        <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            title="Xóa"
-                        />
-                    </Popconfirm>
+                    <PermissionGate permission="promotions.delete">
+                        <Popconfirm
+                            title="Xóa khuyến mãi này?"
+                            description="Bạn có chắc chắn muốn xóa khuyến mãi này không?"
+                            onConfirm={() => handleDelete(record.promo_id)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            okType="danger"
+                        >
+                            <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                                title="Xóa"
+                            />
+                        </Popconfirm>
+                    </PermissionGate>
                 </Space>
             ),
         },
@@ -252,13 +255,15 @@ export default function Promotions() {
                     <h1 className="text-2xl font-bold text-gray-900">Quản lý Khuyến mãi</h1>
                     <p className="text-gray-600 mt-1">Tổng số: {paginate.totalRecords} khuyến mãi</p>
                 </div>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={handleCreate}
-                >
-                    Tạo khuyến mãi mới
-                </Button>
+                <PermissionGate permission="promotions.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleCreate}
+                    >
+                        Tạo khuyến mãi mới
+                    </Button>
+                </PermissionGate>
             </div>
 
             <Row gutter={16}>
@@ -368,7 +373,7 @@ export default function Promotions() {
                         label="Thời gian hiệu lực"
                         rules={[{ required: true, message: 'Vui lòng chọn thời gian hiệu lực' }]}
                     >
-                        <RangePicker 
+                        <RangePicker
                             style={{ width: '100%' }}
                             format="DD/MM/YYYY"
                         />
@@ -447,8 +452,8 @@ export default function Promotions() {
                         </div>
 
                         <div>
-                            <Button 
-                                type="primary" 
+                            <Button
+                                type="primary"
                                 icon={<ShoppingOutlined />}
                                 onClick={() => {
                                     setDetailModalVisible(false);

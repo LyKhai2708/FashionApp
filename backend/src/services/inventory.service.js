@@ -4,7 +4,7 @@ const stockHelper = require('./stock.helper');
 
 async function getInventoryOverview() {
     const overview = await knex('categories')
-        .leftJoin('products', function() {
+        .leftJoin('products', function () {
             this.on('categories.category_id', '=', 'products.category_id')
                 .andOn('products.del_flag', '=', knex.raw('?', [0]));
         })
@@ -21,7 +21,7 @@ async function getInventoryOverview() {
         .orderBy('category_name');
 
     const totalStats = await knex('product_variants')
-        .join('products', function() {
+        .join('products', function () {
             this.on('product_variants.product_id', '=', 'products.product_id')
                 .andOn('products.del_flag', '=', knex.raw('?', [0]));
         })
@@ -54,9 +54,9 @@ async function getInventoryOverview() {
 }
 
 async function getLowStockProducts(payload) {
-    const { 
-        page = 1, 
-        limit = 20, 
+    const {
+        page = 1,
+        limit = 20,
         threshold = 10,
         categoryId,
         brandId,
@@ -73,7 +73,7 @@ async function getLowStockProducts(payload) {
         .leftJoin('categories as cat', 'p.category_id', 'cat.category_id')
         .leftJoin('brand as b', 'p.brand_id', 'b.id')
         .where('p.del_flag', 0)
-        .where(function() {
+        .where(function () {
             if (stockStatus === 'out') {
                 this.where('pv.stock_quantity', 0);
             } else if (stockStatus === 'low') {
@@ -93,7 +93,7 @@ async function getLowStockProducts(payload) {
     }
 
     if (search) {
-        query = query.where(function() {
+        query = query.where(function () {
             this.whereILike('p.name', `%${search}%`)
                 .orWhereILike('s.name', `%${search}%`)
                 .orWhereILike('c.name', `%${search}%`);
@@ -101,7 +101,7 @@ async function getLowStockProducts(payload) {
     }
 
     const countQuery = query.clone().count('* as count').first();
-    
+
     const results = await query
         .select(
             'pv.product_variants_id',
@@ -163,7 +163,17 @@ async function getStockHistory(payload) {
         .join('products as p', 'pv.product_id', 'p.product_id')
         .join('sizes as s', 'pv.size_id', 's.size_id')
         .join('colors as c', 'pv.color_id', 'c.color_id')
-        .leftJoin('users as u', 'sh.admin_id', 'u.user_id');
+        .leftJoin('users as u', 'sh.admin_id', 'u.user_id')
+        .leftJoin('purchase_orders as po', function () {
+            this.on('sh.reference_id', '=', 'po.po_id')
+                .andOn('sh.reference_type', '=', knex.raw('?', ['purchase_order']));
+        })
+        .leftJoin('suppliers as sup', 'po.supplier_id', 'sup.supplier_id')
+        .leftJoin('orders as o', function () {
+            this.on('sh.reference_id', '=', 'o.order_id')
+                .andOn('sh.reference_type', '=', knex.raw('?', ['order']));
+        })
+        .leftJoin('users as customer', 'o.user_id', 'customer.user_id');
 
     if (variantId) {
         query = query.where('sh.product_variant_id', variantId);
@@ -198,11 +208,15 @@ async function getStockHistory(payload) {
             'sh.reason',
             'sh.notes',
             'sh.created_at',
+            'sh.reference_id',
+            'sh.reference_type',
             'p.product_id',
             'p.name as product_name',
             's.name as size_name',
             'c.name as color_name',
-            'u.username as admin_username'
+            'u.username as admin_username',
+            'sup.name as supplier_name',
+            'customer.username as customer_name'
         )
         .orderBy('sh.created_at', 'desc')
         .limit(paginator.limit)

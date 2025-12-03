@@ -42,7 +42,7 @@ async function createVoucher(payload) {
 async function getManyVoucher(payload) {
     const { page = 1, limit = 10, code, name, active, discount_type, start_date, end_date } = payload;
     const paginator = new Paginator(page, limit);
-    
+
     let result = voucherRepository()
         .where((builder) => {
             if (code) {
@@ -86,7 +86,7 @@ async function getManyVoucher(payload) {
         .orderBy('created_at', 'desc')
         .limit(paginator.limit)
         .offset(paginator.offset);
-    
+
     let totalRecords = 0;
     result = (await result).map((result) => {
         totalRecords = result.recordCount;
@@ -96,7 +96,7 @@ async function getManyVoucher(payload) {
             remaining_usage: result.usage_limit ? result.usage_limit - result.used_count : null
         };
     });
-    
+
     return {
         metadata: paginator.getMetadata(totalRecords),
         vouchers: result,
@@ -110,11 +110,11 @@ async function getVoucherById(voucherId) {
     const voucher = await voucherRepository()
         .where('voucher_id', voucherId)
         .first();
-        
+
     if (!voucher) {
         throw new Error('Voucher không tồn tại');
     }
-    
+
     return {
         ...voucher,
         remaining_usage: voucher.usage_limit ? voucher.usage_limit - voucher.used_count : null
@@ -128,11 +128,11 @@ async function getVoucherByCode(code) {
     const voucher = await voucherRepository()
         .where('code', code.toUpperCase())
         .first();
-        
+
     if (!voucher) {
         throw new Error('Voucher không tồn tại');
     }
-    
+
     return {
         ...voucher,
         remaining_usage: voucher.usage_limit ? voucher.usage_limit - voucher.used_count : null
@@ -144,19 +144,19 @@ async function getVoucherByCode(code) {
  */
 async function updateVoucher(voucherId, payload) {
     const voucher = readVoucher(payload);
-    delete voucher.code; 
-    
+    delete voucher.code;
+
     const updated = await voucherRepository()
         .where('voucher_id', voucherId)
         .update({
             ...voucher,
             updated_at: knex.fn.now()
         });
-        
+
     if (!updated) {
         throw new Error('Voucher không tồn tại');
     }
-    
+
     return await getVoucherById(voucherId);
 }
 
@@ -165,59 +165,79 @@ async function deleteVoucher(voucherId) {
     const voucher = await voucherRepository()
         .where('voucher_id', voucherId)
         .first();
-        
+
     if (!voucher) {
         throw new Error('Voucher không tồn tại');
     }
-    
+
+    if (voucher.used_count > 0) {
+        throw new Error('Không thể xóa voucher đã được sử dụng. Vui lòng vô hiệu hóa voucher thay vì xóa.');
+    }
+
     return voucherRepository()
         .where('voucher_id', voucherId)
-        .update({ 
-            active: false,
-            updated_at: knex.fn.now()
-        });
+        .del();
 }
 
-/**
- * Kiểm tra voucher có hợp lệ không
- */
+
+async function toggleVoucherActive(voucherId) {
+    const voucher = await voucherRepository()
+        .where('voucher_id', voucherId)
+        .first();
+
+    if (!voucher) {
+        throw new Error('Voucher không tồn tại');
+    }
+
+    const newActiveStatus = !voucher.active;
+
+    await voucherRepository()
+        .where('voucher_id', voucherId)
+        .update({
+            active: newActiveStatus,
+            updated_at: knex.fn.now()
+        });
+
+    return await getVoucherById(voucherId);
+}
+
+
 async function validateVoucher(code, userId, orderAmount) {
     const voucher = await getVoucherByCode(code);
     const now = new Date();
-    
-    // Kiểm tra các điều kiện
+
     if (!voucher.active) {
         throw new Error('Voucher đã hết hiệu lực');
     }
-    
+
     const startDate = new Date(voucher.start_date);
     const endDate = new Date(voucher.end_date);
     endDate.setHours(23, 59, 59, 999);
-    
+
     if (now < startDate || now > endDate) {
         throw new Error('Voucher không nằm trong thời gian hiệu lực');
     }
-    
+
     if (voucher.usage_limit && voucher.used_count >= voucher.usage_limit) {
         throw new Error('Voucher đã hết lượt sử dụng');
     }
-    
+
     if (orderAmount < voucher.min_order_amount) {
         throw new Error(`Đơn hàng tối thiểu phải đạt ${voucher.min_order_amount.toLocaleString('vi-VN')} VNĐ để sử dụng voucher này`);
     }
-    
+
     // Kiểm tra giới hạn sử dụng per user
     if (userId) {
         const userVoucher = await userVoucherRepository()
             .where('user_id', userId)
             .where('voucher_id', voucher.voucher_id)
             .first();
-            
+
         if (userVoucher && userVoucher.used_count >= voucher.user_limit) {
             throw new Error(`Bạn đã sử dụng voucher này quá số lần cho phép (${voucher.user_limit} lần)`);
         }
     }
-    
+
     return voucher;
 }
 
@@ -226,7 +246,7 @@ async function validateVoucher(code, userId, orderAmount) {
  */
 function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
     let discountAmount = 0;
-    
+
     switch (voucher.discount_type) {
         case 'percentage':
             discountAmount = orderAmount * (voucher.discount_value / 100);
@@ -234,19 +254,19 @@ function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
                 discountAmount = voucher.max_discount_amount;
             }
             break;
-            
+
         case 'fixed_amount':
             discountAmount = voucher.discount_value;
             if (discountAmount > orderAmount) {
                 discountAmount = orderAmount;
             }
             break;
-            
+
         case 'free_shipping':
             discountAmount = shippingFee;
             break;
     }
-    
+
     return Math.round(discountAmount);
 }
 
@@ -258,12 +278,12 @@ async function useVoucher(voucherId, userId, orderId, discountAmount) {
         await trx('vouchers')
             .where('voucher_id', voucherId)
             .increment('used_count', 1);
-        
+
         const userVoucher = await trx('user_vouchers')
             .where('user_id', userId)
             .where('voucher_id', voucherId)
             .first();
-            
+
         if (userVoucher) {
             await trx('user_vouchers')
                 .where('user_voucher_id', userVoucher.user_voucher_id)
@@ -280,7 +300,7 @@ async function useVoucher(voucherId, userId, orderId, discountAmount) {
                 last_used_at: knex.fn.now()
             });
         }
-        
+
         await trx('order_vouchers').insert({
             order_id: orderId,
             voucher_id: voucherId,
@@ -294,23 +314,23 @@ async function useVoucher(voucherId, userId, orderId, discountAmount) {
  */
 async function getAvailableVouchers(userId, orderAmount) {
     const now = new Date();
-    
+
     let query = voucherRepository()
         .where('active', true)
         .where('start_date', '<=', now.toISOString().split('T')[0])
         .where('end_date', '>=', now.toISOString().split('T')[0])
         .where((builder) => {
             builder.whereNull('usage_limit')
-                  .orWhereRaw('used_count < usage_limit');
+                .orWhereRaw('used_count < usage_limit');
         });
-    
+
     // Nếu có orderAmount, lọc theo điều kiện min_order_amount
     if (orderAmount) {
         query = query.where('min_order_amount', '<=', orderAmount);
     }
-    
+
     const vouchers = await query.select('*');
-    
+
     // Kiểm tra giới hạn sử dụng per user
     const availableVouchers = [];
     for (const voucher of vouchers) {
@@ -319,7 +339,7 @@ async function getAvailableVouchers(userId, orderAmount) {
                 .where('user_id', userId)
                 .where('voucher_id', voucher.voucher_id)
                 .first();
-                
+
             if (!userVoucher || userVoucher.used_count < voucher.user_limit) {
                 availableVouchers.push({
                     ...voucher,
@@ -335,7 +355,7 @@ async function getAvailableVouchers(userId, orderAmount) {
             });
         }
     }
-    
+
     return availableVouchers;
 }
 
@@ -346,7 +366,7 @@ async function autoDeactivateExpiredVouchers() {
     await voucherRepository()
         .where('active', true)
         .whereRaw('end_date < CURDATE()')
-        .update({ 
+        .update({
             active: false,
             updated_at: knex.fn.now()
         });
@@ -357,7 +377,7 @@ async function autoDeactivateExpiredVouchers() {
  */
 async function getUserVoucherHistory(userId, page = 1, limit = 10) {
     const paginator = new Paginator(page, limit);
-    
+
     const result = await knex('user_vouchers as uv')
         .join('vouchers as v', 'uv.voucher_id', 'v.voucher_id')
         .where('uv.user_id', userId)
@@ -377,14 +397,14 @@ async function getUserVoucherHistory(userId, page = 1, limit = 10) {
         .orderBy('uv.last_used_at', 'desc')
         .limit(paginator.limit)
         .offset(paginator.offset);
-    
+
     let totalRecords = 0;
     const vouchers = result.map((item) => {
         totalRecords = item.recordCount;
         delete item.recordCount;
         return item;
     });
-    
+
     return {
         metadata: paginator.getMetadata(totalRecords),
         vouchers: vouchers
@@ -398,6 +418,7 @@ module.exports = {
     getVoucherByCode,
     updateVoucher,
     deleteVoucher,
+    toggleVoucherActive,
     validateVoucher,
     calculateVoucherDiscount,
     useVoucher,

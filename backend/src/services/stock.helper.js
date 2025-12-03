@@ -5,7 +5,9 @@ async function updateStock(trx, variantId, quantityChange, options = {}) {
         actionType = 'adjustment',
         adminId = null,
         reason = null,
-        notes = null
+        notes = null,
+        referenceId = null,
+        referenceType = null
     } = options;
 
     if (quantityChange === 0) {
@@ -30,7 +32,7 @@ async function updateStock(trx, variantId, quantityChange, options = {}) {
 
     await trx('product_variants')
         .where('product_variants_id', variantId)
-        .update({ 
+        .update({
             stock_quantity: quantityAfter
         });
 
@@ -42,7 +44,9 @@ async function updateStock(trx, variantId, quantityChange, options = {}) {
         quantity_change: quantityChange,
         quantity_after: quantityAfter,
         reason: reason,
-        notes: notes
+        notes: notes,
+        reference_id: referenceId,
+        reference_type: referenceType
     });
 
     return {

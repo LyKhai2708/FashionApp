@@ -4,7 +4,7 @@ const JSend = require('../jsend');
 
 async function createColor(req, res, next) {
   const { name } = req.body;
-  
+
   if (!req.body?.name || typeof req.body.name !== 'string') {
     return next(new ApiError(400, 'Color name should be a non-empty string'));
   }
@@ -72,8 +72,8 @@ async function getColor(req, res, next) {
 }
 
 async function updateColor(req, res, next) {
-  const {id: color_id} = req.params;
-  const {name} = req.body;
+  const { id: color_id } = req.params;
+  const { name } = req.body;
 
   if (Object.keys(req.body).length === 0) {
     return next(new ApiError(400, 'Data for update cannot be empty'));
@@ -90,7 +90,7 @@ async function updateColor(req, res, next) {
     if (!updatedColor) {
       return next(new ApiError(404, 'Color not found'));
     }
-    
+
 
     return res.json(JSend.success({ color: updatedColor }));
   } catch (error) {
@@ -112,6 +112,9 @@ async function deleteColor(req, res, next) {
     return res.json(JSend.success());
   } catch (error) {
     console.log(error);
+    if (error.message && error.message.includes('đang có sản phẩm sử dụng')) {
+      return next(new ApiError(400, error.message));
+    }
     return next(new ApiError(500, `Could not delete Color with id=${color_id}`));
   }
 }
@@ -127,7 +130,7 @@ async function deleteAllColors(req, res, next) {
 }
 
 module.exports = {
-    
+
   createColor,
   getColorsByFilter,
   getColor,

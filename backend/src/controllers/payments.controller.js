@@ -13,14 +13,13 @@ class PaymentController {
         return next(new ApiError(400, 'Order ID là bắt buộc'));
       }
 
-
       const order = await orderService.getOrderById(orderId);
       if (!order) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      if (req.user.role !== 'admin' && order.user_id !== userId) {
-        return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
+      if (order.user_id !== userId) {
+        return next(new ApiError(403, 'Bạn chỉ có thể tạo link thanh toán cho đơn hàng của mình'));
       }
 
       const result = await paymentService.createPaymentLink(orderId, returnUrl, cancelUrl);
@@ -41,8 +40,9 @@ class PaymentController {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      if (req.user.role !== 'admin' && order.user_id !== userId) {
-        return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
+      // Only order owner can check payment status
+      if (order.user_id !== userId) {
+        return next(new ApiError(403, 'Bạn chỉ có thể kiểm tra thanh toán của đơn hàng mình'));
       }
 
       const result = await paymentService.checkPayment(parseInt(orderId));
@@ -58,14 +58,13 @@ class PaymentController {
       const { orderId } = req.params;
       const userId = req.user.id;
 
-      // Kiểm tra quyền truy cập
       const order = await orderService.getOrderById(orderId);
       if (!order) {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      if (req.user.role !== 'admin' && order.user_id !== userId) {
-        return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
+      if (order.user_id !== userId) {
+        return next(new ApiError(403, 'Bạn chỉ có thể hủy thanh toán của đơn hàng mình'));
       }
 
       const result = await paymentService.cancelPayment(parseInt(orderId));
@@ -112,8 +111,8 @@ class PaymentController {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
-      if (req.user.role !== 'admin' && order.user_id !== userId) {
-        return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
+      if (order.user_id !== userId) {
+        return next(new ApiError(403, 'Bạn chỉ có thể xem thông tin thanh toán của đơn hàng mình'));
       }
 
       const payment = await paymentService.getPaymentByOrderId(parseInt(orderId));

@@ -9,6 +9,7 @@ import { useMessage } from '../../App';
 import brandService from '../../services/brandService';
 import categoryService, { type Category } from '../../services/categoryService';
 import { Edit, Eye, Plus, PackageOpen, Search } from 'lucide-react';
+import { PermissionGate } from '../../components/PermissionGate';
 
 interface Paginate {
     totalRecords: number;
@@ -50,10 +51,10 @@ export default function Products() {
         try {
             const allProductsResponse = await productService.getProducts({ limit: 1000 }); // Lấy tất cả
             const allProducts = allProductsResponse.products;
-            
+
             setStats({
                 total: allProducts.length,
-                active: allProducts.filter(p => p.del_flag === 0).length, 
+                active: allProducts.filter(p => p.del_flag === 0).length,
                 lowStock: allProducts.filter(p => (p.total_stock || 0) < 30 && (p.total_stock || 0) > 0).length,
                 outOfStock: allProducts.filter(p => (p.total_stock || 0) === 0).length
             });
@@ -189,13 +190,15 @@ export default function Products() {
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
                     <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-                    <button 
-                        onClick={() => navigate('/admin/products/add')}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm transition-colors"
-                    >
-                        <Plus size={20} />
-                        Thêm sản phẩm
-                    </button>
+                    <PermissionGate permission="products.create">
+                        <button
+                            onClick={() => navigate('/admin/products/add')}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm transition-colors"
+                        >
+                            <Plus size={20} />
+                            Thêm sản phẩm
+                        </button>
+                    </PermissionGate>
                 </div>
                 <p className="text-gray-600">Quản lý tất cả sản phẩm trong hệ thống</p>
             </div>
@@ -411,54 +414,70 @@ export default function Products() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        (product.total_stock || 0) === 0
-                                                            ? 'bg-red-100 text-red-800'
-                                                            : (product.total_stock || 0) < 30
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(product.total_stock || 0) === 0
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : (product.total_stock || 0) < 30
                                                             ? 'bg-yellow-100 text-yellow-800'
                                                             : 'bg-green-100 text-green-800'
-                                                    }`}>
+                                                        }`}>
                                                         {product.total_stock || 0} sản phẩm
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    product.del_flag === 0
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.del_flag === 0
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                                    }`}>
                                                     {product.del_flag === 0 ? ' Đang bán' : 'Ngưng bán'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <button 
+                                                    <button
                                                         onClick={() => navigate(`/products/${product.slug}-${product.product_id}`)}
                                                         className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-2"
                                                     >
-                                                        <Eye className='w-4 h-4'/>Xem
+                                                        <Eye className='w-4 h-4' />Xem
                                                     </button>
-                                                    <button 
-                                                        onClick={() => navigate(`/admin/products/edit/${product.product_id}`)}
-                                                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2"
+                                                    <PermissionGate
+                                                        permission="products.edit"
+                                                        showTooltip={true}
+                                                        tooltipMessage="Bạn không có quyền sửa sản phẩm"
+                                                        fallback={
+                                                            <button
+                                                                disabled
+                                                                className="text-gray-400 text-sm font-medium flex items-center gap-2 cursor-not-allowed opacity-50"
+                                                            >
+                                                                <Edit className='w-4 h-4' />Sửa
+                                                            </button>
+                                                        }
                                                     >
-                                                        <Edit className='w-4 h-4'/>Sửa
-                                                    </button>
+                                                        <button
+                                                            onClick={() => navigate(`/admin/products/edit/${product.product_id}`)}
+                                                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2"
+                                                        >
+                                                            <Edit className='w-4 h-4' />Sửa
+                                                        </button>
+                                                    </PermissionGate>
                                                     {product.del_flag === 0 ? (
-                                                        <button
-                                                            onClick={() => handleDelete(product.product_id)}
-                                                            className="text-red-600 hover:text-red-800 text-sm font-medium"
-                                                        >
-                                                            Ngưng bán
-                                                        </button>
+                                                        <PermissionGate permission="products.delete">
+                                                            <button
+                                                                onClick={() => handleDelete(product.product_id)}
+                                                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                                            >
+                                                                Ngưng bán
+                                                            </button>
+                                                        </PermissionGate>
                                                     ) : (
-                                                        <button
-                                                            onClick={() => handleRestore(product.product_id)}
-                                                            className="text-green-600 hover:text-green-800 text-sm font-medium"
-                                                        >
-                                                            Bán lại
-                                                        </button>
+                                                        <PermissionGate permission="products.edit">
+                                                            <button
+                                                                onClick={() => handleRestore(product.product_id)}
+                                                                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                                            >
+                                                                Bán lại
+                                                            </button>
+                                                        </PermissionGate>
                                                     )}
                                                 </div>
                                             </td>

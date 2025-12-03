@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { 
-    Table, 
-    Button, 
-    Space, 
-    Tag, 
-    Modal, 
-    Form, 
-    Input, 
-    InputNumber, 
-    DatePicker, 
-    Select, 
-    Upload, 
+import {
+    Table,
+    Button,
+    Space,
+    Tag,
+    Modal,
+    Form,
+    Input,
+    InputNumber,
+    DatePicker,
+    Select,
+    Upload,
     message,
     Popconfirm,
     Card,
@@ -19,9 +19,9 @@ import {
     Image
 } from 'antd';
 import { Tag as TagIcon, Ticket, Folder } from 'lucide-react';
-import { 
-    PlusOutlined, 
-    DeleteOutlined, 
+import {
+    PlusOutlined,
+    DeleteOutlined,
     EditOutlined,
     UploadOutlined,
     PictureOutlined,
@@ -35,6 +35,7 @@ import voucherService, { type Voucher } from '../../services/voucherService';
 import categoryService, { type Category } from '../../services/categoryService';
 import dayjs from 'dayjs';
 import { getImageUrl } from '../../utils/imageHelper';
+import { PermissionGate } from '../../components/PermissionGate';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -123,7 +124,7 @@ export default function Banners() {
         setBannerType(banner.banner_type);
         setCurrentImageUrl(banner.image_url);
         setFileList([]);
-        
+
         form.setFieldsValue({
             title: banner.title,
             alt_text: banner.alt_text,
@@ -133,13 +134,13 @@ export default function Banners() {
             category_id: banner.category_id,
             link_url: banner.link_url,
             link_target: banner.link_target,
-            dateRange: banner.start_date && banner.end_date ? 
+            dateRange: banner.start_date && banner.end_date ?
                 [dayjs(banner.start_date), dayjs(banner.end_date)] : null,
             status: banner.status,
             position: banner.position,
             display_order: banner.display_order
         });
-        
+
         setModalVisible(true);
     };
 
@@ -155,7 +156,7 @@ export default function Banners() {
 
     const handleBannerTypeChange = (value: string) => {
         setBannerType(value);
-        
+
         // Auto-fill dates when select promotion/voucher
         if (value === 'promotion') {
             const promoId = form.getFieldValue('promotion_id');
@@ -201,30 +202,30 @@ export default function Banners() {
     const handleSubmit = async (values: any) => {
         try {
             const formData = new FormData();
-            
+
             formData.append('title', values.title);
             if (values.alt_text) formData.append('alt_text', values.alt_text);
             formData.append('banner_type', values.banner_type);
-            
+
             if (values.promotion_id) formData.append('promotion_id', values.promotion_id);
             if (values.voucher_id) formData.append('voucher_id', values.voucher_id);
             if (values.category_id) formData.append('category_id', values.category_id);
             if (values.link_url) formData.append('link_url', values.link_url);
             formData.append('link_target', values.link_target || '_self');
-            
+
             if (values.dateRange) {
                 formData.append('start_date', values.dateRange[0].format('YYYY-MM-DD'));
                 formData.append('end_date', values.dateRange[1].format('YYYY-MM-DD'));
             }
-            
+
             formData.append('status', values.status || 'draft');
             formData.append('position', values.position || 'home-hero');
             formData.append('display_order', values.display_order || 0);
-            
+
             if (fileList.length > 0 && fileList[0].originFileObj) {
                 formData.append('image', fileList[0].originFileObj);
             }
-            
+
             if (editingBanner) {
                 await bannerService.updateBannerWithImage(editingBanner.banner_id, formData);
                 message.success('Cập nhật banner thành công');
@@ -232,7 +233,7 @@ export default function Banners() {
                 await bannerService.createBannerWithImage(formData);
                 message.success('Tạo banner thành công');
             }
-            
+
             setModalVisible(false);
             form.resetFields();
             fetchBanners();
@@ -357,24 +358,28 @@ export default function Banners() {
             fixed: 'right' as 'right',
             render: (_, record) => (
                 <Space>
-                    <Button
-                        type="text"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                    />
-                    <Popconfirm
-                        title="Xóa banner?"
-                        description="Banner sẽ bị set status = expired"
-                        onConfirm={() => handleDelete(record.banner_id)}
-                        okText="Xóa"
-                        cancelText="Hủy"
-                    >
+                    <PermissionGate permission="banners.edit">
                         <Button
                             type="text"
-                            danger
-                            icon={<DeleteOutlined />}
+                            icon={<EditOutlined />}
+                            onClick={() => handleEdit(record)}
                         />
-                    </Popconfirm>
+                    </PermissionGate>
+                    <PermissionGate permission="banners.delete">
+                        <Popconfirm
+                            title="Xóa banner?"
+                            description="Banner sẽ bị set status = expired"
+                            onConfirm={() => handleDelete(record.banner_id)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                        >
+                            <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                            />
+                        </Popconfirm>
+                    </PermissionGate>
                 </Space>
             )
         }
@@ -390,14 +395,16 @@ export default function Banners() {
                     <div style={{ fontSize: 14, color: '#999' }}>
                         Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{paginate.totalRecords}</span> banners
                     </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleCreate}
-                        size="large"
-                    >
-                        Thêm Banner
-                    </Button>
+                    <PermissionGate permission="banners.create">
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleCreate}
+                            size="large"
+                        >
+                            Thêm Banner
+                        </Button>
+                    </PermissionGate>
                 </div>
             </div>
 

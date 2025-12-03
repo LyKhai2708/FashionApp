@@ -3,6 +3,7 @@ import { Card, Button, Modal, Form, Input, Popconfirm, Space, Statistic, Row, Co
 import { PlusOutlined, DeleteOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useMessage } from '../../App';
 import colorService from '../../services/colorService';
+import { PermissionGate } from '../../components/PermissionGate';
 
 interface Color {
     color_id: number;
@@ -41,7 +42,7 @@ export default function Colors() {
             message.success('Xóa thành công');
             fetchColors();
         } catch (error: any) {
-            message.error('Không thể xóa');
+            message.error(error.message || 'Không thể xóa');
         }
     };
 
@@ -66,18 +67,20 @@ export default function Colors() {
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
                     <BgColorsOutlined /> Quản lý màu sắc
                 </h1>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                        setIsModalOpen(true);
-                        setPreviewColor('#000000');
-                        form.setFieldValue('hex_code', '#000000');
-                    }}
-                    size="large"
-                >
-                    Thêm màu
-                </Button>
+                <PermissionGate permission="colors.create">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                            setIsModalOpen(true);
+                            setPreviewColor('#000000');
+                            form.setFieldValue('hex_code', '#000000');
+                        }}
+                        size="large"
+                    >
+                        Thêm màu
+                    </Button>
+                </PermissionGate>
             </div>
 
             <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -102,11 +105,11 @@ export default function Colors() {
                                 hoverable
                                 style={{ textAlign: 'center' }}
                             >
-                                <div 
-                                    style={{ 
-                                        width: 64, 
-                                        height: 64, 
-                                        borderRadius: '50%', 
+                                <div
+                                    style={{
+                                        width: 64,
+                                        height: 64,
+                                        borderRadius: '50%',
                                         margin: '0 auto 12px',
                                         backgroundColor: color.hex_code,
                                         border: '2px solid #e8e8e8',
@@ -115,23 +118,25 @@ export default function Colors() {
                                 />
                                 <div style={{ fontWeight: 500, marginBottom: 4 }}>{color.name}</div>
                                 <div style={{ fontSize: 12, color: '#999', marginBottom: 8, fontFamily: 'monospace' }}>{color.hex_code}</div>
-                                <Popconfirm
-                                    title="Xóa màu sắc?"
-                                    description="Bạn có chắc muốn xóa màu này?"
-                                    onConfirm={() => handleDelete(color.color_id)}
-                                    okText="Xóa"
-                                    cancelText="Hủy"
-                                    okButtonProps={{ danger: true }}
-                                >
-                                    <Button
-                                        type="text"
-                                        danger
-                                        size="small"
-                                        icon={<DeleteOutlined />}
+                                <PermissionGate permission="colors.delete">
+                                    <Popconfirm
+                                        title="Xóa màu sắc?"
+                                        description="Bạn có chắc muốn xóa màu này?"
+                                        onConfirm={() => handleDelete(color.color_id)}
+                                        okText="Xóa"
+                                        cancelText="Hủy"
+                                        okButtonProps={{ danger: true }}
                                     >
-                                        Xóa
-                                    </Button>
-                                </Popconfirm>
+                                        <Button
+                                            type="text"
+                                            danger
+                                            size="small"
+                                            icon={<DeleteOutlined />}
+                                        >
+                                            Xóa
+                                        </Button>
+                                    </Popconfirm>
+                                </PermissionGate>
                             </Card>
                         </Col>
                     ))}
@@ -174,7 +179,7 @@ export default function Colors() {
                         ]}
                     >
                         <div className="flex gap-2">
-                            <Input 
+                            <Input
                                 placeholder="#000000"
                                 value={previewColor}
                                 onChange={(e) => {
@@ -197,7 +202,7 @@ export default function Colors() {
                     </Form.Item>
 
                     <div className="text-center">
-                        <div 
+                        <div
                             className="w-24 h-24 rounded-full mx-auto border-2 shadow-lg"
                             style={{ backgroundColor: previewColor }}
                         />

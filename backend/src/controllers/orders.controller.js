@@ -98,8 +98,11 @@ class OrdersController {
         return next(new ApiError(404, 'Không tìm thấy đơn hàng'));
       }
 
+      const isOwner = order.user_id === req.user.id;
+      const userPermissions = await getUserPermissions(req.user.id);
+      const hasPermission = userPermissions.includes('orders.view');
 
-      if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+      if (!isOwner && !hasPermission) {
         return next(new ApiError(403, 'Không có quyền truy cập đơn hàng này'));
       }
 
@@ -150,7 +153,7 @@ class OrdersController {
       }
 
       const isOwner = order.user_id === req.user.id;
-      const userPermissions = await getUserPermissions(req.user.user_id);
+      const userPermissions = await getUserPermissions(req.user.id);
       const hasPermission = userPermissions.includes('orders.cancel');
 
       if (!isOwner && !hasPermission) {
@@ -179,37 +182,6 @@ class OrdersController {
     } catch (err) {
       console.error('Error getting eligible orders:', err);
       return next(new ApiError(500, "Lỗi khi lấy danh sách đơn hàng hợp lệ"));
-    }
-  }
-
-  async updatePaymentStatus(req, res, next) {
-    try {
-      if (req.user.role !== 'admin') {
-        return next(new ApiError(403, 'Chỉ admin mới có quyền thực hiện thao tác này'));
-      }
-
-      const { id } = req.params;
-      const { payment_status } = req.body;
-
-      if (!payment_status) {
-        throw new ApiError(400, 'Trạng thái thanh toán không được để trống');
-      }
-
-      const validStatuses = ['pending', 'paid', 'failed', 'cancelled', 'refunded'];
-      if (!validStatuses.includes(payment_status)) {
-        throw new ApiError(400, 'Trạng thái thanh toán không hợp lệ');
-      }
-
-      const updated = await orderService.updatePaymentStatus(id, payment_status);
-
-      if (!updated) {
-        return next(new ApiError(404, 'Không tìm thấy thông tin thanh toán'));
-      }
-
-      return res.json(JSend.success({ message: 'Cập nhật trạng thái thanh toán thành công' }));
-    } catch (error) {
-      console.error('Error updating payment status:', error);
-      return next(new ApiError(500, error.message || 'Lỗi khi cập nhật trạng thái thanh toán'));
     }
   }
   //khuc nay chua chac , se sua sau

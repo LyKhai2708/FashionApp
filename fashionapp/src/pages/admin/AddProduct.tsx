@@ -67,7 +67,7 @@ interface ColorImage {
 
 interface ColorVariants {
     color_id: number;
-    selected_sizes: number[]; 
+    selected_sizes: number[];
     variants: Variant[];
 }
 
@@ -232,7 +232,7 @@ export default function AddProduct() {
         setColorVariants(prev =>
             prev.map(cv => {
                 if (cv.color_id !== colorId) return cv;
-                
+
                 return {
                     ...cv,
                     variants: cv.variants.map(v =>
@@ -306,7 +306,7 @@ export default function AddProduct() {
                     if (img.originFileObj) {
                         formData.append('images', img.originFileObj);
                         formData.append('image_colors', ci.color_id.toString());
-                        
+
                         // Metadata cho từng ảnh
                         imageMetadata.push({
                             color_id: ci.color_id,
@@ -388,17 +388,17 @@ export default function AddProduct() {
                         )}
                     </div>
                 }
-                style={{ 
+                style={{
                     marginBottom: 16,
                     background: '#fafafa',
                     border: '1px solid #e8e8e8'
                 }}
-                headStyle={{ 
+                headStyle={{
                     background: 'white',
                     borderBottom: '2px solid #f0f0f0'
                 }}
             >
-                <div style={{ 
+                <div style={{
                     marginBottom: 16,
                     padding: '12px',
                     background: 'white',
@@ -425,7 +425,7 @@ export default function AddProduct() {
                 </div>
 
                 {cv && cv.variants.length > 0 ? (
-                    <div style={{ 
+                    <div style={{
                         background: 'white',
                         borderRadius: '6px',
                         overflow: 'hidden'
@@ -466,9 +466,9 @@ export default function AddProduct() {
     return (
         <div style={{ background: '#f5f5f5', minHeight: '100vh', padding: '24px' }}>
             <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                <div style={{ 
-                    background: 'white', 
-                    padding: '24px', 
+                <div style={{
+                    background: 'white',
+                    padding: '24px',
                     borderRadius: '12px',
                     marginBottom: '24px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
@@ -489,7 +489,7 @@ export default function AddProduct() {
                             <Text type="secondary">Điền thông tin để tạo sản phẩm mới</Text>
                         </div>
                     </div>
-                    
+
                     <Steps
                         current={-1}
                         style={{ marginTop: 32 }}
@@ -510,195 +510,209 @@ export default function AddProduct() {
                     />
                 </div>
 
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                initialValues={{
-                    base_price: 0
-                }}
-            >
-                <Row gutter={24}>
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                    initialValues={{
+                        base_price: 0
+                    }}
+                >
+                    <Row gutter={24}>
 
-                    <Col xs={24} lg={14}>
-                        <Card 
-                            title="Thông tin cơ bản"
-                            style={{ 
-                                marginBottom: 24,
-                                borderRadius: '12px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                            }}
-                            headStyle={{ borderBottom: '2px solid #f0f0f0' }}
-                        >
-
-                            <div style={{ marginBottom: 24 }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '8px',
-                                    marginBottom: 12
-                                }}>
-                                    <Text strong style={{ fontSize: 15 }}>Ảnh thumbnail</Text>
-                                    <Tag color="orange">Bắt buộc</Tag>
-                                </div>
-                                <Upload
-                                    listType="picture-card"
-                                    fileList={thumbnailFile}
-                                    onChange={handleThumbnailChange}
-                                    beforeUpload={() => false}
-                                    maxCount={1}
-                                >
-                                    {thumbnailFile.length === 0 && (
-                                        <div>
-                                            <PlusOutlined />
-                                            <div style={{ marginTop: 8 }}>Chọn ảnh</div>
-                                        </div>
-                                    )}
-                                </Upload>
-                                <div style={{ 
-                                    marginTop: 12,
-                                    padding: '12px',
-                                    background: '#fff7e6',
-                                    borderRadius: '8px',
-                                    border: '1px solid #ffd591'
-                                }}>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                        Ảnh đại diện hiển thị trên danh sách sản phẩm
-                                    </Text>
-                                </div>
-                            </div>
-
-                            <Divider />
-
-                            <Form.Item
-                                label="Tên sản phẩm"
-                                name="name"
-                                rules={[
-                                    { required: true, message: 'Vui lòng nhập tên sản phẩm' },
-                                    { min: 3, message: 'Tên sản phẩm phải có ít nhất 3 ký tự' },
-                                    { max: 100, message: 'Tên sản phẩm không vượt quá 100 ký tự' }
-                                ]}
-                            >
-                                <Input size="large" placeholder="Nhập tên sản phẩm" />
-                            </Form.Item>
-
-                            <Form.Item
-                                label="Mô tả"
-                                name="description"
-                                rules={[{ max: 500, message: 'Mô tả không vượt quá 500 ký tự' }]}
-                            >
-                                <TextArea
-                                    rows={4}
-                                    placeholder="Nhập mô tả sản phẩm"
-                                />
-                            </Form.Item>
-
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Form.Item
-                                        label="Danh mục"
-                                        name="category_id"
-                                        rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
-                                    >
-                                        <Select
-                                            size="large"
-                                            placeholder="Chọn danh mục"
-                                            showSearch
-                                            optionFilterProp="children"
-                                        >
-                                            {categories.map(cat => (
-                                                <Select.Option key={cat.category_id} value={cat.category_id}>
-                                                    {cat.category_name}
-                                                </Select.Option>
-                                            ))}
-                                        </Select>
-                                    </Form.Item>
-                                </Col>
-                                <Col span={12}>
-                                    <Form.Item
-                                        label="Thương hiệu"
-                                        name="brand_id"
-                                        rules={[{ required: true, message: 'Vui lòng chọn thương hiệu' }]}
-                                    >
-                                        <Select
-                                            size="large"
-                                            placeholder="Chọn thương hiệu"
-                                            showSearch
-                                            optionFilterProp="children"
-                                        >
-                                            {brands.map(brand => (
-                                                <Select.Option key={brand.id} value={brand.id}>
-                                                    {brand.name}
-                                                </Select.Option>
-                                            ))}
-                                        </Select>
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-
-                            <Form.Item
-                                label="Giá sản phẩm (VNĐ)"
-                                name="base_price"
-                                rules={[
-                                    { required: true, message: 'Vui lòng nhập giá' },
-                                    { type: 'number', min: 0, message: 'Giá phải lớn hơn 0' }
-                                ]}
-                                tooltip="Tất cả variant đều có cùng giá này"
-                            >
-                                <InputNumber
-                                    size="large"
-                                    style={{ width: '100%' }}
-                                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value!.replace(/\$\s?|(,*)/g, '')}
-                                    placeholder="Nhập giá sản phẩm"
-                                />
-                            </Form.Item>
-                        </Card>
-
-                        {selectedColors.length > 0 && (
-                            <Card 
-                                title="Quản lý tồn kho theo màu sắc"
-                                style={{ 
+                        <Col xs={24} lg={14}>
+                            <Card
+                                title="Thông tin cơ bản"
+                                style={{
                                     marginBottom: 24,
                                     borderRadius: '12px',
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
                                 }}
                                 headStyle={{ borderBottom: '2px solid #f0f0f0' }}
                             >
-                                {selectedColors.map(colorId => renderVariantsTable(colorId))}
-                            </Card>
-                        )}
-                    </Col>
 
-                    <Col xs={24} lg={10}>
-                        <Card 
-                            title="Màu sắc & Hình ảnh"
-                            style={{ 
-                                marginBottom: 24,
-                                borderRadius: '12px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                            }}
-                            headStyle={{ borderBottom: '2px solid #f0f0f0' }}
-                        >
-                            <Form.Item label="Chọn màu sắc">
-                                <Select
-                                    mode="multiple"
-                                    size="large"
-                                    placeholder="Chọn màu sắc"
-                                    value={selectedColors}
-                                    onChange={handleColorChange}
-                                    optionLabelProp="label"
+                                <div style={{ marginBottom: 24 }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        marginBottom: 12
+                                    }}>
+                                        <Text strong style={{ fontSize: 15 }}>Ảnh thumbnail</Text>
+                                        <Tag color="orange">Bắt buộc</Tag>
+                                    </div>
+                                    <Upload
+                                        listType="picture-card"
+                                        fileList={thumbnailFile}
+                                        onChange={handleThumbnailChange}
+                                        beforeUpload={() => false}
+                                        maxCount={1}
+                                    >
+                                        {thumbnailFile.length === 0 && (
+                                            <div>
+                                                <PlusOutlined />
+                                                <div style={{ marginTop: 8 }}>Chọn ảnh</div>
+                                            </div>
+                                        )}
+                                    </Upload>
+                                    <div style={{
+                                        marginTop: 12,
+                                        padding: '12px',
+                                        background: '#fff7e6',
+                                        borderRadius: '8px',
+                                        border: '1px solid #ffd591'
+                                    }}>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                            Ảnh đại diện hiển thị trên danh sách sản phẩm
+                                        </Text>
+                                    </div>
+                                </div>
+
+                                <Divider />
+
+                                <Form.Item
+                                    label="Tên sản phẩm"
+                                    name="name"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập tên sản phẩm' },
+                                        { min: 3, message: 'Tên sản phẩm phải có ít nhất 3 ký tự' },
+                                        { max: 100, message: 'Tên sản phẩm không vượt quá 100 ký tự' }
+                                    ]}
                                 >
-                                    {colors.map(color => (
-                                        <Select.Option
-                                            key={color.color_id}
-                                            value={color.color_id}
-                                            label={
+                                    <Input size="large" placeholder="Nhập tên sản phẩm" />
+                                </Form.Item>
+
+                                <Form.Item
+                                    label="Mô tả"
+                                    name="description"
+                                    rules={[{ max: 500, message: 'Mô tả không vượt quá 500 ký tự' }]}
+                                >
+                                    <TextArea
+                                        rows={4}
+                                        placeholder="Nhập mô tả sản phẩm"
+                                    />
+                                </Form.Item>
+
+                                <Row gutter={16}>
+                                    <Col span={12}>
+                                        <Form.Item
+                                            label="Danh mục"
+                                            name="category_id"
+                                            rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
+                                        >
+                                            <Select
+                                                size="large"
+                                                placeholder="Chọn danh mục"
+                                                showSearch
+                                                optionFilterProp="children"
+                                            >
+                                                {categories.map(cat => (
+                                                    <Select.Option key={cat.category_id} value={cat.category_id}>
+                                                        {cat.category_name}
+                                                    </Select.Option>
+                                                ))}
+                                            </Select>
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Form.Item
+                                            label="Thương hiệu"
+                                            name="brand_id"
+                                            rules={[{ required: true, message: 'Vui lòng chọn thương hiệu' }]}
+                                        >
+                                            <Select
+                                                size="large"
+                                                placeholder="Chọn thương hiệu"
+                                                showSearch
+                                                optionFilterProp="children"
+                                            >
+                                                {brands.map(brand => (
+                                                    <Select.Option key={brand.id} value={brand.id}>
+                                                        {brand.name}
+                                                    </Select.Option>
+                                                ))}
+                                            </Select>
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+
+                                <Form.Item
+                                    label="Giá sản phẩm (VNĐ)"
+                                    name="base_price"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập giá' },
+                                        { type: 'number', min: 0, message: 'Giá phải lớn hơn 0' }
+                                    ]}
+                                    tooltip="Tất cả variant đều có cùng giá này"
+                                >
+                                    <InputNumber
+                                        size="large"
+                                        style={{ width: '100%' }}
+                                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+                                        placeholder="Nhập giá sản phẩm"
+                                    />
+                                </Form.Item>
+                            </Card>
+
+                            {selectedColors.length > 0 && (
+                                <Card
+                                    title="Quản lý tồn kho theo màu sắc"
+                                    style={{
+                                        marginBottom: 24,
+                                        borderRadius: '12px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                                    }}
+                                    headStyle={{ borderBottom: '2px solid #f0f0f0' }}
+                                >
+                                    {selectedColors.map(colorId => renderVariantsTable(colorId))}
+                                </Card>
+                            )}
+                        </Col>
+
+                        <Col xs={24} lg={10}>
+                            <Card
+                                title="Màu sắc & Hình ảnh"
+                                style={{
+                                    marginBottom: 24,
+                                    borderRadius: '12px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                                }}
+                                headStyle={{ borderBottom: '2px solid #f0f0f0' }}
+                            >
+                                <Form.Item label="Chọn màu sắc">
+                                    <Select
+                                        mode="multiple"
+                                        size="large"
+                                        placeholder="Chọn màu sắc"
+                                        value={selectedColors}
+                                        onChange={handleColorChange}
+                                        optionLabelProp="label"
+                                    >
+                                        {colors.map(color => (
+                                            <Select.Option
+                                                key={color.color_id}
+                                                value={color.color_id}
+                                                label={
+                                                    <Space>
+                                                        <div
+                                                            style={{
+                                                                width: 16,
+                                                                height: 16,
+                                                                borderRadius: '50%',
+                                                                backgroundColor: color.hex_code,
+                                                                border: '1px solid #d9d9d9'
+                                                            }}
+                                                        />
+                                                        {color.name}
+                                                    </Space>
+                                                }
+                                            >
                                                 <Space>
                                                     <div
                                                         style={{
-                                                            width: 16,
-                                                            height: 16,
+                                                            width: 20,
+                                                            height: 20,
                                                             borderRadius: '50%',
                                                             backgroundColor: color.hex_code,
                                                             border: '1px solid #d9d9d9'
@@ -706,194 +720,180 @@ export default function AddProduct() {
                                                     />
                                                     {color.name}
                                                 </Space>
-                                            }
-                                        >
-                                            <Space>
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+
+                                <Divider />
+
+                                {colorImages.map(ci => {
+                                    const color = colors.find(c => c.color_id === ci.color_id);
+                                    return (
+                                        <div key={ci.color_id} style={{
+                                            marginBottom: 24,
+                                            padding: '16px',
+                                            background: '#fafafa',
+                                            borderRadius: '8px',
+                                            border: '1px solid #f0f0f0'
+                                        }}>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                marginBottom: 12
+                                            }}>
                                                 <div
                                                     style={{
-                                                        width: 20,
-                                                        height: 20,
+                                                        width: 24,
+                                                        height: 24,
                                                         borderRadius: '50%',
-                                                        backgroundColor: color.hex_code,
-                                                        border: '1px solid #d9d9d9'
+                                                        backgroundColor: color?.hex_code,
+                                                        border: '2px solid white',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                                                     }}
                                                 />
-                                                {color.name}
-                                            </Space>
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                                                <Text strong style={{ fontSize: 15 }}>{color?.name}</Text>
+                                                <Tag color="blue">{ci.images.length} ảnh</Tag>
+                                            </div>
 
-                            <Divider />
-
-                            {colorImages.map(ci => {
-                                const color = colors.find(c => c.color_id === ci.color_id);
-                                return (
-                                    <div key={ci.color_id} style={{ 
-                                        marginBottom: 24,
-                                        padding: '16px',
-                                        background: '#fafafa',
-                                        borderRadius: '8px',
-                                        border: '1px solid #f0f0f0'
-                                    }}>
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: '8px',
-                                            marginBottom: 12
-                                        }}>
-                                            <div
-                                                style={{
-                                                    width: 24,
-                                                    height: 24,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: color?.hex_code,
-                                                    border: '2px solid white',
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                                }}
-                                            />
-                                            <Text strong style={{ fontSize: 15 }}>{color?.name}</Text>
-                                            <Tag color="blue">{ci.images.length} ảnh</Tag>
-                                        </div>
-
-                                        {/* Preview ảnh đã có với controls */}
-                                        {ci.images.length > 0 && (
-                                            <div style={{ marginBottom: 16 }}>
-                                                <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                    Ảnh đã chọn:
-                                                </Text>
-                                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                                    {ci.images.map((img, index) => (
-                                                        <div
-                                                            key={img.uid}
-                                                            style={{
-                                                                position: 'relative',
-                                                                width: 104,
-                                                                height: 104,
-                                                                border: index === ci.primaryIndex ? '3px solid #1890ff' : '1px solid #d9d9d9',
-                                                                borderRadius: '8px',
-                                                                overflow: 'hidden'
-                                                            }}
-                                                        >
-                                                            <img
-                                                                src={img.thumbUrl || URL.createObjectURL(img.originFileObj as Blob)}
-                                                                alt=""
-                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                            />
-                                                            <div style={{
-                                                                position: 'absolute',
-                                                                top: 4,
-                                                                right: 4,
-                                                                display: 'flex',
-                                                                gap: '4px'
-                                                            }}>
-                                                                <Tooltip title={index === ci.primaryIndex ? "Ảnh chính" : "Đặt làm ảnh chính"}>
+                                            {/* Preview ảnh đã có với controls */}
+                                            {ci.images.length > 0 && (
+                                                <div style={{ marginBottom: 16 }}>
+                                                    <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                                                        Ảnh đã chọn:
+                                                    </Text>
+                                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                        {ci.images.map((img, index) => (
+                                                            <div
+                                                                key={img.uid}
+                                                                style={{
+                                                                    position: 'relative',
+                                                                    width: 104,
+                                                                    height: 104,
+                                                                    border: index === ci.primaryIndex ? '3px solid #1890ff' : '1px solid #d9d9d9',
+                                                                    borderRadius: '8px',
+                                                                    overflow: 'hidden'
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={img.thumbUrl || URL.createObjectURL(img.originFileObj as Blob)}
+                                                                    alt=""
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                />
+                                                                <div style={{
+                                                                    position: 'absolute',
+                                                                    top: 4,
+                                                                    right: 4,
+                                                                    display: 'flex',
+                                                                    gap: '4px'
+                                                                }}>
+                                                                    <Tooltip title={index === ci.primaryIndex ? "Ảnh chính" : "Đặt làm ảnh chính"}>
+                                                                        <Button
+                                                                            size="small"
+                                                                            type={index === ci.primaryIndex ? "primary" : "default"}
+                                                                            icon={index === ci.primaryIndex ? <StarFilled /> : <StarOutlined />}
+                                                                            onClick={() => handleSetPrimaryImage(ci.color_id, index)}
+                                                                        />
+                                                                    </Tooltip>
                                                                     <Button
                                                                         size="small"
-                                                                        type={index === ci.primaryIndex ? "primary" : "default"}
-                                                                        icon={index === ci.primaryIndex ? <StarFilled /> : <StarOutlined />}
-                                                                        onClick={() => handleSetPrimaryImage(ci.color_id, index)}
+                                                                        danger
+                                                                        icon={<DeleteOutlined />}
+                                                                        onClick={() => handleRemoveImage(ci.color_id, index)}
                                                                     />
-                                                                </Tooltip>
-                                                                <Button
-                                                                    size="small"
-                                                                    danger
-                                                                    icon={<DeleteOutlined />}
-                                                                    onClick={() => handleRemoveImage(ci.color_id, index)}
-                                                                />
+                                                                </div>
+                                                                {index > 0 && (
+                                                                    <Button
+                                                                        size="small"
+                                                                        style={{ position: 'absolute', bottom: 4, left: 4 }}
+                                                                        onClick={() => handleMoveImage(ci.color_id, index, index - 1)}
+                                                                    >
+                                                                        ←
+                                                                    </Button>
+                                                                )}
+                                                                {index < ci.images.length - 1 && (
+                                                                    <Button
+                                                                        size="small"
+                                                                        style={{ position: 'absolute', bottom: 4, right: 4 }}
+                                                                        onClick={() => handleMoveImage(ci.color_id, index, index + 1)}
+                                                                    >
+                                                                        →
+                                                                    </Button>
+                                                                )}
                                                             </div>
-                                                            {index > 0 && (
-                                                                <Button
-                                                                    size="small"
-                                                                    style={{ position: 'absolute', bottom: 4, left: 4 }}
-                                                                    onClick={() => handleMoveImage(ci.color_id, index, index - 1)}
-                                                                >
-                                                                    ←
-                                                                </Button>
-                                                            )}
-                                                            {index < ci.images.length - 1 && (
-                                                                <Button
-                                                                    size="small"
-                                                                    style={{ position: 'absolute', bottom: 4, right: 4 }}
-                                                                    onClick={() => handleMoveImage(ci.color_id, index, index + 1)}
-                                                                >
-                                                                    →
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {/* Upload mới */}
-                                        <Upload
-                                            listType="picture-card"
-                                            fileList={[]}
-                                            onChange={({ fileList }) => {
-                                                // Append to existing images
-                                                const newImages = [...ci.images, ...fileList];
-                                                handleColorImageChange(ci.color_id, newImages);
-                                            }}
-                                            beforeUpload={() => false}
-                                            multiple
-                                            showUploadList={false}
-                                        >
-                                            <div>
-                                                <PlusOutlined />
-                                                <div style={{ marginTop: 8 }}>Thêm ảnh</div>
-                                            </div>
-                                        </Upload>
-                                    </div>
-                                );
-                            })}
-                        </Card>
-                    </Col>
-                </Row>
+                                            {/* Upload mới */}
+                                            <Upload
+                                                listType="picture-card"
+                                                fileList={[]}
+                                                onChange={({ fileList }) => {
+                                                    // Append to existing images
+                                                    const newImages = [...ci.images, ...fileList];
+                                                    handleColorImageChange(ci.color_id, newImages);
+                                                }}
+                                                beforeUpload={() => false}
+                                                multiple
+                                                showUploadList={false}
+                                            >
+                                                <div>
+                                                    <PlusOutlined />
+                                                    <div style={{ marginTop: 8 }}>Thêm ảnh</div>
+                                                </div>
+                                            </Upload>
+                                        </div>
+                                    );
+                                })}
+                            </Card>
+                        </Col>
+                    </Row>
 
-                <Card style={{ 
-                    borderRadius: '12px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                    background: 'white'
-                }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: '16px'
+                    <Card style={{
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                        background: 'white'
                     }}>
-                        <Text type="secondary">
-                            Kiểm tra kỹ thông tin trước khi lưu
-                        </Text>
-                        <Space size="middle">
-                            <Button
-                                size="large"
-                                onClick={() => navigate('/admin/products')}
-                                disabled={loading}
-                            >
-                                Hủy bỏ
-                            </Button>
-                            <Button
-                                type="primary"
-                                size="large"
-                                htmlType="submit"
-                                loading={loading}
-                                style={{
-                                    background: 'black',
-                                    border: 'none',
-                                    height: '44px',
-                                    padding: '0 32px',
-                                    fontWeight: 600
-                                }}
-                            >
-                                {loading ? 'Đang lưu...' : 'Lưu sản phẩm'}
-                            </Button>
-                        </Space>
-                    </div>
-                </Card>
-            </Form>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '16px'
+                        }}>
+                            <Text type="secondary">
+                                Kiểm tra kỹ thông tin trước khi lưu
+                            </Text>
+                            <Space size="middle">
+                                <Button
+                                    size="large"
+                                    onClick={() => navigate('/admin/products')}
+                                    disabled={loading}
+                                >
+                                    Hủy bỏ
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    htmlType="submit"
+                                    loading={loading}
+                                    style={{
+                                        background: 'black',
+                                        border: 'none',
+                                        height: '44px',
+                                        padding: '0 32px',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {loading ? 'Đang lưu...' : 'Lưu sản phẩm'}
+                                </Button>
+                            </Space>
+                        </div>
+                    </Card>
+                </Form>
             </div>
         </div>
     );

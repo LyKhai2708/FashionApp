@@ -22,18 +22,17 @@ interface UseProductListReturn {
     refetch: () => Promise<void>;
     setFilters: (filters: ProductsParams) => void;
     setSort: (sort: string) => void;
+    setPage: (page: number) => void;
     currentFilters: ProductsParams;
 }
 
 export const useProductList = (options: UseProductListOptions = {}): UseProductListReturn => {
     const { initialParams = {}, categoryId, autoFetch = true } = options;
     const { user } = useAuth();
-    
-    // Refs để tránh stale closures
+
     const abortControllerRef = useRef<AbortController | null>(null);
     const hasInitialFetch = useRef(false);
-    
-    // State
+
     const [products, setProducts] = useState<Product[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -41,7 +40,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-    
+
     const [currentFilters, setCurrentFilters] = useState<ProductsParams>({
         page: 1,
         limit: 12,
@@ -71,7 +70,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             abortControllerRef.current = new AbortController();
 
             const isFirstPage = reset || params.page === 1;
-            
+
             if (isFirstPage) {
                 setLoading(true);
                 setError(null);
@@ -80,8 +79,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             }
 
             const finalParams = {
-                ...params,
-                page: reset ? 1 : (params.page || 1)
+                ...params
             };
 
             const response = await productService.getProducts(
@@ -91,16 +89,8 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
 
             const { products: newProducts, metadata } = response;
 
-            if (reset || finalParams.page === 1) {
-                setProducts(newProducts);
-                setCurrentPage(1);
-            } else {
-                setProducts(prev => {
-                    const existingIds = new Set(prev.map(p => p.product_id));
-                    const uniqueNew = newProducts.filter(p => !existingIds.has(p.product_id));
-                    return [...prev, ...uniqueNew];
-                });
-            }
+            setProducts(newProducts);
+
 
             setTotalCount(metadata.totalRecords);
             setCurrentPage(metadata.page);
@@ -113,14 +103,14 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             if (err.name === 'AbortError' || err.name === 'CanceledError') {
                 return;
             }
-            
+
             setError(err.message || 'Không thể tải danh sách sản phẩm');
-            
+
             if (reset) {
                 setProducts([]);
                 setTotalCount(0);
             }
-            
+
             setLoading(false);
             setLoadingMore(false);
         }
@@ -131,7 +121,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
             console.log('Cannot load more');
             return;
         }
-        
+
         await fetchProducts({ ...currentFilters, page: currentPage + 1 }, false);
     }, [hasMore, loadingMore, loading, currentPage, currentFilters, fetchProducts]);
 
@@ -160,46 +150,56 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
                 ...(categoryId !== undefined && { category_id: categoryId }),
                 ...filters
             };
-            
+
             Object.keys(newFilters).forEach(key => {
                 const value = newFilters[key as keyof ProductsParams];
                 if (value === undefined || value === null || value === '') {
                     delete newFilters[key as keyof ProductsParams];
                 }
             });
-            
+
 
         }
-        
+
         setCurrentFilters(newFilters);
         setHasMore(true);
         fetchProducts(newFilters, true);
     }, [categoryId, currentFilters.limit, fetchProducts]);
 
     const setSort = useCallback((sort: string) => {
-        
+
         const newFilters = {
             ...currentFilters,
             sort: sort as ProductsParams['sort'],
             page: 1
         };
-        
+
         setCurrentFilters(newFilters);
         setHasMore(true);
+        fetchProducts(newFilters, true);
+    }, [currentFilters, fetchProducts]);
+
+    const setPage = useCallback((page: number) => {
+        const newFilters = {
+            ...currentFilters,
+            page
+        };
+
+        setCurrentFilters(newFilters);
         fetchProducts(newFilters, true);
     }, [currentFilters, fetchProducts]);
 
     useEffect(() => {
         if (autoFetch && !hasInitialFetch.current) {
             hasInitialFetch.current = true;
-            
+
             const initialFilters = {
                 page: 1,
                 limit: 12,
                 ...initialParams,
                 ...(categoryId !== undefined && { category_id: categoryId })
             };
-            
+
             setCurrentFilters(initialFilters);
             fetchProducts(initialFilters, true);
         }
@@ -208,13 +208,13 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
 
     useEffect(() => {
         if (hasInitialFetch.current && categoryId !== undefined && categoryId !== currentFilters.category_id) {
-            
+
             const newFilters = {
                 page: 1,
                 limit: currentFilters.limit || 12,
                 category_id: categoryId
             };
-            
+
             setCurrentFilters(newFilters);
             setHasMore(true);
             fetchProducts(newFilters, true);
@@ -234,6 +234,7 @@ export const useProductList = (options: UseProductListOptions = {}): UseProductL
         refetch,
         setFilters,
         setSort,
+        setPage,
         currentFilters
     };
 };

@@ -13,11 +13,12 @@ export interface User {
     id: number;
     username: string;
     email: string;
-    role: 'customer' | 'admin';
+    role: string;
     phone?: string | null;
     address?: string;
     auth_provider?: 'local' | 'google';
     google_id?: string;
+    permissions?: string[];
 }
 
 export interface LoginRequest {
@@ -35,8 +36,8 @@ export interface RegisterRequest {
 export interface AuthResponse {
     status: 'success';
     data: {
-      user: User;
-      token: string;
+        user: User;
+        token: string;
     };
 }
 

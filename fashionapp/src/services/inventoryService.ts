@@ -45,6 +45,9 @@ export interface StockHistoryItem {
     size_name: string;
     color_name: string;
     admin_username: string;
+    reference_type?: 'order' | 'purchase_order' | 'adjustment';
+    supplier_name?: string;
+    customer_name?: string;
 }
 
 export interface StockTrendItem {
