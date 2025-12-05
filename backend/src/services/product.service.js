@@ -7,14 +7,14 @@ async function getAllChildCategoryIds(parentCategoryId) {
     const childCategories = await knex('categories')
         .where('parent_id', parentCategoryId)
         .select('category_id');
-    
-    let allChildIds = [parentCategoryId]; 
-    
+
+    let allChildIds = [parentCategoryId];
+
     for (const child of childCategories) {
         const grandChildIds = await getAllChildCategoryIds(child.category_id);
         allChildIds = allChildIds.concat(grandChildIds);
     }
-    
+
     return allChildIds;
 }
 
@@ -23,7 +23,7 @@ function productsRepository() {
 }
 
 function readProduct(payload) {
-    
+
     const product = {
         name: payload.name,
         description: payload.description || null,
@@ -55,7 +55,7 @@ async function createProduct(payload) {
     return await knex.transaction(async (trx) => {
         const product = readProduct(payload);
         const [product_id] = await trx("products").insert(product);
-        
+
         if (payload.variants && payload.variants.length > 0) {
             const variantInserts = payload.variants.map(variant => ({
                 product_id: product_id,
@@ -64,13 +64,13 @@ async function createProduct(payload) {
                 stock_quantity: variant.stock_quantity || 0,
                 active: variant.active !== undefined ? variant.active : 1
             }));
-            
+
             await trx("product_variants").insert(variantInserts);
         }
-        
+
         if (payload.variants && payload.variants.length > 0) {
             const imagesByColor = new Map();
-            
+
             payload.variants.forEach(variant => {
                 if (variant.images && variant.images.length > 0) {
                     if (!imagesByColor.has(variant.color_id)) {
@@ -78,13 +78,13 @@ async function createProduct(payload) {
                     }
                 }
             });
-            
+
             for (const [color_id, images] of imagesByColor) {
                 const imageInserts = images.map((image, index) => {
                     const imageUrl = typeof image === 'string' ? image : (image.url || image.image_url);
                     const isPrimary = typeof image === 'object' ? (image.is_primary || index === 0) : (index === 0);
                     const displayOrder = typeof image === 'object' ? (image.display_order || index + 1) : (index + 1);
-                    
+
                     return {
                         product_id: product_id,
                         color_id: color_id,
@@ -93,13 +93,13 @@ async function createProduct(payload) {
                         display_order: displayOrder
                     };
                 });
-                
+
                 await trx("images").insert(imageInserts);
             }
         }
-        
-        return { 
-            ...product, 
+
+        return {
+            ...product,
             product_id,
             variants_added: payload.variants?.length || 0
         };
@@ -121,7 +121,7 @@ async function getProductById(id, user_id = null) {
             .leftJoin('brand as b', 'p.brand_id', 'b.id')
             .leftJoin('categories as c', 'p.category_id', 'c.category_id')
             .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id')
-            .leftJoin('favorites as f', function() {
+            .leftJoin('favorites as f', function () {
                 this.on('p.product_id', '=', 'f.product_id');
                 if (user_id) {
                     this.andOn('f.user_id', '=', knex.raw('?', [user_id]));
@@ -180,7 +180,7 @@ async function getProductById(id, user_id = null) {
                 'pv.color_id',
                 'c.name as color_name',
                 'c.hex_code as color_hex',
-                'pv.size_id', 
+                'pv.size_id',
                 's.name as size_name',
                 'pv.stock_quantity',
                 'pv.active'
@@ -195,8 +195,8 @@ async function getProductById(id, user_id = null) {
             .whereIn('color_id', colorIds)
             .select(
                 'color_id',
-                'image_url', 
-                'is_primary', 
+                'image_url',
+                'is_primary',
                 'display_order'
             )
             .orderBy('display_order') : [];
@@ -226,7 +226,7 @@ async function getProductById(id, user_id = null) {
                 name: variant.size_name
             },
             stock_quantity: variant.stock_quantity,
-            final_price: (function() {
+            final_price: (function () {
                 const baseOrDiscounted = parseFloat(product.discounted_price ?? product.base_price);
                 return parseFloat((baseOrDiscounted).toFixed(2));
             })(),
@@ -256,7 +256,7 @@ async function getProductById(id, user_id = null) {
         throw error;
     }
 }
-  
+
 async function updateProduct(id, payload) {
     return await knex.transaction(async (trx) => {
         const updatedProduct = await trx('products').where("product_id", id).select('*').first();
@@ -267,7 +267,7 @@ async function updateProduct(id, payload) {
 
         if (imageData && imageData.newThumbnail && imageData.uploadedFiles.length > 0) {
             update.thumbnail = `/public/uploads/${imageData.uploadedFiles[0].filename}`;
-            
+
             if (updatedProduct.thumbnail && update.thumbnail !== updatedProduct.thumbnail) {
                 const oldFilePath = updatedProduct.thumbnail.startsWith('/public/uploads/')
                     ? `.${updatedProduct.thumbnail}`
@@ -288,8 +288,8 @@ async function updateProduct(id, payload) {
         await trx('products').where("product_id", id).update(update);
 
         if (payload.variants) {
-            const variants = typeof payload.variants === 'string' 
-                ? JSON.parse(payload.variants) 
+            const variants = typeof payload.variants === 'string'
+                ? JSON.parse(payload.variants)
                 : payload.variants;
 
             if (variants && variants.length > 0) {
@@ -342,7 +342,7 @@ async function updateProduct(id, payload) {
                     const deletedImage = await trx('images')
                         .where({ product_id: id, image_url: imageUrl })
                         .first();
-                    
+
                     await trx('images').where({
                         product_id: id,
                         image_url: imageUrl
@@ -359,7 +359,7 @@ async function updateProduct(id, payload) {
                             console.error('Failed to delete image file:', filePath, err.message);
                         }
                     }
-                    
+
                     // If deleted image was primary, set first remaining image as primary
                     if (deletedImage && deletedImage.is_primary) {
                         const firstRemaining = await trx('images')
@@ -369,7 +369,7 @@ async function updateProduct(id, payload) {
                             })
                             .orderBy('display_order', 'asc')
                             .first();
-                        
+
                         if (firstRemaining) {
                             await trx('images')
                                 .where('image_id', firstRemaining.image_id)
@@ -396,13 +396,13 @@ async function updateProduct(id, payload) {
                 for (let i = fileIndex; i < imageData.uploadedFiles.length; i++) {
                     const file = imageData.uploadedFiles[i];
                     const colorId = imageData.imageColors[i - fileIndex];
-                    
+
                     if (colorId) {
                         const maxOrder = await trx('images')
                             .where({ product_id: id, color_id: colorId })
                             .max('display_order as max')
                             .first();
-                        
+
                         await trx('images').insert({
                             product_id: id,
                             color_id: colorId,
@@ -420,12 +420,12 @@ async function updateProduct(id, payload) {
 }
 
 
-  
+
 async function getManyProducts(query, role = null) {
     const { search, brand_id, category_id, category_slug, del_flag, min_price, max_price, color_id, size_id, page = 1, limit = 10, sort, user_id } = query;
 
     const paginator = new Paginator(page, limit);
-    
+
     let categoryIds = null;
     if (category_id) {
         categoryIds = await getAllChildCategoryIds(category_id);
@@ -446,9 +446,9 @@ async function getManyProducts(query, role = null) {
         }
         if (del_flag !== undefined) {
             builder.where('p.del_flag', del_flag == '1' || del_flag == 'true' ? 1 : 0);
-        } else if(del_flag === undefined && role !== 'admin') {
+        } else if (del_flag === undefined && role !== 'admin') {
             builder.where('p.del_flag', 0);
-        } else if( del_flag === undefined && role === 'admin'){
+        } else if (del_flag === undefined && role === 'admin') {
         }
         if (min_price) {
             builder.whereRaw(`
@@ -496,23 +496,23 @@ async function getManyProducts(query, role = null) {
             .leftJoin('brand as b', 'p.brand_id', 'b.id')
             .leftJoin('categories as c', 'p.category_id', 'c.category_id')
             .leftJoin(promotionSubquery, 'p.product_id', 'active_promotions.product_id');
-            
+
         if (user_id) {
-            query = query.leftJoin('favorites as f', function() {
+            query = query.leftJoin('favorites as f', function () {
                 this.on('p.product_id', '=', 'f.product_id')
                     .andOn('f.user_id', '=', knex.raw('?', [user_id]));
             });
         } else {
-            query = query.leftJoin('favorites as f', function() {
+            query = query.leftJoin('favorites as f', function () {
                 this.on('p.product_id', '=', 'f.product_id')
                     .andOn(knex.raw('1'), '=', knex.raw('0'));
             });
         }
-            
+
         if (color_id || size_id) {
             query = query.join('product_variants as pv', 'p.product_id', 'pv.product_id');
         }
-        
+
 
         return query;
     }
@@ -561,7 +561,7 @@ async function getManyProducts(query, role = null) {
                 FROM product_variants pv
                 WHERE pv.product_id = p.product_id
             ) as total_stock`)
-                        
+
         )
         .distinct('p.product_id')
         .limit(paginator.limit)
@@ -590,7 +590,7 @@ async function getManyProducts(query, role = null) {
 
     if (products.length > 0) {
         const productIds = products.map(p => p.product_id);
-        
+
         const colors = await knex('product_variants as pv')
             .join('colors as c', 'pv.color_id', 'c.color_id')
             .whereIn('pv.product_id', productIds)
@@ -648,7 +648,7 @@ async function getManyProducts(query, role = null) {
             queryVariant.where('pv.active', '=', 1);
         }
         const variants = await queryVariant;
-        
+
 
         const variantsByProductAndColor = {};
         for (const variant of variants) {
@@ -694,7 +694,7 @@ async function getManyProducts(query, role = null) {
                 discount_percent: product.discount_percent || 0,
                 has_promotion: product.has_promotion
             };
-            
+
             const reviews = reviewsByProduct[product.product_id];
             product.review_count = reviews ? reviews.review_count : 0;
             product.average_rating = reviews ? reviews.average_rating : 0;
@@ -722,27 +722,27 @@ async function hardDeleteProduct(id) {
              WHERE pv.product_id = ?`,
             [id]
         );
-        
+
         if (orders[0].count > 0) {
             throw new Error('Không thể xóa sản phẩm đã có trong đơn hàng. Vui lòng chỉ dừng bán mặt hàng này.');
         }
-        
+
         const product = await trx('products')
             .where('product_id', id)
             .select('thumbnail')
             .first();
-        
+
         const images = await trx('images')
             .where('product_id', id)
             .select('image_url');
-        
+
 
         await trx('images').where('product_id', id).del();
         await trx('product_variants').where('product_id', id).del();
         await trx('product_reviews').where('product_id', id).del();
         await trx('product_image_features').where('product_id', id).del();
         await trx('products').where('product_id', id).del();
-        
+
 
 
         if (product && product.thumbnail) {
@@ -756,7 +756,7 @@ async function hardDeleteProduct(id) {
                 console.error('Failed to delete thumbnail:', thumbnailPath, err.message);
             }
         }
-        
+
         const deletePromises = images.map(async (img) => {
             if (img.image_url) {
                 const filePath = img.image_url.startsWith('/public/uploads/')
@@ -770,9 +770,9 @@ async function hardDeleteProduct(id) {
                 }
             }
         });
-        
+
         await Promise.allSettled(deletePromises);
-        
+
         return true;
     });
 }
@@ -792,7 +792,7 @@ async function getProductsByIds(productIds, user_id = null) {
     let query = knex('products as p')
         .leftJoin('brand as b', 'p.brand_id', 'b.id')
         .leftJoin('categories as cat', 'p.category_id', 'cat.category_id')
-        .leftJoin(function() {
+        .leftJoin(function () {
             this.select('product_id')
                 .max('discount_percent as discount_percent')
                 .from('promotion_products as pp')
@@ -832,9 +832,9 @@ async function getProductsByIds(productIds, user_id = null) {
             `)
         );
 
-    
+
     if (user_id) {
-        query.leftJoin('favorites as f', function() {
+        query.leftJoin('favorites as f', function () {
             this.on('f.product_id', '=', 'p.product_id')
                 .andOn('f.user_id', '=', knex.raw('?', [user_id]));
         }).select(
@@ -863,13 +863,13 @@ async function getProductsByIds(productIds, user_id = null) {
         .groupBy('pv.product_id', 'c.color_id', 'c.name', 'c.hex_code')
         .orderBy('c.color_id');
 
-   
+
     const images = await knex('images')
         .whereIn('product_id', foundProductIds)
         .select('product_id', 'color_id', 'image_url', 'is_primary', 'display_order')
         .orderBy('display_order');
 
-    
+
     const imagesByProductAndColor = {};
     for (const img of images) {
         const key = `${img.product_id}_${img.color_id}`;
@@ -883,7 +883,7 @@ async function getProductsByIds(productIds, user_id = null) {
         });
     }
 
-    
+
     const variants = await knex('product_variants as pv')
         .join('sizes as s', 'pv.size_id', 's.size_id')
         .whereIn('pv.product_id', foundProductIds)
@@ -914,7 +914,7 @@ async function getProductsByIds(productIds, user_id = null) {
         });
     }
 
-    
+
     const reviewsStats = await knex('product_reviews')
         .whereIn('product_id', foundProductIds)
         .select('product_id')
@@ -953,12 +953,12 @@ async function getProductsByIds(productIds, user_id = null) {
         product.average_rating = stats ? stats.average_rating : 0;
     }
 
-    
+
     const productMap = {};
     for (const product of products) {
         productMap[product.product_id] = product;
     }
-    
+
     const sortedProducts = [];
     for (const id of productIds) {
         if (productMap[id]) {

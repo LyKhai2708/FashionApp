@@ -60,8 +60,10 @@ const createVoucher = async (req, res, next) => {
             return next(new ApiError(400, 'Loại giảm giá không hợp lệ'));
         }
 
-        if (!req.body?.discount_value || typeof req.body.discount_value !== 'number' || req.body.discount_value <= 0) {
-            return next(new ApiError(400, 'Giá trị giảm giá là bắt buộc và phải lớn hơn 0'));
+        if (req.body.discount_type !== 'free_shipping') {
+            if (!req.body?.discount_value || typeof req.body.discount_value !== 'number' || req.body.discount_value <= 0) {
+                return next(new ApiError(400, 'Giá trị giảm giá là bắt buộc và phải lớn hơn 0'));
+            }
         }
 
         if (req.body.discount_type === 'percentage' && (req.body.discount_value < 0 || req.body.discount_value > 100)) {
@@ -77,7 +79,7 @@ const createVoucher = async (req, res, next) => {
             name: req.body.name,
             description: req.body.description || null,
             discount_type: req.body.discount_type,
-            discount_value: req.body.discount_value,
+            discount_value: req.body.discount_type === 'free_shipping' ? 0 : req.body.discount_value,
             min_order_amount: req.body.min_order_amount || 0,
             max_discount_amount: req.body.max_discount_amount || null,
             usage_limit: req.body.usage_limit || null,
@@ -189,7 +191,7 @@ const toggleVoucherActive = async (req, res, next) => {
 
 const getAvailableVouchers = async (req, res, next) => {
     try {
-        const userId = req.user?.user_id;
+        const userId = req.user?.id;
         const { order_amount } = req.query;
 
         const vouchers = await voucherService.getAvailableVouchers(
@@ -211,7 +213,7 @@ const getAvailableVouchers = async (req, res, next) => {
 const validateVoucher = async (req, res, next) => {
     try {
         const { code } = req.params;
-        const userId = req.user?.user_id;
+        const userId = req.user?.id;
         const { order_amount, shipping_fee = 0 } = req.body;
 
         if (!order_amount || typeof order_amount !== 'number' || order_amount <= 0) {

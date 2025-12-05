@@ -108,10 +108,8 @@ async function verifyToken(token) {
             throw new Error('Token đã hết hạn. Vui lòng yêu cầu gửi lại email');
         }
 
-        // Handle change_email - update user email in transaction
         if (record.purpose === 'change_email' && record.user_id) {
             await knex.transaction(async (trx) => {
-                // Mark verified
                 await trx('otp_verifications')
                     .where({ id: record.id })
                     .update({
@@ -120,13 +118,16 @@ async function verifyToken(token) {
                         updated_at: new Date()
                     });
 
-                // Update user email
+
                 await trx('users')
                     .where({ user_id: record.user_id })
-                    .update({ email: record.email });
+                    .update({
+                        email: record.email,
+                        google_id: null,
+                        auth_provider: 'local'
+                    });
             });
 
-            console.log(`Email changed successfully for user ${record.user_id}: ${record.email}`);
 
             return {
                 success: true,

@@ -22,25 +22,25 @@ async function createPromotion(payload) {
 }
 
 
-async function getManyPromotion(payload){
-    const {page = 1, limit = 10, promo_name, active, start_date, end_date} = payload;
+async function getManyPromotion(payload) {
+    const { page = 1, limit = 10, promo_name, active, start_date, end_date } = payload;
     const paginator = new Paginator(page, limit);
     let result = promotionRepository()
-    .leftJoin('promotion_products as pp', 'promotions.promo_id', 'pp.promo_id')
-    .where((builder) => {
-        if(promo_name){
-            builder.whereILike('name', `%${promo_name}%`);
-        }
-        if(active !== undefined){
-            builder.where('active', active);
-        }
-        if(start_date){
-            builder.where('start_date', '>=', start_date);
-        }
-        if(end_date){
-            builder.where('end_date', '<=', end_date);
-        }
-    }).select(
+        .leftJoin('promotion_products as pp', 'promotions.promo_id', 'pp.promo_id')
+        .where((builder) => {
+            if (promo_name) {
+                builder.whereILike('name', `%${promo_name}%`);
+            }
+            if (active !== undefined) {
+                builder.where('active', active);
+            }
+            if (start_date) {
+                builder.where('start_date', '>=', start_date);
+            }
+            if (end_date) {
+                builder.where('end_date', '<=', end_date);
+            }
+        }).select(
             knex.raw('count(promotions.promo_id) OVER() AS recordCount'),
             'promotions.promo_id',
             'promotions.name',
@@ -49,11 +49,11 @@ async function getManyPromotion(payload){
             'promotions.end_date',
             'promotions.active',
             knex.raw('COUNT(pp.product_id) as product_count')
-    )
-    .groupBy('promotions.promo_id')
-    .orderBy('promotions.created_at', 'desc')
-    .limit(paginator.limit).offset(paginator.offset);
-    
+        )
+        .groupBy('promotions.promo_id')
+        .orderBy('promotions.created_at', 'desc')
+        .limit(paginator.limit).offset(paginator.offset);
+
     let totalRecords = 0;
     result = (await result).map((result) => {
         totalRecords = result.recordCount;
@@ -63,7 +63,7 @@ async function getManyPromotion(payload){
             product_count: parseInt(result.product_count) || 0
         };
     });
-    
+
     return {
         metadata: paginator.getMetadata(totalRecords),
         promotions: result,
@@ -76,9 +76,18 @@ async function addProductToPromotion(productId, promoId) {
         .where('promo_id', promoId)
         .where('active', true)
         .first();
-        
+
     if (!promotion) {
-        throw new Error('Promotion không tồn tại');
+        throw new Error('Promotion does not exist or is inactive');
+    }
+
+    const existingEntry = await knex('promotion_products')
+        .where('promo_id', promoId)
+        .where('product_id', productId)
+        .first();
+
+    if (existingEntry) {
+        throw new Error('Product is already added to this promotion');
     }
 
     const overlappingPromo = await knex('promotion_products as pp')
@@ -86,7 +95,7 @@ async function addProductToPromotion(productId, promoId) {
         .where('pp.product_id', productId)
         .where('p.active', true)
         .where('p.promo_id', '!=', promoId)
-        .where(function() {
+        .where(function () {
             this.whereRaw(
                 '(p.start_date <= ? AND p.end_date >= ?)',
                 [promotion.end_date, promotion.start_date]
@@ -126,10 +135,10 @@ async function removeProductFromPromotion(productId) {
         .del();
 }
 
-async function getManyProductInPromotion(payload, role = null){
-    const {page = 1, limit = 10, promo_id} = payload;
+async function getManyProductInPromotion(payload, role = null) {
+    const { page = 1, limit = 10, promo_id } = payload;
     const paginator = new Paginator(page, limit);
-    
+
     let result = knex('promotion_products as pp')
         .join('promotions as p', 'pp.promo_id', 'p.promo_id')
         .join('products as prod', 'pp.product_id', 'prod.product_id')
@@ -170,9 +179,9 @@ async function getManyProductInPromotion(payload, role = null){
         .orderBy('prod.name')
         .limit(paginator.limit)
         .offset(paginator.offset);
-    
+
     const products = await result;
-    
+
     if (products.length === 0) {
         return {
             metadata: paginator.getMetadata(0),
@@ -181,7 +190,7 @@ async function getManyProductInPromotion(payload, role = null){
     }
 
     let totalRecords = products[0].recordCount;
-    
+
     const productIds = products.map(item => item.product_id);
 
     const reviewsStats = await knex('product_reviews')
@@ -198,7 +207,7 @@ async function getManyProductInPromotion(payload, role = null){
             average_rating: parseFloat(stat.average_rating) || 0
         };
     }
-    
+
 
     const colors = await knex('product_variants as pv')
         .join('colors as c', 'pv.color_id', 'c.color_id')
@@ -239,12 +248,12 @@ async function getManyProductInPromotion(payload, role = null){
             'pv.stock_quantity'
         )
         .orderBy('s.size_id');
-    
+
     if (role === 'admin') {
     } else {
         queryVariant = queryVariant.where('pv.active', '=', 1);
     }
-    
+
     const variants = await queryVariant;
 
     // Group variants by product_id and color_id
@@ -277,11 +286,11 @@ async function getManyProductInPromotion(payload, role = null){
             sizes: variantsByProductAndColor[key] || []
         });
     }
-    
+
     const formattedProducts = products.map((item) => {
         const colors = colorsByProduct[item.product_id] || [];
         const reviews = reviewsByProduct[item.product_id];
-        
+
         return {
             product_id: item.product_id,
             name: item.product_name,
@@ -311,7 +320,7 @@ async function getManyProductInPromotion(payload, role = null){
             average_rating: reviews ? reviews.average_rating : 0
         };
     });
-    
+
     return {
         metadata: paginator.getMetadata(totalRecords),
         products: formattedProducts,
@@ -322,11 +331,11 @@ async function deactivatePromotion(promoId) {
     const promotion = await knex('promotions')
         .where('promo_id', promoId)
         .first();
-        
+
     if (!promotion) {
         throw new Error('Promotion không tồn tại');
     }
-    
+
     if (!promotion.active) {
         throw new Error('Promotion đã inactive rồi');
     }
@@ -340,27 +349,27 @@ async function getPromotionById(promoId) {
     const promotion = await knex('promotions')
         .where('promo_id', promoId)
         .first();
-        
+
     if (!promotion) {
         throw new Error('Promotion không tồn tại');
     }
-    
+
     // Get product count
     const productCount = await knex('promotion_products')
         .where('promo_id', promoId)
         .count('product_id as count')
         .first();
-    
+
     return {
         ...promotion,
         product_count: parseInt(productCount.count) || 0
     };
 }
 async function autoDeactivateExpiredPromotions() {
-  await knex('promotions')
-    .where('active', true)
-    .whereRaw('end_date < CURDATE()')
-    .update({ active: false });
+    await knex('promotions')
+        .where('active', true)
+        .whereRaw('end_date < CURDATE()')
+        .update({ active: false });
 }
 
 

@@ -2,7 +2,7 @@ const voucherController = require('../controllers/voucher.controller');
 const express = require('express');
 const router = express.Router();
 const { methodNotAllowed } = require('../controllers/errors.controller');
-const { authMiddleware } = require('../middleware/auth.middleware');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth.middleware');
 const { checkPermission } = require('../middleware/permission.middleware');
 
 /**
@@ -199,6 +199,7 @@ router.put('/admin/:id/toggle-active',
 
 // Public routes
 router.get('/available',
+    optionalAuthMiddleware,
     voucherController.getAvailableVouchers
 );
 
@@ -208,6 +209,7 @@ router.get('/history',
 );
 
 router.post('/validate/:code',
+    optionalAuthMiddleware,
     voucherController.validateVoucher
 );
 
