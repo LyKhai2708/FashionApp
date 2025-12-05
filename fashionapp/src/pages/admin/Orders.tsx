@@ -28,12 +28,12 @@ const Orders: React.FC = () => {
         try {
             setLoading(true);
             setError('');
-            
+
             const params: any = {
                 page: currentPage,
                 limit: limit
             };
-            
+
             if (orderStatus) params.order_status = orderStatus;
             if (paymentStatus) params.payment_status = paymentStatus;
             if (paymentMethod) params.payment_method = paymentMethod;
@@ -43,7 +43,7 @@ const Orders: React.FC = () => {
             setTotalPages(result.pagination.total_pages);
             setTotal(result.pagination.total);
         } catch (err: any) {
-            setError(err.message || 'Không thể tải danh sách đơn hàng');
+            setError(err.message || 'Cannot load orders');
         } finally {
             setLoading(false);
         }
@@ -75,11 +75,11 @@ const Orders: React.FC = () => {
 
     const getOrderStatusTag = (status: string) => {
         const statusMap: Record<string, { color: string; text: string }> = {
-            pending: { color: 'orange', text: 'Chờ xử lý' },
-            processing: { color: 'blue', text: 'Đang xử lý' },
-            shipped: { color: 'cyan', text: 'Đang giao' },
-            delivered: { color: 'green', text: 'Đã giao' },
-            cancelled: { color: 'red', text: 'Đã hủy' }
+            pending: { color: 'orange', text: 'Pending' },
+            processing: { color: 'blue', text: 'Processing' },
+            shipped: { color: 'cyan', text: 'Shipped' },
+            delivered: { color: 'green', text: 'Delivered' },
+            cancelled: { color: 'red', text: 'Cancelled' }
         };
         const config = statusMap[status] || { color: 'default', text: status };
         return <Tag color={config.color}>{config.text}</Tag>;
@@ -87,11 +87,11 @@ const Orders: React.FC = () => {
 
     const getPaymentStatusTag = (status: string) => {
         const statusMap: Record<string, { color: string; text: string }> = {
-            pending: { color: 'orange', text: 'Chưa thanh toán' },
-            paid: { color: 'green', text: 'Đã thanh toán' },
-            failed: { color: 'red', text: 'Thất bại' },
-            cancelled: { color: 'default', text: 'Đã hủy' },
-            refunded: { color: 'purple', text: 'Đã hoàn tiền' }
+            pending: { color: 'orange', text: 'Unpaid' },
+            paid: { color: 'green', text: 'Paid' },
+            failed: { color: 'red', text: 'Failed' },
+            cancelled: { color: 'default', text: 'Cancelled' },
+            refunded: { color: 'purple', text: 'Refunded' }
         };
         const config = statusMap[status] || { color: 'default', text: status };
         return <Tag color={config.color}>{config.text}</Tag>;
@@ -99,7 +99,7 @@ const Orders: React.FC = () => {
 
     const columns: ColumnsType<Order> = [
         {
-            title: 'Mã đơn',
+            title: 'Order Code',
             key: 'order_code',
             width: 120,
             render: (_, record) => (
@@ -107,7 +107,7 @@ const Orders: React.FC = () => {
             )
         },
         {
-            title: 'Khách hàng',
+            title: 'Customer',
             key: 'customer',
             width: 180,
             render: (_, record) => (
@@ -118,7 +118,7 @@ const Orders: React.FC = () => {
             )
         },
         {
-            title: 'Tổng tiền',
+            title: 'Total Amount',
             dataIndex: 'total_amount',
             key: 'total_amount',
             width: 130,
@@ -127,28 +127,28 @@ const Orders: React.FC = () => {
             )
         },
         {
-            title: 'Trạng thái đơn',
+            title: 'Order Status',
             dataIndex: 'order_status',
             key: 'order_status',
             width: 130,
             render: (status: string) => getOrderStatusTag(status)
         },
         {
-            title: 'Thanh toán',
+            title: 'Payment',
             dataIndex: 'payment_status',
             key: 'payment_status',
             width: 140,
             render: (status: string) => getPaymentStatusTag(status)
         },
         {
-            title: 'Ngày đặt',
+            title: 'Order Date',
             dataIndex: 'order_date',
             key: 'order_date',
             width: 150,
             render: (date: string) => formatDate(date)
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 100,
             fixed: 'right',
@@ -158,7 +158,7 @@ const Orders: React.FC = () => {
                     icon={<EyeOutlined />}
                     onClick={() => navigate(`/admin/orders/${record.order_id}`)}
                 >
-                    Chi tiết
+                    Details
                 </Button>
             )
         }
@@ -168,17 +168,17 @@ const Orders: React.FC = () => {
         <div style={{ padding: 24 }}>
             <div className="mb-4 flex items-center justify-between">
                 <h1 className="text-2xl font-bold">
-                    <ShoppingOutlined /> Quản lý đơn hàng
+                    <ShoppingOutlined /> Order Management
                 </h1>
                 <div className="text-sm text-gray-500">
-                    Tổng: <span className="font-semibold text-black">{total}</span> đơn hàng
+                    Total: <span className="font-semibold text-black">{total}</span> orders
                 </div>
             </div>
 
             <Card style={{ marginBottom: 24 }}>
                 <Space size="middle" wrap>
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Trạng thái đơn hàng</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Order Status</div>
                         <Select
                             value={orderStatus || undefined}
                             onChange={(value) => {
@@ -186,19 +186,19 @@ const Orders: React.FC = () => {
                                 setCurrentPage(1);
                             }}
                             style={{ width: 200 }}
-                            placeholder="Tất cả"
+                            placeholder="All"
                             allowClear
                         >
-                            <Select.Option value="pending">Chờ xử lý</Select.Option>
-                            <Select.Option value="processing">Đang xử lý</Select.Option>
-                            <Select.Option value="shipped">Đang giao</Select.Option>
-                            <Select.Option value="delivered">Đã giao</Select.Option>
-                            <Select.Option value="cancelled">Đã hủy</Select.Option>
+                            <Select.Option value="pending">Pending</Select.Option>
+                            <Select.Option value="processing">Processing</Select.Option>
+                            <Select.Option value="shipped">Shipped</Select.Option>
+                            <Select.Option value="delivered">Delivered</Select.Option>
+                            <Select.Option value="cancelled">Cancelled</Select.Option>
                         </Select>
                     </div>
 
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Trạng thái thanh toán</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Payment Status</div>
                         <Select
                             value={paymentStatus || undefined}
                             onChange={(value) => {
@@ -206,19 +206,19 @@ const Orders: React.FC = () => {
                                 setCurrentPage(1);
                             }}
                             style={{ width: 200 }}
-                            placeholder="Tất cả"
+                            placeholder="All"
                             allowClear
                         >
-                            <Select.Option value="pending">Chưa thanh toán</Select.Option>
-                            <Select.Option value="paid">Đã thanh toán</Select.Option>
-                            <Select.Option value="failed">Thanh toán thất bại</Select.Option>
-                            <Select.Option value="cancelled">Đã hủy</Select.Option>
-                            <Select.Option value="refunded">Đã hoàn tiền</Select.Option>
+                            <Select.Option value="pending">Unpaid</Select.Option>
+                            <Select.Option value="paid">Paid</Select.Option>
+                            <Select.Option value="failed">Payment Failed</Select.Option>
+                            <Select.Option value="cancelled">Cancelled</Select.Option>
+                            <Select.Option value="refunded">Refunded</Select.Option>
                         </Select>
                     </div>
 
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Phương thức thanh toán</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Payment Method</div>
                         <Select
                             value={paymentMethod || undefined}
                             onChange={(value) => {
@@ -226,11 +226,11 @@ const Orders: React.FC = () => {
                                 setCurrentPage(1);
                             }}
                             style={{ width: 200 }}
-                            placeholder="Tất cả"
+                            placeholder="All"
                             allowClear
                         >
                             <Select.Option value="cod">COD</Select.Option>
-                            <Select.Option value="bank_transfer">Chuyển khoản</Select.Option>
+                            <Select.Option value="bank_transfer">Bank Transfer</Select.Option>
                             <Select.Option value="payos">PayOS</Select.Option>
                         </Select>
                     </div>
@@ -240,7 +240,7 @@ const Orders: React.FC = () => {
                             icon={<ReloadOutlined />}
                             onClick={handleResetFilters}
                         >
-                            Đặt lại bộ lọc
+                            Reset Filters
                         </Button>
                     </div>
                 </Space>
@@ -258,15 +258,15 @@ const Orders: React.FC = () => {
                         total: total,
                         onChange: (page) => setCurrentPage(page),
                         showSizeChanger: false,
-                        showTotal: (total) => `Tổng ${total} đơn hàng`
+                        showTotal: (total) => `Total ${total} orders`
                     }}
                     locale={{
                         emptyText: error ? (
                             <div style={{ padding: '40px 0' }}>
                                 <p style={{ color: '#ff4d4f', marginBottom: 16 }}>{error}</p>
-                                <Button type="primary" onClick={loadOrders}>Thử lại</Button>
+                                <Button type="primary" onClick={loadOrders}>Retry</Button>
                             </div>
-                        ) : 'Không có đơn hàng nào'
+                        ) : 'No orders found'
                     }}
                     scroll={{ x: 1000 }}
                 />

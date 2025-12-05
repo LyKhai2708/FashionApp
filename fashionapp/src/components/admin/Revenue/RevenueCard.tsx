@@ -33,16 +33,15 @@ const RevenueCard: React.FC<RevenueCardProps> = ({
                     </p>
                     <div className="flex items-center mt-2 space-x-2">
                         <span className="text-sm text-gray-500">
-                            {orderCount} đơn hàng
+                            {orderCount} orders
                         </span>
-                        <span className={`text-sm font-medium ${
-                            isPositive ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <span className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'
+                            }`}>
                             {isPositive ? '↑' : '↓'} {Math.abs(changePercent)}%
                         </span>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
-                        So với {period === 'today' ? 'hôm qua' : period === 'week' ? 'tuần trước' : 'tháng trước'}
+                        Compared to {period === 'today' ? 'yesterday' : period === 'week' ? 'last week' : 'last month'}
                     </p>
                 </div>
                 {icon && (

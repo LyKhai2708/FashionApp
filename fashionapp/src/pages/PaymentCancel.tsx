@@ -12,19 +12,19 @@ export default function PaymentCancel() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
-  const { 
-    retryPayment, 
-    loading: retryLoading, 
-    canRetry, 
-    timeLeft 
+
+  const {
+    retryPayment,
+    loading: retryLoading,
+    canRetry,
+    timeLeft
   } = useRetryPayment(Number(orderId));
 
   // Load order data
   useEffect(() => {
     const loadOrder = async () => {
       if (!orderId) return;
-      
+
       try {
         const orderData = await orderService.getOrderById(parseInt(orderId));
         setOrder(orderData);
@@ -57,10 +57,10 @@ export default function PaymentCancel() {
         </div>
 
         <h1 className="text-3xl font-bold text-center mb-4">
-          Thanh toán đã bị hủy
+          Payment Cancelled
         </h1>
         <p className="text-center text-gray-600 mb-8">
-          Giao dịch đã bị hủy. Bạn có thể thử lại hoặc chọn phương thức thanh toán khác.
+          Transaction was cancelled. You can try again or choose another payment method.
         </p>
 
         {/* Order Info */}
@@ -68,11 +68,11 @@ export default function PaymentCancel() {
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">Mã đơn hàng:</span>
+                <span className="text-gray-600">Order code:</span>
                 <span className="font-semibold">#{order.order_code}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Tổng tiền:</span>
+                <span className="text-gray-600">Total:</span>
                 <span className="font-semibold text-lg text-red-600">
                   {order.total_amount?.toLocaleString('vi-VN')}₫
                 </span>
@@ -87,15 +87,15 @@ export default function PaymentCancel() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button 
-            type="default" 
+          <Button
+            type="default"
             size="large"
             block
             onClick={() => navigate('/cart')}
           >
-            Về giỏ hàng
+            Go to cart
           </Button>
-          
+
           <RetryPaymentButton
             onRetry={retryPayment}
             loading={retryLoading}
@@ -107,7 +107,7 @@ export default function PaymentCancel() {
         {/* Help Text */}
         {!canRetry && (
           <p className="text-center text-gray-500 text-sm mt-4">
-            Đơn hàng đã hết hạn thanh toán. Vui lòng đặt hàng mới từ giỏ hàng.
+            Order has expired for payment. Please place a new order from your cart.
           </p>
         )}
       </div>

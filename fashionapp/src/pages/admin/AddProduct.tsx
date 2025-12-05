@@ -105,7 +105,7 @@ export default function AddProduct() {
                 setColors(colorsData);
                 setSizes(sizesData);
             } catch (error) {
-                antMessage.error('Không thể tải dữ liệu');
+                antMessage.error('Cannot load data');
             } finally {
                 setPageLoading(false);
             }
@@ -250,12 +250,12 @@ export default function AddProduct() {
         try {
 
             if (!thumbnailFile.length) {
-                antMessage.error('Vui lòng chọn ảnh thumbnail');
+                antMessage.error('Please select a thumbnail image');
                 return;
             }
 
             if (selectedColors.length === 0) {
-                antMessage.error('Vui lòng chọn ít nhất 1 màu sắc');
+                antMessage.error('Please select at least 1 color');
                 return;
             }
 
@@ -265,7 +265,7 @@ export default function AddProduct() {
                 const colorNames = missingImages
                     .map(ci => colors.find(c => c.color_id === ci.color_id)?.name)
                     .join(', ');
-                antMessage.error(`Vui lòng thêm ảnh cho màu: ${colorNames}`);
+                antMessage.error(`Please add images for color: ${colorNames}`);
                 return;
             }
 
@@ -274,7 +274,7 @@ export default function AddProduct() {
                 const colorNames = missingSizes
                     .map(cv => colors.find(c => c.color_id === cv.color_id)?.name)
                     .join(', ');
-                antMessage.error(`Vui lòng chọn size cho màu: ${colorNames}`);
+                antMessage.error(`Please select sizes for color: ${colorNames}`);
                 return;
             }
 
@@ -327,11 +327,11 @@ export default function AddProduct() {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            antMessage.success('Thêm sản phẩm thành công!');
+            antMessage.success('Product added successfully!');
             navigate('/admin/products');
         } catch (error: any) {
             console.error('Create product error:', error);
-            antMessage.error(error.response?.data?.message || 'Không thể thêm sản phẩm');
+            antMessage.error(error.response?.data?.message || 'Cannot add product');
         } finally {
             setLoading(false);
         }
@@ -352,7 +352,7 @@ export default function AddProduct() {
                 }
             },
             {
-                title: 'Số lượng',
+                title: 'Quantity',
                 dataIndex: 'stock_quantity',
                 key: 'stock_quantity',
                 render: (_: any, record: Variant) => (
@@ -406,11 +406,11 @@ export default function AddProduct() {
                     border: '1px solid #f0f0f0'
                 }}>
                     <Text strong style={{ display: 'block', marginBottom: 8, color: '#595959' }}>
-                        Chọn size có sẵn:
+                        Select available sizes:
                     </Text>
                     <Select
                         mode="multiple"
-                        placeholder="Chọn size cho màu này"
+                        placeholder="Select sizes for this color"
                         value={cv?.selected_sizes || []}
                         onChange={(sizeIds) => handleColorSizeChange(colorId, sizeIds)}
                         style={{ width: '100%' }}
@@ -447,7 +447,7 @@ export default function AddProduct() {
                         border: '2px dashed #d9d9d9'
                     }}>
                         <Text type="secondary">
-                            Chọn size ở trên để thêm variant
+                            Select sizes above to add variants
                         </Text>
                     </div>
                 )}
@@ -479,14 +479,14 @@ export default function AddProduct() {
                         style={{ marginBottom: 16 }}
                         type="text"
                     >
-                        Quay lại danh sách
+                        Back to list
                     </Button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div>
                             <Title level={2} style={{ margin: 0 }}>
-                                Thêm sản phẩm mới
+                                Add New Product
                             </Title>
-                            <Text type="secondary">Điền thông tin để tạo sản phẩm mới</Text>
+                            <Text type="secondary">Fill in the information to create a new product</Text>
                         </div>
                     </div>
 
@@ -495,16 +495,16 @@ export default function AddProduct() {
                         style={{ marginTop: 32 }}
                         items={[
                             {
-                                title: 'Thông tin cơ bản',
+                                title: 'Basic Information',
                             },
                             {
-                                title: 'Hình ảnh & Màu sắc',
+                                title: 'Images & Colors',
                             },
                             {
-                                title: 'Quản lý tồn kho',
+                                title: 'Size',
                             },
                             {
-                                title: 'Hoàn tất',
+                                title: 'Complete',
                             }
                         ]}
                     />
@@ -522,7 +522,7 @@ export default function AddProduct() {
 
                         <Col xs={24} lg={14}>
                             <Card
-                                title="Thông tin cơ bản"
+                                title="Basic Information"
                                 style={{
                                     marginBottom: 24,
                                     borderRadius: '12px',
@@ -538,8 +538,8 @@ export default function AddProduct() {
                                         gap: '8px',
                                         marginBottom: 12
                                     }}>
-                                        <Text strong style={{ fontSize: 15 }}>Ảnh thumbnail</Text>
-                                        <Tag color="orange">Bắt buộc</Tag>
+                                        <Text strong style={{ fontSize: 15 }}>Thumbnail</Text>
+                                        <Tag color="orange">Required</Tag>
                                     </div>
                                     <Upload
                                         listType="picture-card"
@@ -551,7 +551,7 @@ export default function AddProduct() {
                                         {thumbnailFile.length === 0 && (
                                             <div>
                                                 <PlusOutlined />
-                                                <div style={{ marginTop: 8 }}>Chọn ảnh</div>
+                                                <div style={{ marginTop: 8 }}>Select image</div>
                                             </div>
                                         )}
                                     </Upload>
@@ -563,7 +563,7 @@ export default function AddProduct() {
                                         border: '1px solid #ffd591'
                                     }}>
                                         <Text type="secondary" style={{ fontSize: 12 }}>
-                                            Ảnh đại diện hiển thị trên danh sách sản phẩm
+                                            Representative image displayed on product list
                                         </Text>
                                     </div>
                                 </div>
@@ -571,38 +571,38 @@ export default function AddProduct() {
                                 <Divider />
 
                                 <Form.Item
-                                    label="Tên sản phẩm"
+                                    label="Product Name"
                                     name="name"
                                     rules={[
-                                        { required: true, message: 'Vui lòng nhập tên sản phẩm' },
-                                        { min: 3, message: 'Tên sản phẩm phải có ít nhất 3 ký tự' },
-                                        { max: 100, message: 'Tên sản phẩm không vượt quá 100 ký tự' }
+                                        { required: true, message: 'Please enter product name' },
+                                        { min: 3, message: 'Product name must have at least 3 characters' },
+                                        { max: 100, message: 'Product name cannot exceed 100 characters' }
                                     ]}
                                 >
-                                    <Input size="large" placeholder="Nhập tên sản phẩm" />
+                                    <Input size="large" placeholder="Enter product name" />
                                 </Form.Item>
 
                                 <Form.Item
-                                    label="Mô tả"
+                                    label="Description"
                                     name="description"
-                                    rules={[{ max: 500, message: 'Mô tả không vượt quá 500 ký tự' }]}
+                                    rules={[{ max: 500, message: 'Description cannot exceed 500 characters' }]}
                                 >
                                     <TextArea
                                         rows={4}
-                                        placeholder="Nhập mô tả sản phẩm"
+                                        placeholder="Enter product description"
                                     />
                                 </Form.Item>
 
                                 <Row gutter={16}>
                                     <Col span={12}>
                                         <Form.Item
-                                            label="Danh mục"
+                                            label="Category"
                                             name="category_id"
-                                            rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
+                                            rules={[{ required: true, message: 'Please select a category' }]}
                                         >
                                             <Select
                                                 size="large"
-                                                placeholder="Chọn danh mục"
+                                                placeholder="Select category"
                                                 showSearch
                                                 optionFilterProp="children"
                                             >
@@ -616,13 +616,13 @@ export default function AddProduct() {
                                     </Col>
                                     <Col span={12}>
                                         <Form.Item
-                                            label="Thương hiệu"
+                                            label="Brand"
                                             name="brand_id"
-                                            rules={[{ required: true, message: 'Vui lòng chọn thương hiệu' }]}
+                                            rules={[{ required: true, message: 'Please select a brand' }]}
                                         >
                                             <Select
                                                 size="large"
-                                                placeholder="Chọn thương hiệu"
+                                                placeholder="Select brand"
                                                 showSearch
                                                 optionFilterProp="children"
                                             >
@@ -637,27 +637,27 @@ export default function AddProduct() {
                                 </Row>
 
                                 <Form.Item
-                                    label="Giá sản phẩm (VNĐ)"
+                                    label="Product Price (VND)"
                                     name="base_price"
                                     rules={[
-                                        { required: true, message: 'Vui lòng nhập giá' },
-                                        { type: 'number', min: 0, message: 'Giá phải lớn hơn 0' }
+                                        { required: true, message: 'Please enter price' },
+                                        { type: 'number', min: 0, message: 'Price must be greater than 0' }
                                     ]}
-                                    tooltip="Tất cả variant đều có cùng giá này"
+                                    tooltip="All variants have the same price"
                                 >
                                     <InputNumber
                                         size="large"
                                         style={{ width: '100%' }}
                                         formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                         parser={value => value!.replace(/\$\s?|(,*)/g, '')}
-                                        placeholder="Nhập giá sản phẩm"
+                                        placeholder="Enter product price"
                                     />
                                 </Form.Item>
                             </Card>
 
                             {selectedColors.length > 0 && (
                                 <Card
-                                    title="Quản lý tồn kho theo màu sắc"
+                                    title="Inventory Management by Color"
                                     style={{
                                         marginBottom: 24,
                                         borderRadius: '12px',
@@ -672,7 +672,7 @@ export default function AddProduct() {
 
                         <Col xs={24} lg={10}>
                             <Card
-                                title="Màu sắc & Hình ảnh"
+                                title="Colors & Images"
                                 style={{
                                     marginBottom: 24,
                                     borderRadius: '12px',
@@ -680,11 +680,11 @@ export default function AddProduct() {
                                 }}
                                 headStyle={{ borderBottom: '2px solid #f0f0f0' }}
                             >
-                                <Form.Item label="Chọn màu sắc">
+                                <Form.Item label="Select Colors">
                                     <Select
                                         mode="multiple"
                                         size="large"
-                                        placeholder="Chọn màu sắc"
+                                        placeholder="Select colors"
                                         value={selectedColors}
                                         onChange={handleColorChange}
                                         optionLabelProp="label"
@@ -754,14 +754,14 @@ export default function AddProduct() {
                                                     }}
                                                 />
                                                 <Text strong style={{ fontSize: 15 }}>{color?.name}</Text>
-                                                <Tag color="blue">{ci.images.length} ảnh</Tag>
+                                                <Tag color="blue">{ci.images.length} images</Tag>
                                             </div>
 
                                             {/* Preview ảnh đã có với controls */}
                                             {ci.images.length > 0 && (
                                                 <div style={{ marginBottom: 16 }}>
                                                     <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                                                        Ảnh đã chọn:
+                                                        Selected images:
                                                     </Text>
                                                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                                         {ci.images.map((img, index) => (
@@ -788,7 +788,7 @@ export default function AddProduct() {
                                                                     display: 'flex',
                                                                     gap: '4px'
                                                                 }}>
-                                                                    <Tooltip title={index === ci.primaryIndex ? "Ảnh chính" : "Đặt làm ảnh chính"}>
+                                                                    <Tooltip title={index === ci.primaryIndex ? "Primary image" : "Set as primary image"}>
                                                                         <Button
                                                                             size="small"
                                                                             type={index === ci.primaryIndex ? "primary" : "default"}
@@ -827,7 +827,6 @@ export default function AddProduct() {
                                                 </div>
                                             )}
 
-                                            {/* Upload mới */}
                                             <Upload
                                                 listType="picture-card"
                                                 fileList={[]}
@@ -842,7 +841,7 @@ export default function AddProduct() {
                                             >
                                                 <div>
                                                     <PlusOutlined />
-                                                    <div style={{ marginTop: 8 }}>Thêm ảnh</div>
+                                                    <div style={{ marginTop: 8 }}>Add images</div>
                                                 </div>
                                             </Upload>
                                         </div>
@@ -865,7 +864,7 @@ export default function AddProduct() {
                             gap: '16px'
                         }}>
                             <Text type="secondary">
-                                Kiểm tra kỹ thông tin trước khi lưu
+                                Please review carefully before saving
                             </Text>
                             <Space size="middle">
                                 <Button
@@ -873,7 +872,7 @@ export default function AddProduct() {
                                     onClick={() => navigate('/admin/products')}
                                     disabled={loading}
                                 >
-                                    Hủy bỏ
+                                    Cancel
                                 </Button>
                                 <Button
                                     type="primary"
@@ -888,7 +887,7 @@ export default function AddProduct() {
                                         fontWeight: 600
                                     }}
                                 >
-                                    {loading ? 'Đang lưu...' : 'Lưu sản phẩm'}
+                                    {loading ? 'Saving...' : 'Save Product'}
                                 </Button>
                             </Space>
                         </div>

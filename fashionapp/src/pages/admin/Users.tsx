@@ -36,7 +36,7 @@ const Users: React.FC = () => {
             setRoles(data);
         } catch (err: any) {
             console.error('Failed to fetch roles:', err);
-            message.error('Không thể tải danh sách vai trò');
+            message.error('Cannot load roles');
         }
     };
 
@@ -58,7 +58,7 @@ const Users: React.FC = () => {
             setUsers(data.users);
             setTotal(data.metadata.totalRecords);
         } catch (err: any) {
-            setError(err.message || 'Không thể tải danh sách người dùng');
+            setError(err.message || 'Cannot load users');
         } finally {
             setLoading(false);
         }
@@ -77,7 +77,7 @@ const Users: React.FC = () => {
     };
 
     const handleToggleStatus = async (userId: number, currentStatus: number) => {
-        if (!window.confirm(`Xác nhận ${currentStatus === 1 ? 'vô hiệu hóa' : 'kích hoạt'} người dùng này?`)) {
+        if (!window.confirm(`Are you sure you want to ${currentStatus === 1 ? 'deactivate' : 'activate'} this user?`)) {
             return;
         }
 
@@ -86,7 +86,7 @@ const Users: React.FC = () => {
             await userService.toggleUserStatus(userId, newStatus);
             await loadUsers();
         } catch (err: any) {
-            alert(err.message || 'Không thể cập nhật trạng thái');
+            alert(err.message || 'Cannot update status');
         }
     };
 
@@ -104,12 +104,12 @@ const Users: React.FC = () => {
         try {
             setIsCreating(true);
             await userService.createUser(values);
-            message.success('Tạo người dùng thành công!');
+            message.success('User created successfully!');
             setIsModalOpen(false);
             form.resetFields();
             await loadUsers();
         } catch (err: any) {
-            message.error(err.message || 'Không thể tạo người dùng');
+            message.error(err.message || 'Cannot create user');
         } finally {
             setIsCreating(false);
         }
@@ -124,7 +124,7 @@ const Users: React.FC = () => {
             render: (id: number) => <span style={{ fontWeight: 500 }}>#{id}</span>
         },
         {
-            title: 'Tên người dùng',
+            title: 'Username',
             dataIndex: 'username',
             key: 'username',
             width: 150,
@@ -137,14 +137,14 @@ const Users: React.FC = () => {
             width: 200
         },
         {
-            title: 'Số điện thoại',
+            title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
             width: 120,
             render: (phone: string) => phone || '-'
         },
         {
-            title: 'Vai trò',
+            title: 'Role',
             dataIndex: 'role',
             key: 'role',
             width: 100,
@@ -165,25 +165,25 @@ const Users: React.FC = () => {
             }
         },
         {
-            title: 'Trạng thái',
+            title: 'Status',
             dataIndex: 'is_active',
             key: 'is_active',
             width: 120,
             render: (is_active: number) => (
                 <Tag color={is_active === 1 ? 'success' : 'error'}>
-                    {is_active === 1 ? 'Hoạt động' : 'Vô hiệu hóa'}
+                    {is_active === 1 ? 'Active' : 'Disabled'}
                 </Tag>
             )
         },
         {
-            title: 'Ngày tạo',
+            title: 'Created Date',
             dataIndex: 'created_at',
             key: 'created_at',
             width: 150,
             render: (date: string) => formatDate(date)
         },
         {
-            title: 'Hành động',
+            title: 'Actions',
             key: 'actions',
             width: 150,
             fixed: 'right',
@@ -193,7 +193,7 @@ const Users: React.FC = () => {
                     <PermissionGate
                         permission="users.edit"
                         showTooltip={true}
-                        tooltipMessage="Bạn không có quyền chỉnh sửa người dùng"
+                        tooltipMessage="You don't have permission to edit users"
                         fallback={
                             <Button
                                 type="link"
@@ -201,16 +201,16 @@ const Users: React.FC = () => {
                                 icon={record.is_active === 1 ? <StopOutlined /> : <CheckOutlined />}
                                 style={{ opacity: 0.5, cursor: 'not-allowed' }}
                             >
-                                {record.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                                {record.is_active === 1 ? 'Disable' : 'Enable'}
                             </Button>
                         }
                     >
                         <Popconfirm
-                            title={record.is_active === 1 ? 'Vô hiệu hóa người dùng?' : 'Kích hoạt người dùng?'}
-                            description={`Xác nhận ${record.is_active === 1 ? 'vô hiệu hóa' : 'kích hoạt'} người dùng này?`}
+                            title={record.is_active === 1 ? 'Disable user?' : 'Enable user?'}
+                            description={`Are you sure you want to ${record.is_active === 1 ? 'disable' : 'enable'} this user?`}
                             onConfirm={() => handleToggleStatus(record.user_id, record.is_active || 0)}
-                            okText="Xác nhận"
-                            cancelText="Hủy"
+                            okText="Confirm"
+                            cancelText="Cancel"
                             okButtonProps={{ danger: record.is_active === 1 }}
                         >
                             <Button
@@ -218,7 +218,7 @@ const Users: React.FC = () => {
                                 danger={record.is_active === 1}
                                 icon={record.is_active === 1 ? <StopOutlined /> : <CheckOutlined />}
                             >
-                                {record.is_active === 1 ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                                {record.is_active === 1 ? 'Disable' : 'Enable'}
                             </Button>
                         </Popconfirm>
                     </PermissionGate>
@@ -232,10 +232,10 @@ const Users: React.FC = () => {
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                        <UserOutlined /> Quản lý người dùng
+                        <UserOutlined /> User Management
                     </h1>
                     <div style={{ fontSize: 14, color: '#999', marginTop: 8 }}>
-                        Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{total}</span> người dùng
+                        Total: <span style={{ fontWeight: 600, color: '#000' }}>{total}</span> users
                     </div>
                 </div>
                 <PermissionGate permission="users.create">
@@ -245,7 +245,7 @@ const Users: React.FC = () => {
                         onClick={() => setIsModalOpen(true)}
                         size="large"
                     >
-                        Tạo người dùng mới
+                        Create New User
                     </Button>
                 </PermissionGate>
             </div>
@@ -253,9 +253,9 @@ const Users: React.FC = () => {
             <Card style={{ marginBottom: 24 }}>
                 <Space size="middle" wrap>
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Tìm kiếm</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Search</div>
                         <Input
-                            placeholder="Tên người dùng..."
+                            placeholder="Username..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onPressEnter={handleSearch}
@@ -265,12 +265,12 @@ const Users: React.FC = () => {
                     </div>
 
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Vai trò</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Role</div>
                         <Select
                             value={roleFilter || undefined}
                             onChange={(value) => setRoleFilter(value || '')}
                             style={{ width: 150 }}
-                            placeholder="Tất cả"
+                            placeholder="All"
                             allowClear
                         >
                             {roles.map(role => (
@@ -282,16 +282,16 @@ const Users: React.FC = () => {
                     </div>
 
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Trạng thái</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Status</div>
                         <Select
                             value={statusFilter || undefined}
                             onChange={(value) => setStatusFilter(value || '')}
                             style={{ width: 150 }}
-                            placeholder="Tất cả"
+                            placeholder="All"
                             allowClear
                         >
-                            <Select.Option value="1">Hoạt động</Select.Option>
-                            <Select.Option value="0">Vô hiệu hóa</Select.Option>
+                            <Select.Option value="1">Active</Select.Option>
+                            <Select.Option value="0">Disabled</Select.Option>
                         </Select>
                     </div>
 
@@ -302,13 +302,13 @@ const Users: React.FC = () => {
                                 icon={<SearchOutlined />}
                                 onClick={handleSearch}
                             >
-                                Tìm kiếm
+                                Search
                             </Button>
                             <Button
                                 icon={<ReloadOutlined />}
                                 onClick={handleResetFilters}
                             >
-                                Đặt lại
+                                Reset
                             </Button>
                         </Space>
                     </div>
@@ -327,22 +327,22 @@ const Users: React.FC = () => {
                         total: total,
                         onChange: (page) => setCurrentPage(page),
                         showSizeChanger: false,
-                        showTotal: (total) => `Tổng ${total} người dùng`
+                        showTotal: (total) => `Total ${total} users`
                     }}
                     locale={{
                         emptyText: error ? (
                             <div style={{ padding: '40px 0' }}>
                                 <p style={{ color: '#ff4d4f', marginBottom: 16 }}>{error}</p>
-                                <Button type="primary" onClick={loadUsers}>Thử lại</Button>
+                                <Button type="primary" onClick={loadUsers}>Retry</Button>
                             </div>
-                        ) : 'Không tìm thấy người dùng nào'
+                        ) : 'No users found'
                     }}
                     scroll={{ x: 1200 }}
                 />
             </Card>
 
             <Modal
-                title="Tạo người dùng mới"
+                title="Create New User"
                 open={isModalOpen}
                 onCancel={() => {
                     setIsModalOpen(false);
@@ -358,55 +358,55 @@ const Users: React.FC = () => {
                     style={{ marginTop: 24 }}
                 >
                     <Form.Item
-                        label="Tên người dùng"
+                        label="Username"
                         name="username"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập tên người dùng' },
-                            { min: 3, message: 'Tên người dùng phải có ít nhất 3 ký tự' }
+                            { required: true, message: 'Please enter username' },
+                            { min: 3, message: 'Username must be at least 3 characters' }
                         ]}
                     >
-                        <Input placeholder="Nhập tên người dùng" />
+                        <Input placeholder="Enter username" />
                     </Form.Item>
 
                     <Form.Item
                         label="Email"
                         name="email"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập email' },
-                            { type: 'email', message: 'Email không hợp lệ' }
+                            { required: true, message: 'Please enter email' },
+                            { type: 'email', message: 'Invalid email' }
                         ]}
                     >
-                        <Input placeholder="Nhập email" />
+                        <Input placeholder="Enter email" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Mật khẩu"
+                        label="Password"
                         name="password"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập mật khẩu' },
-                            { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
+                            { required: true, message: 'Please enter password' },
+                            { min: 8, message: 'Password must be at least 8 characters' }
                         ]}
                     >
-                        <Input.Password placeholder="Nhập mật khẩu" />
+                        <Input.Password placeholder="Enter password" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Số điện thoại (tùy chọn)"
+                        label="Phone Number (optional)"
                         name="phone"
                         rules={[
-                            { pattern: /^[0-9]{10}$/, message: 'Số điện thoại phải gồm 10 chữ số' }
+                            { pattern: /^[0-9]{10}$/, message: 'Phone number must be 10 digits' }
                         ]}
                     >
-                        <Input placeholder="Nhập số điện thoại" />
+                        <Input placeholder="Enter phone number" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Vai trò"
+                        label="Role"
                         name="role_id"
                         initialValue={2}
-                        rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
+                        rules={[{ required: true, message: 'Please select a role' }]}
                     >
-                        <Select placeholder="Chọn vai trò">
+                        <Select placeholder="Select role">
                             {roles.map(role => (
                                 <Select.Option key={role.role_id} value={role.role_id}>
                                     {role.role_name.charAt(0).toUpperCase() + role.role_name.slice(1)}
@@ -421,14 +421,14 @@ const Users: React.FC = () => {
                                 setIsModalOpen(false);
                                 form.resetFields();
                             }}>
-                                Hủy
+                                Cancel
                             </Button>
                             <Button
                                 type="primary"
                                 htmlType="submit"
                                 loading={isCreating}
                             >
-                                Tạo người dùng
+                                Create User
                             </Button>
                         </Space>
                     </Form.Item>

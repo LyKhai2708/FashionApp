@@ -23,11 +23,11 @@ type Props = {
 
 const getStatusText = (status: string) => {
   switch (status) {
-    case 'pending': return 'Chờ duyệt';
-    case 'processing': return 'Đang xử lý';
-    case 'shipped': return 'Đang giao';
-    case 'delivered': return 'Đã giao';
-    case 'cancelled': return 'Đã hủy';
+    case 'pending': return 'Pending';
+    case 'processing': return 'Processing';
+    case 'shipped': return 'Shipped';
+    case 'delivered': return 'Delivered';
+    case 'cancelled': return 'Cancelled';
     default: return status;
   }
 };
@@ -35,7 +35,7 @@ const getStatusText = (status: string) => {
 const getPaymentMethodText = (method: string) => {
   switch (method) {
     case 'cod': return 'COD';
-    case 'bank_transfer': return 'Chuyển khoản';
+    case 'bank_transfer': return 'Bank Transfer';
     case 'payos': return 'PayOS';
     case 'momo': return 'MoMo';
     case 'vnpay': return 'VNPay';
@@ -45,11 +45,11 @@ const getPaymentMethodText = (method: string) => {
 
 const getPaymentStatusText = (status: string) => {
   switch (status) {
-    case 'pending': return 'Chưa thanh toán';
-    case 'paid': return 'Đã thanh toán';
-    case 'failed': return 'Thất bại';
-    case 'cancelled': return 'Đã hủy';
-    case 'refunded': return 'Đã hoàn tiền';
+    case 'pending': return 'Unpaid';
+    case 'paid': return 'Paid';
+    case 'failed': return 'Failed';
+    case 'cancelled': return 'Cancelled';
+    case 'refunded': return 'Refunded';
     default: return status;
   }
 };
@@ -65,13 +65,13 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function OrdersList({ 
-  orders, 
-  onView, 
-  onOrderCancelled, 
-  total, 
-  currentPage = 1, 
-  pageSize = 10, 
+export default function OrdersList({
+  orders,
+  onView,
+  onOrderCancelled,
+  total,
+  currentPage = 1,
+  pageSize = 10,
   onPageChange,
   orderStatusFilter = null,
   paymentStatusFilter = null,
@@ -87,14 +87,14 @@ export default function OrdersList({
 
   const handleCancelOrder = async () => {
     if (!selectedOrderId || !cancelReason.trim()) {
-      message.error('Vui lòng nhập lý do hủy đơn hàng');
+      message.error('Please enter cancellation reason');
       return;
     }
 
     try {
       setCancellingId(selectedOrderId);
       await orderService.cancelOrder(selectedOrderId, cancelReason.trim());
-      message.success('Hủy đơn hàng thành công');
+      message.success('Order cancelled successfully');
       setCancelModalVisible(false);
       setCancelReason('');
       setSelectedOrderId(null);
@@ -102,7 +102,7 @@ export default function OrdersList({
         onOrderCancelled();
       }
     } catch (error: any) {
-      message.error(error.message || 'Không thể hủy đơn hàng');
+      message.error(error.message || 'Cannot cancel order');
     } finally {
       setCancellingId(null);
     }
@@ -114,31 +114,31 @@ export default function OrdersList({
   };
 
   const orderStatusTabs = [
-    { key: null, label: 'Tất cả', icon: null, color: '#666' },
-    { key: 'pending', label: 'Chờ duyệt', icon: <ClockCircleOutlined />, color: '#1890ff' },
-    { key: 'processing', label: 'Đang xử lý', icon: <SyncOutlined spin />, color: '#fa8c16' },
-    { key: 'shipped', label: 'Đang giao hàng', icon: <CarOutlined />, color: '#722ed1' },
-    { key: 'delivered', label: 'Hoàn tất', icon: <CheckCircleOutlined />, color: '#52c41a' },
-    { key: 'cancelled', label: 'Đã hủy', icon: <CloseCircleOutlined />, color: '#ff4d4f' },
+    { key: null, label: 'All', icon: null, color: '#666' },
+    { key: 'pending', label: 'Pending', icon: <ClockCircleOutlined />, color: '#1890ff' },
+    { key: 'processing', label: 'Processing', icon: <SyncOutlined spin />, color: '#fa8c16' },
+    { key: 'shipped', label: 'Shipping', icon: <CarOutlined />, color: '#722ed1' },
+    { key: 'delivered', label: 'Completed', icon: <CheckCircleOutlined />, color: '#52c41a' },
+    { key: 'cancelled', label: 'Cancelled', icon: <CloseCircleOutlined />, color: '#ff4d4f' },
   ];
 
   const paymentStatusTabs = [
-    { key: null, label: 'Tất cả' },
-    { key: 'paid', label: 'Đã thanh toán', color: '#52c41a' },
-    { key: 'pending', label: 'Chưa thanh toán', color: '#ff4d4f' },
+    { key: null, label: 'All' },
+    { key: 'paid', label: 'Paid', color: '#52c41a' },
+    { key: 'pending', label: 'Unpaid', color: '#ff4d4f' },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <Typography.Title level={4} className="!mb-2">Lịch sử đơn hàng</Typography.Title>
+        <Typography.Title level={4} className="!mb-2">Order History</Typography.Title>
         <Typography.Text type="secondary" className="text-sm">
-          Quản lý và theo dõi tất cả đơn hàng của bạn
+          Manage and track all your orders
         </Typography.Text>
       </div>
 
       <div>
-        <Typography.Text strong className="block mb-3 text-sm">Trạng thái đơn hàng</Typography.Text>
+        <Typography.Text strong className="block mb-3 text-sm">Order Status</Typography.Text>
         <Space size="small" wrap>
           {orderStatusTabs.map((tab) => {
             const count = tab.key ? orderStatusCounts[tab.key] || 0 : orderStatusCounts['all'] || 0;
@@ -149,11 +149,10 @@ export default function OrdersList({
                 type={isActive ? 'primary' : 'default'}
                 icon={tab.icon}
                 onClick={() => onOrderStatusChange?.(tab.key)}
-                className={`!rounded-full !h-9 transition-all ${
-                  isActive 
-                    ? '!shadow-md' 
+                className={`!rounded-full !h-9 transition-all ${isActive
+                    ? '!shadow-md'
                     : '!bg-white hover:!border-gray-400'
-                }`}
+                  }`}
                 style={{
                   backgroundColor: isActive ? tab.color : undefined,
                   borderColor: isActive ? tab.color : undefined,
@@ -162,9 +161,8 @@ export default function OrdersList({
               >
                 {tab.label}
                 {count > 0 && (
-                  <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-                    isActive ? 'bg-white/20' : 'bg-gray-100'
-                  }`}>
+                  <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${isActive ? 'bg-white/20' : 'bg-gray-100'
+                    }`}>
                     {count}
                   </span>
                 )}
@@ -175,7 +173,7 @@ export default function OrdersList({
       </div>
 
       <div>
-        <Typography.Text strong className="block mb-3 text-sm">Trạng thái thanh toán</Typography.Text>
+        <Typography.Text strong className="block mb-3 text-sm">Payment Status</Typography.Text>
         <Space size="small" wrap>
           {paymentStatusTabs.map((tab) => {
             const isActive = paymentStatusFilter === tab.key;
@@ -184,11 +182,10 @@ export default function OrdersList({
                 key={tab.key || 'all-payment'}
                 type={isActive ? 'primary' : 'default'}
                 onClick={() => onPaymentStatusChange?.(tab.key)}
-                className={`!rounded-full !h-9 transition-all ${
-                  isActive 
-                    ? '!shadow-md' 
+                className={`!rounded-full !h-9 transition-all ${isActive
+                    ? '!shadow-md'
                     : '!bg-white hover:!border-gray-400'
-                }`}
+                  }`}
                 style={{
                   backgroundColor: isActive ? tab.color : undefined,
                   borderColor: isActive ? tab.color : undefined,
@@ -205,101 +202,101 @@ export default function OrdersList({
       {/* Empty State */}
       {orders.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20">
-          <Empty description="Không tìm thấy đơn hàng nào" />
+          <Empty description="No orders found" />
         </div>
       )}
 
       {/* Orders List */}
       {orders.length > 0 && (
         <div className="space-y-4">
-      
-        {orders.map((order) => (
-          <div 
-            key={order.order_id} 
-            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Typography.Text strong className="text-base">
-                      Đơn hàng #{order.order_code || order.order_id}
+
+          {orders.map((order) => (
+            <div
+              key={order.order_id}
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all bg-white">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Typography.Text strong className="text-base">
+                        Order #{order.order_code || order.order_id}
+                      </Typography.Text>
+                      <Tag
+                        color={getStatusColor(order.order_status)}
+                        className="!m-0 !rounded-full !px-3"
+                      >
+                        {getStatusText(order.order_status)}
+                      </Tag>
+                    </div>
+                    <Typography.Text type="secondary" className="text-xs mt-1 block">
+                      Date: {new Date(order.order_date).toLocaleDateString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </Typography.Text>
-                    <Tag 
-                      color={getStatusColor(order.order_status)}
-                      className="!m-0 !rounded-full !px-3"
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Info */}
+              <div className="mb-3 pb-3 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <Typography.Text type="secondary" className="text-sm">
+                    {order.items_count || 0} products
+                  </Typography.Text>
+                  <div className="flex items-center gap-2">
+                    <Tag icon={<CreditCardOutlined />} className="!m-0">
+                      {getPaymentMethodText(order.payment_method)}
+                    </Tag>
+                    <Tag
+                      color={order.payment_status === 'paid' ? 'success' : 'warning'}
+                      className="!m-0"
                     >
-                      {getStatusText(order.order_status)}
+                      {getPaymentStatusText(order.payment_status)}
                     </Tag>
                   </div>
-                  <Typography.Text type="secondary" className="text-xs mt-1 block">
-                    Ngày: {new Date(order.order_date).toLocaleDateString('vi-VN', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Typography.Text type="secondary" className="text-xs block mb-1">
+                    Total
+                  </Typography.Text>
+                  <Typography.Text strong className="text-xl" style={{ color: '#1890ff' }}>
+                    {formatVNDPrice(order.total_amount)}
                   </Typography.Text>
                 </div>
-              </div>
-            </div>
-
-            {/* Product Info */}
-            <div className="mb-3 pb-3 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <Typography.Text type="secondary" className="text-sm">
-                  {order.items_count || 0} sản phẩm
-                </Typography.Text>
-                <div className="flex items-center gap-2">
-                  <Tag icon={<CreditCardOutlined />} className="!m-0">
-                    {getPaymentMethodText(order.payment_method)}
-                  </Tag>
-                  <Tag 
-                    color={order.payment_status === 'paid' ? 'success' : 'warning'}
-                    className="!m-0"
+                <div className="flex gap-2">
+                  {order.order_status === 'pending' && (
+                    <Button
+                      danger
+                      loading={cancellingId === order.order_id}
+                      disabled={cancellingId !== null}
+                      onClick={() => showCancelModal(order.order_id)}
+                      className="!rounded-md"
+                    >
+                      Cancel Order
+                    </Button>
+                  )}
+                  <Button
+                    type="default"
+                    onClick={() => onView(order.order_id)}
+                    className="!border-gray-300 !rounded-md"
                   >
-                    {getPaymentStatusText(order.payment_status)}
-                  </Tag>
+                    View Details
+                  </Button>
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography.Text type="secondary" className="text-xs block mb-1">
-                  Tổng tiền
-                </Typography.Text>
-                <Typography.Text strong className="text-xl" style={{ color: '#1890ff' }}>
-                  {formatVNDPrice(order.total_amount)}
-                </Typography.Text>
-              </div>
-              <div className="flex gap-2">
-                {order.order_status === 'pending' && (
-                  <Button 
-                    danger
-                    loading={cancellingId === order.order_id}
-                    disabled={cancellingId !== null}
-                    onClick={() => showCancelModal(order.order_id)}
-                    className="!rounded-md"
-                  >
-                    Hủy đơn hàng
-                  </Button>
-                )}
-                <Button 
-                  type="default"
-                  onClick={() => onView(order.order_id)}
-                  className="!border-gray-300 !rounded-md"
-                >
-                  Xem chi tiết
-                </Button>
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
         </div>
       )}
-      
+
       {/* Pagination */}
       {total && total > pageSize && (
         <div className="flex justify-center mt-6">
@@ -309,13 +306,13 @@ export default function OrdersList({
             pageSize={pageSize}
             onChange={onPageChange}
             showSizeChanger={false}
-            showTotal={(total) => `Tổng ${total} đơn hàng`}
+            showTotal={(total) => `Total ${total} orders`}
           />
         </div>
       )}
 
       <Modal
-        title="Hủy đơn hàng"
+        title="Cancel Order"
         open={cancelModalVisible}
         onOk={handleCancelOrder}
         onCancel={() => {
@@ -323,21 +320,21 @@ export default function OrdersList({
           setCancelReason('');
           setSelectedOrderId(null);
         }}
-        okText="Xác nhận hủy"
-        cancelText="Không hủy"
+        okText="Confirm Cancellation"
+        cancelText="Don't Cancel"
         okButtonProps={{ danger: true, loading: cancellingId !== null }}
         cancelButtonProps={{ disabled: cancellingId !== null }}
       >
         <div className="space-y-4">
-          <p>Bạn có chắc chắn muốn hủy đơn hàng này không?</p>
+          <p>Are you sure you want to cancel this order?</p>
           <div>
             <label className="block text-sm font-medium mb-2">
-              Lý do hủy đơn hàng <span className="text-red-500">*</span>
+              Cancellation Reason <span className="text-red-500">*</span>
             </label>
             <Input.TextArea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Vui lòng nhập lý do hủy đơn hàng..."
+              placeholder="Please enter the reason for cancellation..."
               rows={3}
               maxLength={500}
               showCount

@@ -9,23 +9,23 @@ export default function Footer() {
         <div>
           <h3 className="text-lg font-semibold text-red-500">DELULU</h3>
           <p className="text-sm mt-2">
-            Mang đến cho bạn những xu hướng thời trang mới nhất.
+            Bringing you the latest fashion trends.
           </p>
         </div>
 
         {/* Liên kết nhanh */}
         <div>
-          <h4 className="font-semibold mb-2">Liên kết</h4>
+          <h4 className="font-semibold mb-2">Links</h4>
           <ul className="space-y-1 text-sm">
-            <li><a href="#" className="hover:underline">Về chúng tôi</a></li>
-            <li><a href="#" className="hover:underline">Liên hệ</a></li>
-            <li><a href="#" className="hover:underline">Điều khoản</a></li>
+            <li><a href="#" className="hover:underline">About us</a></li>
+            <li><a href="#" className="hover:underline">Contact</a></li>
+            <li><a href="#" className="hover:underline">Terms</a></li>
           </ul>
         </div>
 
         {/* Mạng xã hội */}
         <div>
-          <h4 className="font-semibold mb-2">Kết nối</h4>
+          <h4 className="font-semibold mb-2">Connect</h4>
           <div className="flex space-x-3">
             <Facebook className="w-5 h-5 cursor-pointer hover:text-blue-500" />
             <Instagram className="w-5 h-5 cursor-pointer hover:text-pink-500" />

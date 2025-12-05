@@ -51,22 +51,22 @@ const Home: FC = () => {
                 <CategorySlider
                     categories={categories}
                     loading={categoriesLoading}
-                    title="DANH MỤC SẢN PHẨM"
-                    subtitle="Khám phá theo từng dòng sản phẩm cụ thể"
+                    title="PRODUCT CATEGORIES"
+                    subtitle="Explore by specific product lines"
                 />
             </section>
             <PromotionTabsSection />
             <section className="mt-20">
-                <h2 className="text-xl font-bold mb-4 text-center">SẢN PHẨM NỔI BẬT</h2>
-                <h3 className="text-sm text-gray-500 mb-5 text-center">Những sản phẩm được yêu thích nhất</h3>
+                <h2 className="text-xl font-bold mb-4 text-center">FEATURED PRODUCTS</h2>
+                <h3 className="text-sm text-gray-500 mb-5 text-center">Most loved products</h3>
                 <ProductSlider products={mostSoldProducts} loading={mostSoldLoading} />
             </section>
 
             <section className="mt-20">
-                <h2 className="text-xl font-bold mb-4 text-center">HÀNG MỚI VỀ</h2>
-                <h3 className="text-sm text-gray-500 mb-5 text-center">Đừng bỏ lỡ những sản phẩm mới nhất</h3>
-                <ProductList 
-                    products={featuredProducts} 
+                <h2 className="text-xl font-bold mb-4 text-center">NEW ARRIVALS</h2>
+                <h3 className="text-sm text-gray-500 mb-5 text-center">Don't miss out on the latest products</h3>
+                <ProductList
+                    products={featuredProducts}
                     loading={featuredLoading}
                     limit={8}
                 />

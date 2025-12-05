@@ -121,7 +121,7 @@ const PromotionTabsSection = () => {
             <div className="border-2 border-red-200 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                     <Flame className="w-7 h-7 text-red-500" fill="currentColor" />
-                    <h2 className="text-2xl font-extrabold text-gray-900">KHUYẾN MÃI HOT</h2>
+                    <h2 className="text-2xl font-extrabold text-gray-900">HOT DEALS</h2>
                 </div>
                 <Tabs
                     activeKey={activeKey}
@@ -138,7 +138,7 @@ const PromotionTabsSection = () => {
                             <div className="pt-6">
                                 <div className="bg-gray-50 rounded-xl p-5 mb-6">
                                     <h3 className="text-base md:text-lg font-bold text-gray-900 mb-3">
-                                        {promo.name} - Giảm đến {promo.discount_percent}%
+                                        {promo.name} - Up to {promo.discount_percent}% off
                                     </h3>
                                     <Countdown endDate={promo.end_date} />
                                 </div>
@@ -159,7 +159,7 @@ const PromotionTabsSection = () => {
                                             to={`/promotions/${promo.promo_id}`}
                                             className="inline-flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
                                         >
-                                            Xem tất cả sản phẩm trong chương trình
+                                            View all products in this promotion
                                             <ArrowRight className="w-4 h-4" />
                                         </Link>
                                     </div>

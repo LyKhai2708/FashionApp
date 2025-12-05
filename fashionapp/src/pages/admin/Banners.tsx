@@ -84,7 +84,7 @@ export default function Banners() {
             setBanners(result.banners);
             setPaginate(result.metadata);
         } catch (error: any) {
-            message.error(error.message || 'Không thể tải danh sách banners');
+            message.error(error.message || 'Cannot load banners');
         } finally {
             setLoading(false);
         }
@@ -147,10 +147,10 @@ export default function Banners() {
     const handleDelete = async (id: number) => {
         try {
             await bannerService.deleteBanner(id);
-            message.success('Xóa banner thành công');
+            message.success('Banner deleted successfully');
             fetchBanners();
         } catch (error: any) {
-            message.error(error.message || 'Không thể xóa banner');
+            message.error(error.message || 'Cannot delete banner');
         }
     };
 
@@ -228,17 +228,17 @@ export default function Banners() {
 
             if (editingBanner) {
                 await bannerService.updateBannerWithImage(editingBanner.banner_id, formData);
-                message.success('Cập nhật banner thành công');
+                message.success('Banner updated successfully');
             } else {
                 await bannerService.createBannerWithImage(formData);
-                message.success('Tạo banner thành công');
+                message.success('Banner created successfully');
             }
 
             setModalVisible(false);
             form.resetFields();
             fetchBanners();
         } catch (error: any) {
-            message.error(error.message || 'Không thể lưu banner');
+            message.error(error.message || 'Cannot save banner');
         }
     };
 
@@ -269,13 +269,13 @@ export default function Banners() {
             )
         },
         {
-            title: 'Tiêu đề',
+            title: 'Title',
             dataIndex: 'title',
             key: 'title',
             width: 200
         },
         {
-            title: 'Loại banner',
+            title: 'Banner Type',
             dataIndex: 'banner_type',
             key: 'type',
             width: 100,
@@ -290,7 +290,7 @@ export default function Banners() {
             }
         },
         {
-            title: 'Chi tiết',
+            title: 'Details',
             key: 'details',
             width: 180,
             render: (_, record) => {
@@ -314,20 +314,20 @@ export default function Banners() {
             }
         },
         {
-            title: 'Vị trí',
+            title: 'Position',
             dataIndex: 'position',
             key: 'position',
             width: 100
         },
         {
-            title: 'Thứ tự',
+            title: 'Order',
             dataIndex: 'display_order',
             key: 'order',
             width: 80,
             sorter: (a, b) => a.display_order - b.display_order
         },
         {
-            title: 'Ngày bắt đầu - kết thúc',
+            title: 'Start - End Date',
             key: 'dates',
             width: 150,
             render: (_, record) => {
@@ -367,11 +367,11 @@ export default function Banners() {
                     </PermissionGate>
                     <PermissionGate permission="banners.delete">
                         <Popconfirm
-                            title="Xóa banner?"
-                            description="Banner sẽ bị set status = expired"
+                            title="Delete banner?"
+                            description="Banner will be set to expired status"
                             onConfirm={() => handleDelete(record.banner_id)}
-                            okText="Xóa"
-                            cancelText="Hủy"
+                            okText="Delete"
+                            cancelText="Cancel"
                         >
                             <Button
                                 type="text"
@@ -389,11 +389,11 @@ export default function Banners() {
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <FileImageOutlined /> Quản lý Banners
+                    <FileImageOutlined /> Banner Management
                 </h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ fontSize: 14, color: '#999' }}>
-                        Tổng: <span style={{ fontWeight: 600, color: '#000' }}>{paginate.totalRecords}</span> banners
+                        Total: <span style={{ fontWeight: 600, color: '#000' }}>{paginate.totalRecords}</span> banners
                     </div>
                     <PermissionGate permission="banners.create">
                         <Button
@@ -402,7 +402,7 @@ export default function Banners() {
                             onClick={handleCreate}
                             size="large"
                         >
-                            Thêm Banner
+                            Add Banner
                         </Button>
                     </PermissionGate>
                 </div>
@@ -420,19 +420,19 @@ export default function Banners() {
                         pageSize: paginate.limit,
                         total: paginate.totalRecords,
                         onChange: (page, pageSize) => fetchBanners({ page, limit: pageSize }),
-                        showTotal: (total) => `Tổng ${total} banners`
+                        showTotal: (total) => `Total ${total} banners`
                     }}
                 />
             </Card>
 
             <Modal
-                title={editingBanner ? 'Chỉnh sửa Banner' : 'Thêm Banner Mới'}
+                title={editingBanner ? 'Edit Banner' : 'Add New Banner'}
                 open={modalVisible}
                 onCancel={() => setModalVisible(false)}
                 onOk={() => form.submit()}
                 width={800}
-                okText={editingBanner ? 'Cập nhật' : 'Tạo mới'}
-                cancelText="Hủy"
+                okText={editingBanner ? 'Update' : 'Create'}
+                cancelText="Cancel"
             >
                 <Form
                     form={form}
@@ -444,13 +444,13 @@ export default function Banners() {
                             <Form.Item
                                 name="title"
                                 label="Title"
-                                rules={[{ required: true, message: 'Nhập title banner' }]}
+                                rules={[{ required: true, message: 'Enter banner title' }]}
                             >
-                                <Input placeholder="VD: Sale 50% Mùa Hè" />
+                                <Input placeholder="e.g: Summer Sale 50%" />
                             </Form.Item>
 
                             <Form.Item name="alt_text" label="Alt Text (SEO)">
-                                <Input placeholder="Mô tả ảnh cho SEO" />
+                                <Input placeholder="Image description for SEO" />
                             </Form.Item>
 
                             <Form.Item
@@ -516,7 +516,7 @@ export default function Banners() {
 
                             {(bannerType === 'custom' || bannerType === 'voucher') && (
                                 <Form.Item name="link_url" label="Link URL (Optional)">
-                                    <Input placeholder="/products hoặc https://..." />
+                                    <Input placeholder="/products or https://..." />
                                 </Form.Item>
                             )}
 

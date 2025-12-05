@@ -31,16 +31,16 @@ export default function OrderSuccess() {
     const [loading, setLoading] = useState(true);
     const [paymentStatus, setPaymentStatus] = useState<string>('');
     const [checkingPayment, setCheckingPayment] = useState(false);
-    
+
     const searchParams = new URLSearchParams(location.search);
     const paymentMethod = searchParams.get('payment');
-    
+
     const { retryPayment, loading: retryLoading, canRetry } = useRetryPayment(Number(orderId));
 
     useEffect(() => {
         const loadOrder = async () => {
             if (!orderId) {
-                message.error('Không tìm thấy đơn hàng');
+                message.error('Order not found');
                 navigate('/');
                 return;
             }
@@ -49,12 +49,12 @@ export default function OrderSuccess() {
                 setLoading(true);
                 const orderData = await orderService.getOrderById(parseInt(orderId));
                 setOrder(orderData as OrderWithItems);
-                
+
                 if (paymentMethod === 'payos') {
                     await checkPaymentStatus();
                 }
             } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Không thể tải thông tin đơn hàng';
+                const errorMessage = error instanceof Error ? error.message : 'Cannot load order information';
                 message.error(errorMessage);
                 navigate('/');
             } finally {
@@ -64,10 +64,10 @@ export default function OrderSuccess() {
 
         loadOrder();
     }, [orderId, navigate]);
-    
+
     const checkPaymentStatus = async () => {
         if (!orderId) return;
-        
+
         setCheckingPayment(true);
         try {
             const result = await paymentService.checkPaymentStatus(Number(orderId));
@@ -98,13 +98,13 @@ export default function OrderSuccess() {
                 <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-8">
                     <div className="text-center py-8">
                         <Spin size="large" />
-                        <p className="mt-4 text-gray-600">Đang kiểm tra trạng thái thanh toán...</p>
+                        <p className="mt-4 text-gray-600">Checking payment status...</p>
                     </div>
                 </div>
             </div>
         );
     }
-    
+
     // Render payment pending state
     if (paymentMethod === 'payos' && paymentStatus === 'PENDING') {
         return (
@@ -115,43 +115,43 @@ export default function OrderSuccess() {
                             <Clock className="w-12 h-12 text-white" />
                         </div>
                     </div>
-                    
+
                     <h1 className="text-3xl font-bold text-center mb-4">
-                        Đang chờ thanh toán
+                        Awaiting Payment
                     </h1>
                     <p className="text-center text-gray-600 mb-8">
-                        Thanh toán của bạn đang được xử lý. Vui lòng đợi hoặc kiểm tra lại.
+                        Your payment is being processed. Please wait or check again.
                     </p>
-                    
+
                     <Alert
                         type="warning"
-                        message="Đang chờ xác nhận thanh toán"
-                        description="Giao dịch của bạn đang được xử lý. Quá trình này có thể mất vài phút."
+                        message="Awaiting payment confirmation"
+                        description="Your transaction is being processed. This may take a few minutes."
                         className="mb-6"
                     />
-                    
+
                     <div className="flex gap-4">
-                        <Button 
-                            size="large" 
+                        <Button
+                            size="large"
                             block
                             onClick={checkPaymentStatus}
                         >
-                            Kiểm tra lại
+                            Check again
                         </Button>
-                        <Button 
+                        <Button
                             type="primary"
-                            size="large" 
+                            size="large"
                             block
                             onClick={() => navigate('/profile')}
                         >
-                            Xem đơn hàng
+                            View order
                         </Button>
                     </div>
                 </div>
             </div>
         );
     }
-    
+
     // Render payment failed/cancelled state
     if (paymentMethod === 'payos' && (paymentStatus === 'FAILED' || paymentStatus === 'CANCELLED')) {
         return (
@@ -162,30 +162,30 @@ export default function OrderSuccess() {
                             <XCircle className="w-12 h-12 text-white" />
                         </div>
                     </div>
-                    
+
                     <h1 className="text-3xl font-bold text-center mb-4">
-                        Thanh toán chưa hoàn tất
+                        Payment Incomplete
                     </h1>
                     <p className="text-center text-gray-600 mb-8">
-                        Giao dịch thanh toán chưa thành công. Bạn có thể thử thanh toán lại.
+                        Payment was not successful. You can try again.
                     </p>
-                    
+
                     <Alert
                         type="error"
-                        message="Thanh toán thất bại"
-                        description="Đơn hàng của bạn chưa được thanh toán. Vui lòng thử lại hoặc chọn phương thức thanh toán khác."
+                        message="Payment failed"
+                        description="Your order has not been paid. Please try again or choose another payment method."
                         className="mb-6"
                     />
-                    
+
                     {order && (
                         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Mã đơn hàng:</span>
+                                    <span className="text-gray-600">Order code:</span>
                                     <span className="font-semibold">#{order.order_code || order.order_id}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Tổng tiền:</span>
+                                    <span className="text-gray-600">Total:</span>
                                     <span className="font-semibold text-lg text-red-600">
                                         {formatVNDPrice(order.total_amount)}
                                     </span>
@@ -193,7 +193,7 @@ export default function OrderSuccess() {
                             </div>
                         </div>
                     )}
-                    
+
                     <div className="space-y-4">
                         <RetryPaymentButton
                             onRetry={retryPayment}
@@ -201,20 +201,20 @@ export default function OrderSuccess() {
                             disabled={!canRetry}
                             block
                         />
-                        
-                        <Button 
-                            size="large" 
+
+                        <Button
+                            size="large"
                             block
                             onClick={() => navigate('/cart')}
                         >
-                            Về giỏ hàng
+                            Go to cart
                         </Button>
                     </div>
                 </div>
             </div>
         );
     }
-    
+
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4">
             <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-8">
@@ -225,24 +225,24 @@ export default function OrderSuccess() {
                 </div>
 
                 <h1 className="text-3xl font-bold text-center mb-4">
-                    Cảm ơn bạn đã mua hàng
+                    Thank you for your order
                 </h1>
                 <p className="text-center text-gray-600 mb-2">
-                    Chúng tôi đã nhận được đơn hàng của bạn và sẽ giao hàng trong 5-7 ngày làm việc.
+                    We have received your order and will deliver within 5-7 business days.
                 </p>
                 <p className="text-center text-gray-600 mb-8">
-                    Số đơn hàng của bạn là <span className="font-semibold">#{order.order_code || order.order_id}</span>
+                    Your order code is <span className="font-semibold">#{order.order_code || order.order_id}</span>
                 </p>
 
                 <div className="border-t pt-6">
-                    <h2 className="text-xl font-semibold mb-6">Tóm tắt đơn hàng</h2>
+                    <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
 
                     <div className="space-y-4 mb-6">
                         {order.items && order.items.length > 0 ? (
                             order.items.map((item, index) => (
                                 <div key={index} className="flex items-center gap-4 py-3">
-                                    <img 
-                                        src={getImageUrl(item.image_url)} 
+                                    <img
+                                        src={getImageUrl(item.image_url)}
                                         alt={item.product_name}
                                         className="w-16 h-16 object-cover rounded"
                                     />
@@ -261,14 +261,14 @@ export default function OrderSuccess() {
                             ))
                         ) : (
                             <div className="text-gray-500 text-center py-4">
-                                Không có sản phẩm
+                                No products
                             </div>
                         )}
                     </div>
 
                     {/* Total */}
                     <div className="border-t pt-4 flex justify-between items-center">
-                        <span className="text-lg font-semibold">Tổng</span>
+                        <span className="text-lg font-semibold">Total</span>
                         <span className="text-lg font-bold">₫ {formatVNDPrice(order.total_amount)}</span>
                     </div>
                 </div>
@@ -279,7 +279,7 @@ export default function OrderSuccess() {
                         onClick={() => navigate('/')}
                         className="px-8 py-3 border-2 border-black rounded-md hover:bg-black hover:text-white transition font-medium"
                     >
-                        Quay lại trang chủ
+                        Back to homepage
                     </button>
                 </div>
             </div>

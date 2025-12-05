@@ -23,7 +23,7 @@ export default function FavoritesPage() {
       setFavorites(data.favorites);
       setTotalRecords(data.metadata.totalRecords);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Không thể tải danh sách yêu thích';
+      const errorMessage = error instanceof Error ? error.message : 'Cannot load favorites list';
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -44,8 +44,8 @@ export default function FavoritesPage() {
   }, [favoritesMap.size]);
 
   const breadcrumbItems = [
-    { label: 'Trang chủ', path: '/' },
-    { label: 'Sản phẩm yêu thích' }
+    { label: 'Home', path: '/' },
+    { label: 'Favorites' }
   ];
 
   if (loading) {
@@ -62,20 +62,20 @@ export default function FavoritesPage() {
   return (
     <div className="container mx-auto px-4">
       <Breadcrumb items={breadcrumbItems} />
-      
+
       <div className="flex items-center gap-3 mb-6">
         <HeartOutlined className="text-xl text-red-500" />
-        <h1 className="text-xl font-semibold">Sản phẩm yêu thích</h1>
+        <h1 className="text-xl font-semibold">Favorites</h1>
       </div>
 
       {favorites.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[400px]">
-          <Empty 
-            description="Chưa có sản phẩm yêu thích nào"
+          <Empty
+            description="No favorites yet"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           >
             <a href="/products" className="text-blue-500 hover:underline">
-              Khám phá sản phẩm ngay
+              Explore products now
             </a>
           </Empty>
         </div>
@@ -134,7 +134,7 @@ export default function FavoritesPage() {
                 pageSize={limit}
                 onChange={setPage}
                 showSizeChanger={false}
-                showTotal={(total) => `Tổng ${total} sản phẩm`}
+                showTotal={(total) => `Total ${total} products`}
               />
             </div>
           )}

@@ -32,8 +32,8 @@ export default function ProductPage() {
     });
 
     const breadcrumbs = [
-        { label: "Trang chủ", href: "/" },
-        { label: "Sản phẩm", href: "/products" }
+        { label: "Home", href: "/" },
+        { label: "Products", href: "/products" }
     ];
 
     const handleFilterChange = (filters: ProductsParams) => {
@@ -63,13 +63,13 @@ export default function ProductPage() {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-xl font-semibold mb-2">Có lỗi xảy ra</h2>
+                    <h2 className="text-xl font-semibold mb-2">An error occurred</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
                     >
-                        Thử lại
+                        Try again
                     </button>
                 </div>
             </div>

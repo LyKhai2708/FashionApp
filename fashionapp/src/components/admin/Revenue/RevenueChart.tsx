@@ -80,9 +80,9 @@ const RevenueChart: React.FC = () => {
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('vi-VN', { 
-            month: 'short', 
-            day: 'numeric' 
+        return date.toLocaleDateString('vi-VN', {
+            month: 'short',
+            day: 'numeric'
         });
     };
 
@@ -98,8 +98,8 @@ const RevenueChart: React.FC = () => {
             },
             tooltip: {
                 callbacks: {
-                    label: function(context: any) {
-                        return `Doanh thu: ${formatCurrency(context.parsed.y)}`;
+                    label: function (context: any) {
+                        return `Revenue: ${formatCurrency(context.parsed.y)}`;
                     }
                 }
             }
@@ -108,7 +108,7 @@ const RevenueChart: React.FC = () => {
             y: {
                 beginAtZero: true,
                 ticks: {
-                    callback: function(value: any) {
+                    callback: function (value: any) {
                         return formatCurrency(value);
                     }
                 }
@@ -126,7 +126,7 @@ const RevenueChart: React.FC = () => {
         labels: chartData?.data.map(d => formatDate(d.date)) || [],
         datasets: [
             {
-                label: 'Doanh thu',
+                label: 'Revenue',
                 data: chartData?.data.map(d => d.revenue) || [],
                 borderColor: 'rgb(59, 130, 246)',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -143,46 +143,43 @@ const RevenueChart: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                        Biểu đồ doanh thu
+                        Revenue Chart
                     </h2>
                     {chartData && (
                         <p className="text-sm text-gray-500 mt-1">
-                            Tổng: {formatCurrency(chartData.summary.revenue)} 
-                            {' '}({chartData.summary.orderCount} đơn hàng)
+                            Total: {formatCurrency(chartData.summary.revenue)}
+                            {' '}({chartData.summary.orderCount} orders)
                         </p>
                     )}
                 </div>
-                
+
                 <div className="flex space-x-2">
                     <button
                         onClick={() => setPeriod(7)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            period === 7
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${period === 7
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                            }`}
                     >
-                        7 ngày
+                        7 days
                     </button>
                     <button
                         onClick={() => setPeriod(30)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            period === 30
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${period === 30
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                            }`}
                     >
-                        30 ngày
+                        30 days
                     </button>
                     <button
                         onClick={() => setPeriod(90)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            period === 90
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${period === 90
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                            }`}
                     >
-                        90 ngày
+                        90 days
                     </button>
                 </div>
             </div>
@@ -190,13 +187,13 @@ const RevenueChart: React.FC = () => {
             <div className="h-80">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
-                        <div className="text-gray-500">Đang tải...</div>
+                        <div className="text-gray-500">Loading...</div>
                     </div>
                 ) : chartData ? (
                     <Line options={chartOptions} data={data} />
                 ) : (
                     <div className="flex items-center justify-center h-full">
-                        <div className="text-gray-500">Không có dữ liệu</div>
+                        <div className="text-gray-500">No data available</div>
                     </div>
                 )}
             </div>

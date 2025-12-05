@@ -27,31 +27,31 @@ const OrderDetail: React.FC = () => {
             const data = await orderService.getOrderById(Number(id));
             setOrder(data);
         } catch (err: any) {
-            setError(err.message || 'Không thể tải thông tin đơn hàng');
+            setError(err.message || 'Cannot load order information');
         } finally {
             setLoading(false);
         }
     };
 
     const handleUpdateOrderStatus = async (newStatus: string) => {
-        if (!order || !window.confirm(`Xác nhận cập nhật trạng thái đơn hàng sang "${newStatus}"?`)) {
+        if (!order || !window.confirm(`Confirm updating order status to "${newStatus}"?`)) {
             return;
         }
 
         try {
             setUpdating(true);
             await orderService.updateOrderStatus(order.order_id, newStatus);
-            await loadOrderDetail(); // Reload để lấy data mới
-            alert('Cập nhật trạng thái thành công!');
+            await loadOrderDetail(); // Reload to get new data
+            alert('Status updated successfully!');
         } catch (err: any) {
-            alert(err.message || 'Không thể cập nhật trạng thái');
+            alert(err.message || 'Cannot update status');
         } finally {
             setUpdating(false);
         }
     };
 
     const handleUpdatePaymentStatus = async (newStatus: string) => {
-        if (!order || !window.confirm(`Xác nhận cập nhật trạng thái thanh toán sang "${newStatus}"?`)) {
+        if (!order || !window.confirm(`Confirm updating payment status to "${newStatus}"?`)) {
             return;
         }
 
@@ -59,9 +59,9 @@ const OrderDetail: React.FC = () => {
             setUpdating(true);
             await orderService.updatePaymentStatus(order.order_id, newStatus);
             await loadOrderDetail();
-            alert('Cập nhật trạng thái thanh toán thành công!');
+            alert('Payment status updated successfully!');
         } catch (err: any) {
-            alert(err.message || 'Không thể cập nhật trạng thái thanh toán');
+            alert(err.message || 'Cannot update payment status');
         } finally {
             setUpdating(false);
         }
@@ -70,13 +70,13 @@ const OrderDetail: React.FC = () => {
     const handleCancelOrder = async () => {
         if (!order) return;
 
-        const cancelReason = window.prompt('Nhập lý do hủy đơn hàng:');
+        const cancelReason = window.prompt('Enter cancellation reason:');
         if (!cancelReason || !cancelReason.trim()) {
-            alert('Vui lòng nhập lý do hủy đơn hàng');
+            alert('Please enter a cancellation reason');
             return;
         }
 
-        if (!window.confirm('Xác nhận hủy đơn hàng? Hành động này sẽ hoàn lại stock và không thể hoàn tác.')) {
+        if (!window.confirm('Confirm order cancellation? This will restore stock and cannot be undone.')) {
             return;
         }
 
@@ -84,9 +84,9 @@ const OrderDetail: React.FC = () => {
             setUpdating(true);
             await orderService.cancelOrder(order.order_id, cancelReason);
             await loadOrderDetail();
-            alert('Hủy đơn hàng thành công!');
+            alert('Order cancelled successfully!');
         } catch (err: any) {
-            alert(err.message || 'Không thể hủy đơn hàng');
+            alert(err.message || 'Cannot cancel order');
         } finally {
             setUpdating(false);
         }
@@ -114,7 +114,7 @@ const OrderDetail: React.FC = () => {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-500">Đang tải...</p>
+                    <p className="mt-4 text-gray-500">Loading...</p>
                 </div>
             </div>
         );
@@ -124,12 +124,12 @@ const OrderDetail: React.FC = () => {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <p className="text-red-600 mb-4">{error || 'Không tìm thấy đơn hàng'}</p>
+                    <p className="text-red-600 mb-4">{error || 'Order not found'}</p>
                     <button
                         onClick={() => navigate('/admin/orders')}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
-                        Quay lại danh sách
+                        Back to list
                     </button>
                 </div>
             </div>
@@ -144,10 +144,10 @@ const OrderDetail: React.FC = () => {
                         onClick={() => navigate('/admin/orders')}
                         className="text-gray-600 hover:text-gray-900"
                     >
-                        ← Quay lại
+                        ← Back
                     </button>
                     <h1 className="text-2xl font-bold text-gray-900">
-                        Chi tiết đơn hàng #{order.order_code || order.order_id}
+                        Order Details #{order.order_code || order.order_id}
                     </h1>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -160,7 +160,7 @@ const OrderDetail: React.FC = () => {
                 <div className="lg:col-span-2 space-y-6">
 
                     <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-semibold mb-4">Sản phẩm đã đặt</h2>
+                        <h2 className="text-lg font-semibold mb-4">Ordered Products</h2>
                         <div className="space-y-4">
                             {order.items && order.items.length > 0 ? (
                                 order.items.map((item, index) => (
@@ -178,7 +178,7 @@ const OrderDetail: React.FC = () => {
                                                 {item.size_name} - {item.color_name}
                                             </p>
                                             <p className="text-sm text-gray-500">
-                                                Số lượng: {item.quantity}
+                                                Quantity: {item.quantity}
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -186,26 +186,26 @@ const OrderDetail: React.FC = () => {
                                                 {formatCurrency(item.price)}
                                             </p>
                                             <p className="text-sm text-gray-500">
-                                                Tổng: {formatCurrency(item.price * item.quantity)}
+                                                Total: {formatCurrency(item.price * item.quantity)}
                                             </p>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-gray-500 text-center py-4">Không có sản phẩm</p>
+                                <p className="text-gray-500 text-center py-4">No products</p>
                             )}
                         </div>
                     </div>
 
                     <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-semibold mb-4">Thông tin giao hàng</h2>
+                        <h2 className="text-lg font-semibold mb-4">Shipping Information</h2>
                         <div className="space-y-3">
                             <div>
-                                <p className="text-sm text-gray-500">Người nhận</p>
+                                <p className="text-sm text-gray-500">Receiver</p>
                                 <p className="font-medium">{order.receiver_name}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Số điện thoại</p>
+                                <p className="text-sm text-gray-500">Phone Number</p>
                                 <p className="font-medium">{order.receiver_phone}</p>
                             </div>
                             <div>
@@ -213,7 +213,7 @@ const OrderDetail: React.FC = () => {
                                 <p className="font-medium">{order.receiver_email}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Địa chỉ</p>
+                                <p className="text-sm text-gray-500">Address</p>
                                 <p className="font-medium">
                                     {order.shipping_full_address ||
                                         `${order.shipping_detail_address}, ${order.shipping_ward}, ${order.shipping_province}`}
@@ -221,7 +221,7 @@ const OrderDetail: React.FC = () => {
                             </div>
                             {order.notes && (
                                 <div>
-                                    <p className="text-sm text-gray-500">Ghi chú</p>
+                                    <p className="text-sm text-gray-500">Notes</p>
                                     <p className="font-medium">{order.notes}</p>
                                 </div>
                             )}
@@ -232,14 +232,14 @@ const OrderDetail: React.FC = () => {
                 <div className="space-y-6">
 
                     <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-semibold mb-4">Tổng quan đơn hàng</h2>
+                        <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
                         <div className="space-y-3">
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Tạm tính</span>
+                                <span className="text-gray-600">Subtotal</span>
                                 <span className="font-medium">{formatCurrency(order.sub_total)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Phí vận chuyển</span>
+                                <span className="text-gray-600">Shipping Fee</span>
                                 <span className="font-medium">{formatCurrency(order.shipping_fee)}</span>
                             </div>
                             {order.voucher_code && (
@@ -254,16 +254,16 @@ const OrderDetail: React.FC = () => {
                                 </div>
                             )}
                             <div className="border-t pt-3 flex justify-between">
-                                <span className="font-semibold">Tổng cộng</span>
+                                <span className="font-semibold">Total</span>
                                 <span className="font-bold text-lg text-blue-600">
                                     {formatCurrency(order.total_amount)}
                                 </span>
                             </div>
                             <div className="border-t pt-3">
-                                <p className="text-sm text-gray-500">Phương thức thanh toán</p>
+                                <p className="text-sm text-gray-500">Payment Method</p>
                                 <p className="font-medium">
                                     {order.payment_method === 'cod' ? 'COD' :
-                                        order.payment_method === 'bank_transfer' ? 'Chuyển khoản' :
+                                        order.payment_method === 'bank_transfer' ? 'Bank Transfer' :
                                             order.payment_method === 'payos' ? 'PayOS' :
                                                 order.payment_method === 'momo' ? 'MoMo' :
                                                     order.payment_method === 'vnpay' ? 'VNPay' :
@@ -271,21 +271,21 @@ const OrderDetail: React.FC = () => {
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Ngày đặt hàng</p>
+                                <p className="text-sm text-gray-500">Order Date</p>
                                 <p className="font-medium">{formatDate(order.order_date)}</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-semibold mb-4">Cập nhật trạng thái đơn hàng</h2>
+                        <h2 className="text-lg font-semibold mb-4">Update Order Status</h2>
                         {order.order_status === 'cancelled' ? (
                             <div className="text-center py-4">
-                                <p className="text-gray-500">Đơn hàng đã bị hủy</p>
+                                <p className="text-gray-500">Order has been cancelled</p>
                             </div>
                         ) : order.order_status === 'delivered' ? (
                             <div className="text-center py-4">
-                                <p className="text-gray-500">Đơn hàng đã hoàn thành</p>
+                                <p className="text-gray-500">Order has been completed</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -294,35 +294,35 @@ const OrderDetail: React.FC = () => {
                                     disabled={updating || order.order_status === 'pending'}
                                     className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Đặt lại về Chờ xử lý
+                                    Reset to Pending
                                 </button>
                                 <button
                                     onClick={() => handleUpdateOrderStatus('processing')}
                                     disabled={updating || order.order_status === 'processing'}
                                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Đang xử lý
+                                    Processing
                                 </button>
                                 <button
                                     onClick={() => handleUpdateOrderStatus('shipped')}
                                     disabled={updating || order.order_status === 'shipped'}
                                     className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Đang giao hàng
+                                    Shipped
                                 </button>
                                 <button
                                     onClick={() => handleUpdateOrderStatus('delivered')}
                                     disabled={updating || order.order_status === 'delivered'}
                                     className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Đã giao hàng
+                                    Delivered
                                 </button>
                                 <button
                                     onClick={handleCancelOrder}
                                     disabled={updating || order.order_status !== 'pending'}
                                     className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Hủy đơn hàng
+                                    Cancel Order
                                 </button>
                             </div>
                         )}
@@ -330,14 +330,14 @@ const OrderDetail: React.FC = () => {
 
                     {(order.payment_status === 'pending') && (
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h2 className="text-lg font-semibold mb-4">Cập nhật thanh toán</h2>
+                            <h2 className="text-lg font-semibold mb-4">Update Payment</h2>
                             <div className="space-y-2">
                                 <button
                                     onClick={() => handleUpdatePaymentStatus('paid')}
                                     disabled={updating}
                                     className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Xác nhận đã thanh toán
+                                    Confirm Payment Received
                                 </button>
                             </div>
                         </div>

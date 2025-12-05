@@ -41,12 +41,12 @@ export default function SupplierModal({ supplier, isOpen, onClose, onSubmit, isE
 
     return (
         <Modal
-            title={isEditing ? 'Chỉnh sửa nhà cung cấp' : 'Thêm nhà cung cấp mới'}
+            title={isEditing ? 'Edit Supplier' : 'Add New Supplier'}
             open={isOpen}
             onCancel={handleCancel}
             onOk={() => form.submit()}
-            okText={isEditing ? 'Cập nhật' : 'Thêm mới'}
-            cancelText="Hủy"
+            okText={isEditing ? 'Update' : 'Add'}
+            cancelText="Cancel"
             width={700}
             destroyOnClose
         >
@@ -58,68 +58,68 @@ export default function SupplierModal({ supplier, isOpen, onClose, onSubmit, isE
             >
                 <Form.Item
                     name="name"
-                    label="Tên nhà cung cấp"
+                    label="Supplier Name"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập tên nhà cung cấp' },
-                        { min: 2, message: 'Tên phải có ít nhất 2 ký tự' },
-                        { max: 255, message: 'Tên không được quá 255 ký tự' }
+                        { required: true, message: 'Please enter supplier name' },
+                        { min: 2, message: 'Name must have at least 2 characters' },
+                        { max: 255, message: 'Name cannot exceed 255 characters' }
                     ]}
                 >
-                    <Input placeholder="Nhập tên nhà cung cấp" />
+                    <Input placeholder="Enter supplier name" />
                 </Form.Item>
 
                 <Form.Item
                     name="contact_name"
-                    label="Người liên hệ"
+                    label="Contact Person"
                     rules={[
-                        { max: 255, message: 'Tên người liên hệ không được quá 255 ký tự' }
+                        { max: 255, message: 'Contact name cannot exceed 255 characters' }
                     ]}
                 >
-                    <Input placeholder="Tên người liên hệ" />
+                    <Input placeholder="Contact person name" />
                 </Form.Item>
 
                 <Form.Item
                     name="tax_code"
-                    label="Mã số thuế"
+                    label="Tax Code"
                     rules={[
-                        { pattern: /^[0-9-]*$/, message: 'Mã số thuế chỉ được chứa số và dấu gạch ngang' },
-                        { max: 50, message: 'Mã số thuế không được quá 50 ký tự' }
+                        { pattern: /^[0-9-]*$/, message: 'Tax code can only contain numbers and hyphens' },
+                        { max: 50, message: 'Tax code cannot exceed 50 characters' }
                     ]}
                 >
-                    <Input placeholder="Mã số thuế" />
+                    <Input placeholder="Tax code" />
                 </Form.Item>
 
                 <Form.Item
                     name="email"
                     label="Email"
                     rules={[
-                        { type: 'email', message: 'Email không hợp lệ' },
-                        { max: 255, message: 'Email không được quá 255 ký tự' }
+                        { type: 'email', message: 'Invalid email' },
+                        { max: 255, message: 'Email cannot exceed 255 characters' }
                     ]}
                 >
-                    <Input placeholder="Email liên hệ" />
+                    <Input placeholder="Contact email" />
                 </Form.Item>
 
                 <Form.Item
                     name="phone"
-                    label="Số điện thoại"
+                    label="Phone Number"
                     rules={[
-                        { pattern: /^[0-9+\-() ]*$/, message: 'Số điện thoại không hợp lệ' },
-                        { min: 10, message: 'Số điện thoại phải có ít nhất 10 số' },
-                        { max: 20, message: 'Số điện thoại không được quá 20 ký tự' }
+                        { pattern: /^[0-9+\-() ]*$/, message: 'Invalid phone number' },
+                        { min: 10, message: 'Phone number must have at least 10 digits' },
+                        { max: 20, message: 'Phone number cannot exceed 20 characters' }
                     ]}
                 >
-                    <Input placeholder="Số điện thoại" />
+                    <Input placeholder="Phone number" />
                 </Form.Item>
 
                 <Form.Item
                     name="address"
-                    label="Địa chỉ"
+                    label="Address"
                     rules={[
-                        { max: 500, message: 'Địa chỉ không được quá 500 ký tự' }
+                        { max: 500, message: 'Address cannot exceed 500 characters' }
                     ]}
                 >
-                    <Input.TextArea rows={3} placeholder="Địa chỉ nhà cung cấp" />
+                    <Input.TextArea rows={3} placeholder="Supplier address" />
                 </Form.Item>
             </Form>
         </Modal>

@@ -65,17 +65,17 @@ export default function ProfilePage() {
 
   const handleChangeEmail = async () => {
     if (!newEmail) {
-      message.error('Vui lòng nhập email mới');
+      message.error('Please enter new email');
       return;
     }
 
     if (!changeEmailPassword) {
-      message.error('Vui lòng nhập mật khẩu xác nhận');
+      message.error('Please enter password to confirm');
       return;
     }
 
     if (newEmail === userInfo?.email) {
-      message.error('Email mới trùng với email hiện tại');
+      message.error('New email is the same as current email');
       return;
     }
 
@@ -83,9 +83,9 @@ export default function ProfilePage() {
       await emailVerificationService.sendVerificationChangeEmail(newEmail, changeEmailPassword);
       setEmailVerificationSent(true);
       setEmailCountdown(60);
-      message.success('Email xác nhận đã được gửi! Vui lòng kiểm tra hộp thư.');
+      message.success('Verification email sent! Please check your inbox.');
     } catch (error: any) {
-      message.error(error.message || 'Gửi email thất bại');
+      message.error(error.message || 'Failed to send email');
     }
   };
 
@@ -103,11 +103,11 @@ export default function ProfilePage() {
         gender: values.gender || null
       });
 
-      message.success('Cập nhật thông tin thành công!');
+      message.success('Profile updated successfully!');
 
       loadUserInfo();
     } catch (error: any) {
-      message.error(error.message || 'Cập nhật thất bại');
+      message.error(error.message || 'Update failed');
     } finally {
       setUpdating(false);
     }
@@ -117,10 +117,10 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     try {
       await doLogout();
-      message.success('Đăng xuất thành công');
+      message.success('Logged out successfully');
       window.location.href = '/';
     } catch (e) {
-      message.error('Đăng xuất thất bại');
+      message.error('Logout failed');
     }
   }
 
@@ -140,7 +140,7 @@ export default function ProfilePage() {
         gender: data.gender,
       });
     } catch (error: any) {
-      message.error('Không thể tải thông tin người dùng');
+      message.error('Cannot load user information');
     }
   };
 
@@ -180,7 +180,7 @@ export default function ProfilePage() {
       setOrders(data.orders);
       setOrderTotal(data.pagination.total);
     } catch (error) {
-      message.error('Không thể tải danh sách đơn hàng');
+      message.error('Cannot load order list');
     } finally {
       setLoading(false);
     }
@@ -238,7 +238,7 @@ export default function ProfilePage() {
         const data = await orderService.getOrderById(selectedOrderId);
         setOrderDetail(data);
       } catch (error: any) {
-        message.error(error.data.message || 'Không thể tải chi tiết đơn hàng');
+        message.error(error.data.message || 'Cannot load order details');
         setSelectedOrderId(null);
       } finally {
         setLoading(false);
@@ -248,11 +248,11 @@ export default function ProfilePage() {
     loadOrderDetail();
   }, [selectedOrderId, user]);
   const allMenuItems = [
-    { key: "account", label: "Thông tin tài khoản", icon: <UserOutlined /> },
-    { key: "orders", label: "Đơn hàng", icon: <ShoppingCartOutlined /> },
-    { key: "addresses", label: "Địa chỉ", icon: <HomeOutlined /> },
-    { key: "password", label: "Đổi mật khẩu", icon: <LockOutlined /> },
-    { key: "logout", label: "Đăng xuất", icon: <LogoutOutlined /> },
+    { key: "account", label: "Account Information", icon: <UserOutlined /> },
+    { key: "orders", label: "Orders", icon: <ShoppingCartOutlined /> },
+    { key: "addresses", label: "Addresses", icon: <HomeOutlined /> },
+    { key: "password", label: "Change Password", icon: <LockOutlined /> },
+    { key: "logout", label: "Logout", icon: <LogoutOutlined /> },
   ];
   const menuItems = allMenuItems.filter(item => {
     if (item.key === 'password') {
@@ -301,7 +301,7 @@ export default function ProfilePage() {
           {activeTab === "account" && (
             <>
               <div className="flex items-center justify-between mb-6">
-                <Typography.Title level={4}>Thông tin tài khoản</Typography.Title>
+                <Typography.Title level={4}>Account Information</Typography.Title>
               </div>
 
               <Form
@@ -310,46 +310,46 @@ export default function ProfilePage() {
                 onFinish={handleUpdateProfile}
               >
                 <Form.Item
-                  label="Họ và Tên"
+                  label="Full Name"
                   name="name"
                   rules={[
-                    { required: true, message: "Vui lòng nhập họ tên" },
-                    { min: 2, message: "Họ tên phải có ít nhất 2 ký tự" },
-                    { max: 100, message: "Họ tên không vượt quá 100 ký tự" }
+                    { required: true, message: "Please enter full name" },
+                    { min: 2, message: "Full name must be at least 2 characters" },
+                    { max: 100, message: "Full name must not exceed 100 characters" }
                   ]}
                 >
                   <Input />
                 </Form.Item>
 
                 <Form.Item
-                  label="Số điện thoại"
+                  label="Phone Number"
                   name="phone"
                   rules={[
-                    { pattern: /^[0-9]{10}$/, message: "Số điện thoại không hợp lệ!" }
+                    { pattern: /^[0-9]{10}$/, message: "Invalid phone number!" }
                   ]}
                 >
-                  <Input prefix={<UserOutlined />} placeholder="Nhập số điện thoại" />
+                  <Input prefix={<UserOutlined />} placeholder="Enter phone number" />
                 </Form.Item>
 
                 <Form.Item
-                  label="Ngày sinh"
+                  label="Date of Birth"
                   name="birth_date"
                 >
                   <DatePicker
                     style={{ width: '100%' }}
-                    placeholder="Chọn ngày sinh"
+                    placeholder="Select date of birth"
                     format="DD/MM/YYYY"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label="Giới tính"
+                  label="Gender"
                   name="gender"
                 >
-                  <Select placeholder="Chọn giới tính">
-                    <Select.Option value="male">Nam</Select.Option>
-                    <Select.Option value="female">Nữ</Select.Option>
-                    <Select.Option value="other">Khác</Select.Option>
+                  <Select placeholder="Select gender">
+                    <Select.Option value="male">Male</Select.Option>
+                    <Select.Option value="female">Female</Select.Option>
+                    <Select.Option value="other">Other</Select.Option>
                   </Select>
                 </Form.Item>
 
@@ -365,13 +365,13 @@ export default function ProfilePage() {
                         setIsChangeEmailModalOpen(true);
                       }}
                     >
-                      Thay đổi
+                      Change
                     </Button>
                   </div>
                 </Form.Item>
 
                 <Modal
-                  title="Thay đổi địa chỉ Email"
+                  title="Change Email Address"
                   open={isChangeEmailModalOpen}
                   onCancel={() => setIsChangeEmailModalOpen(false)}
                   footer={null}
@@ -380,22 +380,22 @@ export default function ProfilePage() {
                     {!emailVerificationSent ? (
                       <>
                         <p className="text-gray-600">
-                          Vui lòng nhập email mới và mật khẩu hiện tại để xác nhận thay đổi.
+                          Please enter new email and current password to confirm the change.
                         </p>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Email mới</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">New Email</label>
                           <Input
-                            placeholder="Nhập email mới"
+                            placeholder="Enter new email"
                             value={newEmail}
                             onChange={(e) => setNewEmail(e.target.value)}
                           />
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
                           <Input.Password
-                            placeholder="Nhập mật khẩu để xác nhận"
+                            placeholder="Enter password to confirm"
                             value={changeEmailPassword}
                             onChange={(e) => setChangeEmailPassword(e.target.value)}
                           />
@@ -409,21 +409,21 @@ export default function ProfilePage() {
                           className="!bg-black !text-white mt-2"
                           block
                         >
-                          Gửi xác nhận
+                          Send Confirmation
                         </Button>
                       </>
                     ) : (
                       <div className="text-center">
                         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-green-700">
-                            ✅ Email xác nhận đã được gửi đến <strong>{newEmail}</strong>
+                            ✅ Verification email sent to <strong>{newEmail}</strong>
                           </p>
                         </div>
                         <p className="text-gray-600 mb-4">
-                          Vui lòng kiểm tra hộp thư và click vào link xác nhận để hoàn tất việc thay đổi email.
+                          Please check your inbox and click the verification link to complete email change.
                         </p>
                         <Button onClick={() => setIsChangeEmailModalOpen(false)}>
-                          Đóng
+                          Close
                         </Button>
                       </div>
                     )}
@@ -440,7 +440,7 @@ export default function ProfilePage() {
                     className="!bg-black"
                     loading={updating}
                   >
-                    Cập nhật
+                    Update
                   </Button>
                 </Form.Item>
               </Form>

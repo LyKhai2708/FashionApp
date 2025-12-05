@@ -36,7 +36,7 @@ const AdminLogin: React.FC = () => {
         try {
             await login(values);
         } catch (error: any) {
-            const errorMessage = error.message || 'Đăng nhập thất bại';
+            const errorMessage = error.message || 'Login failed';
             message.error(errorMessage);
         }
     };
@@ -55,7 +55,7 @@ const AdminLogin: React.FC = () => {
                         Delulu Admin Panel
                     </Title>
                     <Text type="secondary">
-                        Đăng nhập để quản lý hệ thống
+                        Login to manage the system
                     </Text>
                 </div>
                 <Form
@@ -70,8 +70,8 @@ const AdminLogin: React.FC = () => {
                     <Form.Item
                         name="email"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập email!' },
-                            { type: 'email', message: 'Email không hợp lệ!' }
+                            { required: true, message: 'Please enter email!' },
+                            { type: 'email', message: 'Invalid email!' }
                         ]}
                     >
                         <Input
@@ -84,13 +84,13 @@ const AdminLogin: React.FC = () => {
                     <Form.Item
                         name="password"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' }
+                            { required: true, message: 'Please enter password!' },
+                            { min: 6, message: 'Password must be at least 6 characters!' }
                         ]}
                     >
                         <Input.Password
                             prefix={<LockOutlined className="text-gray-400" />}
-                            placeholder="Mật khẩu"
+                            placeholder="Password"
                             autoComplete="current-password"
                         />
                     </Form.Item>
@@ -104,7 +104,7 @@ const AdminLogin: React.FC = () => {
                             size="large"
                             icon={<LoginOutlined />}
                         >
-                            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                            {isLoading ? 'Logging in...' : 'Login'}
                         </Button>
                     </Form.Item>
                 </Form>

@@ -1,5 +1,5 @@
 import { Input, Button, Space, Modal, Tag, Spin, Empty, Divider } from "antd";
-import { GiftOutlined, CheckOutlined,ClockCircleOutlined } from '@ant-design/icons';
+import { GiftOutlined, CheckOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useState, useEffect } from "react";
 import voucherService, { type Voucher, type VoucherValidationResponse } from '../../services/voucherService';
 import { useMessage } from "../../App";
@@ -14,10 +14,10 @@ interface VoucherInputProps {
     loading?: boolean;
 }
 
-export default function VoucherInput({ 
-    onVoucherApplied, 
-    onVoucherRemoved, 
-    orderAmount, 
+export default function VoucherInput({
+    onVoucherApplied,
+    onVoucherRemoved,
+    orderAmount,
     appliedVoucher,
     loading = false
 }: VoucherInputProps) {
@@ -41,7 +41,7 @@ export default function VoucherInput({
             setAvailableVouchers(vouchers);
         } catch (error: any) {
             console.error('Error fetching vouchers:', error);
-            message.error('Không thể tải danh sách voucher');
+            message.error('Cannot load voucher list');
         } finally {
             setLoadingVouchers(false);
         }
@@ -49,25 +49,25 @@ export default function VoucherInput({
 
     const handleApplyVoucher = async (code?: string) => {
         const voucherToApply = code || voucherCode.trim();
-        
+
         if (!voucherToApply) {
-            message.error('Vui lòng nhập mã voucher');
+            message.error('Please enter voucher code');
             return;
         }
 
         setValidating(true);
         try {
             const result = await voucherService.validateVoucher(
-                voucherToApply.toUpperCase(), 
+                voucherToApply.toUpperCase(),
                 orderAmount,
                 SHIPPING.STANDARD_FEE
             );
             onVoucherApplied(result);
             setVoucherCode('');
             setIsModalOpen(false);
-            message.success('Áp dụng voucher thành công!');
+            message.success('Voucher applied successfully!');
         } catch (error: any) {
-            message.error(error.message || 'Voucher không hợp lệ');
+            message.error(error.message || 'Invalid voucher');
         } finally {
             setValidating(false);
         }
@@ -75,7 +75,7 @@ export default function VoucherInput({
 
     const handleRemoveVoucher = () => {
         onVoucherRemoved();
-        message.info('Đã xóa voucher');
+        message.info('Voucher removed');
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -87,9 +87,9 @@ export default function VoucherInput({
 
     const checkVoucherEligible = (voucher: Voucher): { eligible: boolean; reason?: string } => {
         if (orderAmount < voucher.min_order_amount) {
-            return { 
-                eligible: false, 
-                reason: `Cần mua thêm ${(voucher.min_order_amount - orderAmount).toLocaleString('vi-VN')}₫` 
+            return {
+                eligible: false,
+                reason: `Need ${(voucher.min_order_amount - orderAmount).toLocaleString('vi-VN')}₫ more`
             };
         }
         return { eligible: true };
@@ -98,11 +98,11 @@ export default function VoucherInput({
     const getDiscountText = (voucher: Voucher) => {
         switch (voucher.discount_type) {
             case 'percentage':
-                return `Giảm ${voucher.discount_value}%${voucher.max_discount_amount ? ` (tối đa ${voucher.max_discount_amount.toLocaleString('vi-VN')}₫)` : ''}`;
+                return `${voucher.discount_value}% off${voucher.max_discount_amount ? ` (max ${voucher.max_discount_amount.toLocaleString('vi-VN')}₫)` : ''}`;
             case 'fixed_amount':
-                return `Giảm ${voucher.discount_value.toLocaleString('vi-VN')}₫`;
+                return `${voucher.discount_value.toLocaleString('vi-VN')}₫ off`;
             case 'free_shipping':
-                return 'Miễn phí vận chuyển';
+                return 'Free shipping';
             default:
                 return '';
         }
@@ -128,7 +128,7 @@ export default function VoucherInput({
 
     if (appliedVoucher) {
         const isFreeShipping = appliedVoucher.voucher.discount_type === 'free_shipping';
-        
+
         return (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <Space direction="vertical" className="w-full" size="small">
@@ -136,38 +136,38 @@ export default function VoucherInput({
                         <Space>
                             <CheckOutlined className="text-green-600" />
                             <span className="font-medium text-green-800">
-                                Đã áp dụng: {appliedVoucher.voucher.code}
+                                Applied: {appliedVoucher.voucher.code}
                             </span>
                         </Space>
-                        <Button 
-                            type="text" 
-                            size="small" 
+                        <Button
+                            type="text"
+                            size="small"
                             onClick={handleRemoveVoucher}
                             className="text-red-600 hover:bg-red-50"
                         >
-                            Xóa
+                            Remove
                         </Button>
                     </div>
-                    
+
                     <div className="text-sm text-green-700">
                         <div>{appliedVoucher.voucher.name}</div>
                         {appliedVoucher.voucher.description && (
                             <div className="text-xs mt-1">{appliedVoucher.voucher.description}</div>
                         )}
                     </div>
-                    
+
                     <div className="bg-white rounded p-2 border border-green-100">
                         <div className="flex justify-between text-sm">
                             {isFreeShipping ? (
                                 <>
-                                    <span>Ưu đãi:</span>
+                                    <span>Benefit:</span>
                                     <span className="font-medium text-green-600">
-                                        Miễn phí vận chuyển
+                                        Free shipping
                                     </span>
                                 </>
                             ) : (
                                 <>
-                                    <span>Giảm giá:</span>
+                                    <span>Discount:</span>
                                     <span className="font-medium text-red-600">
                                         -{appliedVoucher.order_summary.discount_amount.toLocaleString('vi-VN')}₫
                                     </span>
@@ -188,14 +188,14 @@ export default function VoucherInput({
                 className="w-full mt-4 border-dashed border-2 border-blue-400 text-blue-600 hover:border-blue-500 hover:text-blue-700"
                 size="large"
             >
-                Chọn hoặc nhập mã khuyến mãi
+                Select or enter voucher code
             </Button>
 
             <Modal
                 title={
                     <div className="flex items-center gap-2">
                         <GiftOutlined className="text-blue-500" />
-                        <span>Chọn mã khuyến mãi</span>
+                        <span>Select Voucher</span>
                     </div>
                 }
                 open={isModalOpen}
@@ -206,10 +206,10 @@ export default function VoucherInput({
             >
                 <Space direction="vertical" className="w-full" size="large">
                     <div>
-                        <div className="text-sm font-medium mb-2">Nhập mã voucher</div>
+                        <div className="text-sm font-medium mb-2">Enter voucher code</div>
                         <Space.Compact style={{ width: '100%' }}>
                             <Input
-                                placeholder="Nhập mã voucher..."
+                                placeholder="Enter voucher code..."
                                 value={voucherCode}
                                 onChange={(e) => {
                                     const value = e.target.value.replace(/[^A-Z0-9]/g, '').toUpperCase();
@@ -227,7 +227,7 @@ export default function VoucherInput({
                                 disabled={loading || !voucherCode.trim()}
                                 size="large"
                             >
-                                Áp dụng
+                                Apply
                             </Button>
                         </Space.Compact>
                     </div>
@@ -237,16 +237,16 @@ export default function VoucherInput({
                     {/* Danh sách vouchers */}
                     <div>
                         <div className="text-sm font-medium mb-3">
-                            Voucher có sẵn ({availableVouchers.length})
+                            Available Vouchers ({availableVouchers.length})
                         </div>
-                        
+
                         {loadingVouchers ? (
                             <div className="flex justify-center py-8">
                                 <Spin size="large" />
                             </div>
                         ) : availableVouchers.length === 0 ? (
-                            <Empty 
-                                description="Không có voucher nào"
+                            <Empty
+                                description="No vouchers available"
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                             />
                         ) : (
@@ -254,11 +254,11 @@ export default function VoucherInput({
                                 {/* Vouchers đủ điều kiện */}
                                 {eligibleVouchers.length > 0 && (
                                     <div>
-                                        <div className="text-xs text-gray-500 mb-2">Có thể áp dụng</div>
+                                        <div className="text-xs text-gray-500 mb-2">Can apply</div>
                                         {eligibleVouchers.map(voucher => {
                                             const daysLeft = getDaysLeft(voucher.end_date);
                                             return (
-                                                <div 
+                                                <div
                                                     key={voucher.voucher_id}
                                                     className="border-2 border-blue-300 bg-blue-50 rounded-lg p-3 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer mb-2"
                                                     onClick={() => handleApplyVoucher(voucher.code)}
@@ -272,34 +272,34 @@ export default function VoucherInput({
                                                                 {voucher.name}
                                                             </div>
                                                         </div>
-                                                        <Button 
-                                                            type="primary" 
+                                                        <Button
+                                                            type="primary"
                                                             size="small"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleApplyVoucher(voucher.code);
                                                             }}
                                                         >
-                                                            Áp dụng
+                                                            Apply
                                                         </Button>
                                                     </div>
-                                                    
+
                                                     <div className="text-sm text-blue-700 font-medium mb-2">
                                                         {getDiscountText(voucher)}
                                                     </div>
-                                                    
+
                                                     {voucher.min_order_amount > 0 && (
                                                         <div className="text-xs text-gray-600">
-                                                            Đơn tối thiểu: {voucher.min_order_amount.toLocaleString('vi-VN')}₫
+                                                            Min order: {voucher.min_order_amount.toLocaleString('vi-VN')}₫
                                                         </div>
                                                     )}
-                                                    
+
                                                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                                                         <ClockCircleOutlined />
-                                                        <span>HSD: {formatDate(voucher.end_date)}</span>
+                                                        <span>Exp: {formatDate(voucher.end_date)}</span>
                                                         {daysLeft <= 3 && (
                                                             <Tag color="orange" className="text-xs ml-auto">
-                                                                Còn {daysLeft} ngày
+                                                                {daysLeft} days left
                                                             </Tag>
                                                         )}
                                                     </div>
@@ -312,12 +312,12 @@ export default function VoucherInput({
                                 {/* Vouchers chưa đủ điều kiện */}
                                 {nonEligibleVouchers.length > 0 && (
                                     <div>
-                                        <div className="text-xs text-gray-500 mb-2">Chưa đủ điều kiện</div>
+                                        <div className="text-xs text-gray-500 mb-2">Not eligible</div>
                                         {nonEligibleVouchers.map(voucher => {
                                             const { reason } = checkVoucherEligible(voucher);
                                             const daysLeft = getDaysLeft(voucher.end_date);
                                             return (
-                                                <div 
+                                                <div
                                                     key={voucher.voucher_id}
                                                     className="border border-gray-300 bg-gray-50 rounded-lg p-3 opacity-60 mb-2"
                                                 >
@@ -334,20 +334,20 @@ export default function VoucherInput({
                                                             {reason}
                                                         </Tag>
                                                     </div>
-                                                    
+
                                                     <div className="text-sm text-gray-600 mb-2">
                                                         {getDiscountText(voucher)}
                                                     </div>
-                                                    
+
                                                     {voucher.min_order_amount > 0 && (
                                                         <div className="text-xs text-gray-500">
-                                                            Đơn tối thiểu: {voucher.min_order_amount.toLocaleString('vi-VN')}₫
+                                                            Min order: {voucher.min_order_amount.toLocaleString('vi-VN')}₫
                                                         </div>
                                                     )}
-                                                    
+
                                                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
                                                         <ClockCircleOutlined />
-                                                        <span>HSD: {formatDate(voucher.end_date)}</span>
+                                                        <span>Exp: {formatDate(voucher.end_date)}</span>
                                                     </div>
                                                 </div>
                                             );

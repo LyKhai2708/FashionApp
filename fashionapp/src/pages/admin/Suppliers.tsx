@@ -31,7 +31,7 @@ export default function Suppliers() {
                 total: response.data.metadata.total
             });
         } catch (error: any) {
-            message.error('Không thể tải danh sách nhà cung cấp');
+            message.error('Cannot load suppliers list');
         } finally {
             setLoading(false);
         }
@@ -53,10 +53,10 @@ export default function Suppliers() {
     const handleDelete = async (id: number) => {
         try {
             await supplierService.deleteSupplier(id);
-            message.success('Xóa nhà cung cấp thành công');
+            message.success('Supplier deleted successfully');
             fetchSuppliers(pagination.current, pagination.pageSize, search);
         } catch (error: any) {
-            message.error('Không thể xóa nhà cung cấp');
+            message.error('Cannot delete supplier');
         }
     };
 
@@ -79,16 +79,16 @@ export default function Suppliers() {
         try {
             if (editingSupplier) {
                 await supplierService.updateSupplier(editingSupplier.supplier_id, data);
-                message.success('Cập nhật nhà cung cấp thành công');
+                message.success('Supplier updated successfully');
             } else {
                 await supplierService.createSupplier(data);
-                message.success('Thêm nhà cung cấp thành công');
+                message.success('Supplier added successfully');
             }
 
             fetchSuppliers(pagination.current, pagination.pageSize, search);
             handleCloseModal();
         } catch (error: any) {
-            message.error(error.message || 'Không thể thực hiện thao tác');
+            message.error(error.message || 'Cannot perform action');
         }
     };
 
@@ -100,13 +100,13 @@ export default function Suppliers() {
             width: 80,
         },
         {
-            title: 'Tên nhà cung cấp',
+            title: 'Supplier Name',
             dataIndex: 'name',
             key: 'name',
             render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span>
         },
         {
-            title: 'Người liên hệ',
+            title: 'Contact Person',
             dataIndex: 'contact_name',
             key: 'contact_name',
         },
@@ -116,12 +116,12 @@ export default function Suppliers() {
             key: 'email',
         },
         {
-            title: 'SĐT',
+            title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 150,
             render: (_: any, record: Supplier) => (
@@ -132,23 +132,23 @@ export default function Suppliers() {
                             icon={<EditOutlined />}
                             onClick={() => handleOpenEditModal(record)}
                         >
-                            Sửa
+                            Edit
                         </Button>
                     </PermissionGate>
                     <PermissionGate permission="suppliers.delete">
                         <Popconfirm
-                            title="Xóa nhà cung cấp?"
-                            description="Bạn có chắc chắn muốn xóa nhà cung cấp này không?"
+                            title="Delete supplier?"
+                            description="Are you sure you want to delete this supplier?"
                             onConfirm={() => handleDelete(record.supplier_id)}
-                            okText="Xóa"
-                            cancelText="Hủy"
+                            okText="Delete"
+                            cancelText="Cancel"
                         >
                             <Button
                                 type="link"
                                 danger
                                 icon={<DeleteOutlined />}
                             >
-                                Xóa
+                                Delete
                             </Button>
                         </Popconfirm>
                     </PermissionGate>
@@ -161,7 +161,7 @@ export default function Suppliers() {
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <TagOutlined /> Quản lý nhà cung cấp
+                    <TagOutlined /> Supplier Management
                 </h1>
                 <PermissionGate permission="suppliers.create">
                     <Button
@@ -170,7 +170,7 @@ export default function Suppliers() {
                         onClick={handleOpenAddModal}
                         size="large"
                     >
-                        Thêm nhà cung cấp
+                        Add Supplier
                     </Button>
                 </PermissionGate>
             </div>
@@ -178,7 +178,7 @@ export default function Suppliers() {
             <Card>
                 <div style={{ marginBottom: 16 }}>
                     <Input.Search
-                        placeholder="Tìm kiếm theo tên, email, sđt..."
+                        placeholder="Search by name, email, phone..."
                         onSearch={handleSearch}
                         style={{ width: 300 }}
                         allowClear
@@ -194,11 +194,11 @@ export default function Suppliers() {
                         pageSize: pagination.pageSize,
                         total: pagination.total,
                         showSizeChanger: true,
-                        showTotal: (total) => `Tổng ${total} nhà cung cấp`
+                        showTotal: (total) => `Total ${total} suppliers`
                     }}
                     onChange={handleTableChange}
                     locale={{
-                        emptyText: 'Chưa có nhà cung cấp nào'
+                        emptyText: 'No suppliers yet'
                     }}
                 />
             </Card>

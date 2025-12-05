@@ -30,7 +30,7 @@ export default function PurchaseOrders() {
                 total: response.data.metadata.total
             });
         } catch (error: any) {
-            message.error('Không thể tải danh sách phiếu nhập');
+            message.error('Cannot load purchase orders list');
         } finally {
             setLoading(false);
         }
@@ -63,9 +63,9 @@ export default function PurchaseOrders() {
 
     const getStatusTag = (status: string) => {
         const config: Record<string, { color: string; text: string }> = {
-            pending: { color: 'orange', text: 'Chờ duyệt' },
-            completed: { color: 'green', text: 'Đã nhập kho' },
-            cancelled: { color: 'red', text: 'Đã hủy' }
+            pending: { color: 'orange', text: 'Pending' },
+            completed: { color: 'green', text: 'Received' },
+            cancelled: { color: 'red', text: 'Cancelled' }
         };
         const { color, text } = config[status] || { color: 'default', text: status };
         return <Tag color={color}>{text}</Tag>;
@@ -73,25 +73,25 @@ export default function PurchaseOrders() {
 
     const columns = [
         {
-            title: 'Mã phiếu',
+            title: 'Order ID',
             dataIndex: 'po_id',
             key: 'po_id',
             width: 100,
             render: (id: number) => <span style={{ fontWeight: 500 }}>#{id}</span>
         },
         {
-            title: 'Nhà cung cấp',
+            title: 'Supplier',
             dataIndex: 'supplier_name',
             key: 'supplier_name',
             render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span>
         },
         {
-            title: 'Người tạo',
+            title: 'Created By',
             dataIndex: 'staff_name',
             key: 'staff_name',
         },
         {
-            title: 'Tổng tiền',
+            title: 'Total Amount',
             dataIndex: 'total_amount',
             key: 'total_amount',
             render: (amount: string) => (
@@ -101,19 +101,19 @@ export default function PurchaseOrders() {
             )
         },
         {
-            title: 'Trạng thái',
+            title: 'Status',
             dataIndex: 'status',
             key: 'status',
             render: (status: string) => getStatusTag(status)
         },
         {
-            title: 'Ngày tạo',
+            title: 'Created Date',
             dataIndex: 'created_at',
             key: 'created_at',
             render: (date: string) => new Date(date).toLocaleDateString('vi-VN')
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 120,
             render: (_: any, record: PurchaseOrder) => (
@@ -124,7 +124,7 @@ export default function PurchaseOrders() {
                             icon={<EyeOutlined />}
                             onClick={() => navigate(`/admin/purchase-orders/${record.po_id}`)}
                         >
-                            Chi tiết
+                            Details
                         </Button>
                     </PermissionGate>
                 </Space>
@@ -136,7 +136,7 @@ export default function PurchaseOrders() {
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <ShoppingCartOutlined /> Quản lý nhập hàng
+                    <ShoppingCartOutlined /> Purchase Order Management
                 </h1>
                 <PermissionGate permission="purchase_orders.create">
                     <Button
@@ -145,7 +145,7 @@ export default function PurchaseOrders() {
                         onClick={() => navigate('/admin/purchase-orders/create')}
                         size="large"
                     >
-                        Tạo phiếu nhập
+                        Create Purchase Order
                     </Button>
                 </PermissionGate>
             </div>
@@ -153,22 +153,22 @@ export default function PurchaseOrders() {
             <Card style={{ marginBottom: 24 }}>
                 <Space>
                     <div>
-                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Trạng thái</div>
+                        <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Status</div>
                         <Select
                             value={statusFilter || undefined}
                             onChange={handleFilterChange}
                             style={{ width: 200 }}
-                            placeholder="Tất cả"
+                            placeholder="All"
                             allowClear
                         >
-                            <Select.Option value="pending">Chờ duyệt</Select.Option>
-                            <Select.Option value="completed">Đã nhập kho</Select.Option>
-                            <Select.Option value="cancelled">Đã hủy</Select.Option>
+                            <Select.Option value="pending">Pending</Select.Option>
+                            <Select.Option value="completed">Received</Select.Option>
+                            <Select.Option value="cancelled">Cancelled</Select.Option>
                         </Select>
                     </div>
                     <div style={{ paddingTop: 30 }}>
                         <Button icon={<ReloadOutlined />} onClick={handleResetFilters}>
-                            Đặt lại
+                            Reset
                         </Button>
                     </div>
                 </Space>
@@ -185,11 +185,11 @@ export default function PurchaseOrders() {
                         pageSize: pagination.pageSize,
                         total: pagination.total,
                         showSizeChanger: true,
-                        showTotal: (total) => `Tổng ${total} phiếu nhập`
+                        showTotal: (total) => `Total ${total} purchase orders`
                     }}
                     onChange={handleTableChange}
                     locale={{
-                        emptyText: 'Chưa có phiếu nhập nào'
+                        emptyText: 'No purchase orders yet'
                     }}
                 />
             </Card>

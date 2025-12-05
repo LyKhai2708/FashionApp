@@ -111,7 +111,7 @@ export default function Inventory() {
 
     const lowStockColumns = [
         {
-            title: 'Sản phẩm',
+            title: 'Product',
             key: 'product',
             width: 300,
             render: (_: any, record: LowStockProduct) => (
@@ -131,37 +131,37 @@ export default function Inventory() {
             )
         },
         {
-            title: 'Danh mục',
+            title: 'Category',
             dataIndex: 'category_name',
             key: 'category_name',
             width: 150
         },
         {
-            title: 'Thương hiệu',
+            title: 'Brand',
             dataIndex: 'brand_name',
             key: 'brand_name',
             width: 150
         },
         {
-            title: 'Tồn kho',
+            title: 'Stock',
             dataIndex: 'stock_quantity',
             key: 'stock_quantity',
             width: 120,
             render: (stock: number) => (
                 <Tag color={stock === 0 ? 'red' : stock < 5 ? 'orange' : 'gold'}>
-                    {stock} {stock === 0 ? '(Hết hàng)' : stock < 5 ? '(Rất thấp)' : '(Thấp)'}
+                    {stock} {stock === 0 ? '(Out of stock)' : stock < 5 ? '(Very low)' : '(Low)'}
                 </Tag>
             )
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 120,
             render: (_: any, record: LowStockProduct) => (
                 <PermissionGate
                     permission="inventory.adjust"
                     showTooltip={true}
-                    tooltipMessage="Bạn không có quyền điều chỉnh tồn kho"
+                    tooltipMessage="You do not have permission to adjust inventory"
                     fallback={
                         <Button
                             type="primary"
@@ -170,7 +170,7 @@ export default function Inventory() {
                             disabled
                             style={{ opacity: 0.5, cursor: 'not-allowed' }}
                         >
-                            Điều chỉnh
+                            Adjust
                         </Button>
                     }
                 >
@@ -180,7 +180,7 @@ export default function Inventory() {
                         icon={<EditOutlined />}
                         onClick={() => handleAdjustStock(record)}
                     >
-                        Điều chỉnh
+                        Adjust
                     </Button>
                 </PermissionGate>
             )
@@ -189,14 +189,14 @@ export default function Inventory() {
 
     const historyColumns = [
         {
-            title: 'Thời gian',
+            title: 'Time',
             dataIndex: 'created_at',
             key: 'created_at',
             width: 150,
             render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm')
         },
         {
-            title: 'Sản phẩm',
+            title: 'Product',
             key: 'product',
             width: 250,
             render: (_: any, record: StockHistoryItem) => (
@@ -209,7 +209,7 @@ export default function Inventory() {
             )
         },
         {
-            title: 'Loại',
+            title: 'Type',
             dataIndex: 'action_type',
             key: 'action_type',
             width: 130,
@@ -223,18 +223,18 @@ export default function Inventory() {
                     order_cancelled: 'cyan'
                 };
                 const labels: Record<string, string> = {
-                    sale: 'Bán hàng',
-                    restock: 'Nhập hàng',
-                    adjustment: 'Điều chỉnh',
-                    damaged: 'Hỏng hóc',
-                    return: 'Hoàn trả',
-                    order_cancelled: 'Hủy đơn'
+                    sale: 'Sale',
+                    restock: 'Restock',
+                    adjustment: 'Adjustment',
+                    damaged: 'Damaged',
+                    return: 'Return',
+                    order_cancelled: 'Order Cancelled'
                 };
                 return <Tag color={colors[type]}>{labels[type]}</Tag>;
             }
         },
         {
-            title: 'Thay đổi',
+            title: 'Change',
             key: 'change',
             width: 180,
             render: (_: any, record: StockHistoryItem) => (
@@ -252,19 +252,19 @@ export default function Inventory() {
             )
         },
         {
-            title: 'Nguồn gốc',
+            title: 'Source',
             key: 'source',
             width: 180,
             render: (_: any, record: StockHistoryItem) => {
                 if (record.action_type === 'sale' && record.customer_name) {
                     return <div style={{ fontSize: 12 }}>
-                        <div style={{ color: '#666' }}>Khách hàng:</div>
+                        <div style={{ color: '#666' }}>Customer:</div>
                         <div style={{ fontWeight: 500 }}>{record.customer_name}</div>
                     </div>;
                 }
                 if (record.action_type === 'restock' && record.supplier_name) {
                     return <div style={{ fontSize: 12 }}>
-                        <div style={{ color: '#666' }}>Nhà cung cấp:</div>
+                        <div style={{ color: '#666' }}>Supplier:</div>
                         <div style={{ fontWeight: 500 }}>{record.supplier_name}</div>
                     </div>;
                 }
@@ -272,13 +272,13 @@ export default function Inventory() {
             }
         },
         {
-            title: 'Lý do',
+            title: 'Reason',
             dataIndex: 'reason',
             key: 'reason',
             ellipsis: true
         },
         {
-            title: 'Người thực hiện',
+            title: 'Performed By',
             dataIndex: 'admin_username',
             key: 'admin_username',
             width: 130,
@@ -290,19 +290,19 @@ export default function Inventory() {
         <div style={{ padding: 24 }}>
             <div className="mb-4 flex items-center justify-between">
                 <h1 className="text-2xl font-bold">
-                    <StockOutlined /> Quản lý tồn kho
+                    <StockOutlined /> Inventory Management
                 </h1>
             </div>
 
             <Tabs activeKey={activeTab} onChange={setActiveTab}>
-                <TabPane tab="Tổng quan" key="overview">
+                <TabPane tab="Overview" key="overview">
                     {overview && (
                         <>
                             <Row gutter={16} style={{ marginBottom: 24 }}>
                                 <Col span={6}>
                                     <Card>
                                         <Statistic
-                                            title="Tổng variants"
+                                            title="Total Variants"
                                             value={overview.total.variants}
                                             valueStyle={{ color: '#3f8600' }}
                                         />
@@ -311,7 +311,7 @@ export default function Inventory() {
                                 <Col span={6}>
                                     <Card>
                                         <Statistic
-                                            title="Tổng tồn kho"
+                                            title="Total Stock"
                                             value={overview.total.stock}
                                             valueStyle={{ color: '#1890ff' }}
                                         />
@@ -320,7 +320,7 @@ export default function Inventory() {
                                 <Col span={6}>
                                     <Card>
                                         <Statistic
-                                            title="Sắp hết hàng"
+                                            title="Low Stock"
                                             value={overview.total.lowStock}
                                             valueStyle={{ color: '#faad14' }}
                                             prefix={<WarningOutlined />}
@@ -330,7 +330,7 @@ export default function Inventory() {
                                 <Col span={6}>
                                     <Card>
                                         <Statistic
-                                            title="Hết hàng"
+                                            title="Out of Stock"
                                             value={overview.total.outOfStock}
                                             valueStyle={{ color: '#cf1322' }}
                                             prefix={<WarningOutlined />}
@@ -339,29 +339,29 @@ export default function Inventory() {
                                 </Col>
                             </Row>
 
-                            <Card title="Tồn kho theo danh mục">
+                            <Card title="Stock by Category">
                                 <Table
                                     dataSource={overview.byCategory}
                                     rowKey="categoryId"
                                     pagination={false}
                                     columns={[
                                         {
-                                            title: 'Danh mục',
+                                            title: 'Category',
                                             dataIndex: 'categoryName',
                                             key: 'categoryName'
                                         },
                                         {
-                                            title: 'Số sản phẩm',
+                                            title: 'Product Count',
                                             dataIndex: 'productCount',
                                             key: 'productCount'
                                         },
                                         {
-                                            title: 'Tổng tồn kho',
+                                            title: 'Total Stock',
                                             dataIndex: 'totalStock',
                                             key: 'totalStock'
                                         },
                                         {
-                                            title: 'Sắp hết hàng',
+                                            title: 'Low Stock',
                                             dataIndex: 'lowStockCount',
                                             key: 'lowStockCount',
                                             render: (count: number) => (
@@ -369,7 +369,7 @@ export default function Inventory() {
                                             )
                                         },
                                         {
-                                            title: 'Hết hàng',
+                                            title: 'Out of Stock',
                                             dataIndex: 'outOfStockCount',
                                             key: 'outOfStockCount',
                                             render: (count: number) => (
@@ -383,12 +383,12 @@ export default function Inventory() {
                     )}
                 </TabPane>
 
-                <TabPane tab="Sản phẩm sắp hết hàng" key="low-stock">
+                <TabPane tab="Low Stock Products" key="low-stock">
                     <Card>
                         <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
                             <Space>
                                 <Input
-                                    placeholder="Tìm kiếm sản phẩm..."
+                                    placeholder="Search products..."
                                     prefix={<SearchOutlined />}
                                     style={{ width: 250 }}
                                     value={searchTerm}
@@ -405,11 +405,11 @@ export default function Inventory() {
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    <Select.Option value="all">Tất cả</Select.Option>
-                                    <Select.Option value="low">Sắp hết</Select.Option>
-                                    <Select.Option value="out">Hết hàng</Select.Option>
+                                    <Select.Option value="all">All</Select.Option>
+                                    <Select.Option value="low">Low Stock</Select.Option>
+                                    <Select.Option value="out">Out of Stock</Select.Option>
                                 </Select>
-                                <Tooltip title="Ngưỡng cảnh báo tồn kho thấp">
+                                <Tooltip title="Low stock warning threshold">
                                     <Select
                                         value={threshold}
                                         style={{ width: 150 }}
@@ -418,12 +418,12 @@ export default function Inventory() {
                                             setCurrentPage(1);
                                         }}
                                     >
-                                        <Select.Option value={5}>Dưới 5</Select.Option>
-                                        <Select.Option value={10}>Dưới 10</Select.Option>
-                                        <Select.Option value={20}>Dưới 20</Select.Option>
-                                        <Select.Option value={50}>Dưới 50</Select.Option>
-                                        <Select.Option value={100}>Dưới 100</Select.Option>
-                                        <Select.Option value={9999}>Tất cả</Select.Option>
+                                        <Select.Option value={5}>Below 5</Select.Option>
+                                        <Select.Option value={10}>Below 10</Select.Option>
+                                        <Select.Option value={20}>Below 20</Select.Option>
+                                        <Select.Option value={50}>Below 50</Select.Option>
+                                        <Select.Option value={100}>Below 100</Select.Option>
+                                        <Select.Option value={9999}>All</Select.Option>
                                     </Select>
                                 </Tooltip>
                             </Space>
@@ -440,17 +440,17 @@ export default function Inventory() {
                                 total: lowStockMetadata?.totalRecords || 0,
                                 onChange: (page) => setCurrentPage(page),
                                 showSizeChanger: false,
-                                showTotal: (total) => `Tổng ${total} sản phẩm`
+                                showTotal: (total) => `Total ${total} products`
                             }}
                         />
                     </Card>
                 </TabPane>
 
-                <TabPane tab={<span><HistoryOutlined /> Lịch sử</span>} key="history">
+                <TabPane tab={<span><HistoryOutlined /> History</span>} key="history">
                     <Card>
                         <Space style={{ marginBottom: 16 }}>
                             <Select
-                                placeholder="Loại thao tác"
+                                placeholder="Action type"
                                 style={{ width: 150 }}
                                 value={historyActionType || undefined}
                                 onChange={(value) => {
@@ -459,12 +459,12 @@ export default function Inventory() {
                                 }}
                                 allowClear
                             >
-                                <Select.Option value="sale">Bán hàng</Select.Option>
-                                <Select.Option value="restock">Nhập hàng</Select.Option>
-                                <Select.Option value="adjustment">Điều chỉnh</Select.Option>
-                                <Select.Option value="damaged">Hỏng hóc</Select.Option>
-                                <Select.Option value="return">Hoàn trả</Select.Option>
-                                <Select.Option value="order_cancelled">Hủy đơn</Select.Option>
+                                <Select.Option value="sale">Sale</Select.Option>
+                                <Select.Option value="restock">Restock</Select.Option>
+                                <Select.Option value="adjustment">Adjustment</Select.Option>
+                                <Select.Option value="damaged">Damaged</Select.Option>
+                                <Select.Option value="return">Return</Select.Option>
+                                <Select.Option value="order_cancelled">Order Cancelled</Select.Option>
                             </Select>
                             <RangePicker
                                 format="DD/MM/YYYY"
@@ -493,7 +493,7 @@ export default function Inventory() {
                                 total: historyMetadata?.totalRecords || 0,
                                 onChange: (page) => setHistoryPage(page),
                                 showSizeChanger: false,
-                                showTotal: (total) => `Tổng ${total} bản ghi`
+                                showTotal: (total) => `Total ${total} records`
                             }}
                         />
                     </Card>

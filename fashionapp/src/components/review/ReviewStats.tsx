@@ -13,7 +13,7 @@ interface ReviewStatsProps {
     productId: number;
     refreshTrigger?: number;
 }
-const ReviewStats: React.FC<ReviewStatsProps> = ({productId, refreshTrigger = 0}) => {
+const ReviewStats: React.FC<ReviewStatsProps> = ({ productId, refreshTrigger = 0 }) => {
     const [stats, setStats] = useState<ReviewStatsData>({
         average_rating: 0,
         total_reviews: 0,
@@ -30,7 +30,7 @@ const ReviewStats: React.FC<ReviewStatsProps> = ({productId, refreshTrigger = 0}
         setLoading(true);
         try {
             const response = await reviewService.getProductReviews(productId, 1, 1);
-          
+
             setStats({
                 average_rating: response.data.average_rating,
                 total_reviews: response.data.total_reviews,
@@ -61,41 +61,41 @@ const ReviewStats: React.FC<ReviewStatsProps> = ({productId, refreshTrigger = 0}
                 {/* Overall Rating */}
                 <div className="text-center">
                     <div className="text-2xl font-bold text-red-500 mb-2">
-                        {stats.average_rating.toFixed(1)} trên 5
+                        {stats.average_rating.toFixed(1)} out of 5
                     </div>
-                    <Rate 
-                    style={{color: 'red'}} 
-                    disabled value={stats.average_rating} 
-                    allowHalf className="mb-2" />
+                    <Rate
+                        style={{ color: 'red' }}
+                        disabled value={stats.average_rating}
+                        allowHalf className="mb-2" />
                     <div className="text-gray-600">
-                        {stats.total_reviews} đánh giá
+                        {stats.total_reviews} reviews
                     </div>
                 </div>
 
                 {/* Rating Breakdown */}
                 <div className="space-y-2">
                     {([5, 4, 3, 2, 1] as const).map(rating => {
-                    const count = stats.rating_breakdown[rating] || 0;
-                    const percentage = stats.total_reviews > 0 
-                            ? (count / stats.total_reviews) * 100 
+                        const count = stats.rating_breakdown[rating] || 0;
+                        const percentage = stats.total_reviews > 0
+                            ? (count / stats.total_reviews) * 100
                             : 0;
-                    return (
-                        <div key={rating} className="flex items-center gap-2">
-                            <span className="block flex items-center w-8 text-sm gap-1 justify-end ">{rating} <Star className=' inline-block w-4 h-4' /></span>
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                <div 
-                                    className="bg-yellow-400 h-2 rounded-full"
-                                    style={{ 
-                                        width: `${percentage}%` 
-                                    }}
-                                />
+                        return (
+                            <div key={rating} className="flex items-center gap-2">
+                                <span className="block flex items-center w-8 text-sm gap-1 justify-end ">{rating} <Star className=' inline-block w-4 h-4' /></span>
+                                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div
+                                        className="bg-yellow-400 h-2 rounded-full"
+                                        style={{
+                                            width: `${percentage}%`
+                                        }}
+                                    />
+                                </div>
+                                <span className="w-8 text-sm text-gray-600">
+                                    {count}
+                                </span>
                             </div>
-                            <span className="w-8 text-sm text-gray-600">
-                                {count}
-                            </span>
-                        </div>
-                    );
-            })}
+                        );
+                    })}
                 </div>
             </div>
         </div>

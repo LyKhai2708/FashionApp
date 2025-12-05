@@ -18,14 +18,14 @@ export default function EmailVerification() {
 
             if (!token) {
                 setStatus('error');
-                setMessage('Token xác nhận không hợp lệ');
+                setMessage('Invalid verification token');
                 return;
             }
 
             try {
                 const response = await emailVerificationService.verifyToken(token);
                 setStatus('success');
-                setMessage(response.message || 'Email đã được xác nhận thành công!');
+                setMessage(response.message || 'Email verified successfully!');
                 setEmail(response.data?.email || '');
                 setPurpose(response.data?.purpose || '');
 
@@ -37,7 +37,7 @@ export default function EmailVerification() {
                 }
             } catch (error: any) {
                 setStatus('error');
-                setMessage(error.message || 'Xác thực email thất bại');
+                setMessage(error.message || 'Email verification failed');
             }
         };
 
@@ -50,7 +50,7 @@ export default function EmailVerification() {
                 {status === 'loading' && (
                     <div className="text-center py-8">
                         <Spin size="large" />
-                        <p className="mt-4 text-gray-600">Đang xác thực email...</p>
+                        <p className="mt-4 text-gray-600">Verifying email...</p>
                     </div>
                 )}
 
@@ -58,7 +58,7 @@ export default function EmailVerification() {
                     <Result
                         icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
                         status="success"
-                        title="Xác Nhận Thành Công!"
+                        title="Verification Successful!"
                         subTitle={
                             <div>
                                 <p>{message}</p>
@@ -66,16 +66,16 @@ export default function EmailVerification() {
 
                                 {purpose === 'register' ? (
                                     <p className="text-gray-600 mt-4 font-medium">
-                                        Vui lòng quay lại trang đăng ký để hoàn tất.
+                                        Please return to the registration page to complete.
                                     </p>
                                 ) : (
                                     <p className="text-gray-600 mt-4 font-medium">
-                                        Email của bạn đã được cập nhật.
+                                        Your email has been updated.
                                     </p>
                                 )}
 
                                 <p className="text-gray-400 text-sm mt-2">
-                                    Bạn có thể đóng tab này.
+                                    You can close this tab.
                                 </p>
                             </div>
                         }
@@ -86,15 +86,15 @@ export default function EmailVerification() {
                                 onClick={() => window.close()}
                                 className="!bg-black !text-white hover:!bg-gray-800"
                             >
-                                Đóng tab này
+                                Close this tab
                             </Button>,
                             purpose === 'register' ? (
                                 <Button key="register" onClick={() => navigate('/register')}>
-                                    Mở trang đăng ký mới
+                                    Open new registration page
                                 </Button>
                             ) : (
                                 <Button key="home" onClick={() => navigate('/')}>
-                                    Về trang chủ
+                                    Go to homepage
                                 </Button>
                             )
                         ]}
@@ -105,7 +105,7 @@ export default function EmailVerification() {
                     <Result
                         icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
                         status="error"
-                        title="Xác Nhận Thất Bại"
+                        title="Verification Failed"
                         subTitle={message}
                         extra={[
                             <Button
@@ -114,10 +114,10 @@ export default function EmailVerification() {
                                 onClick={() => navigate('/register')}
                                 className="!bg-black !text-white hover:!bg-gray-800"
                             >
-                                Đăng ký lại
+                                Register again
                             </Button>,
                             <Button key="home" onClick={() => navigate('/')}>
-                                Về trang chủ
+                                Go to homepage
                             </Button>
                         ]}
                     />

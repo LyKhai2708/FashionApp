@@ -14,9 +14,9 @@ interface TimeLeft {
     seconds: number;
 }
 
-const Countdown: React.FC<CountdownProps> = ({ 
-    endDate, 
-    prefix = 'Kết thúc sau: ',
+const Countdown: React.FC<CountdownProps> = ({
+    endDate,
+    prefix = 'Ends in: ',
     className = ''
 }) => {
     const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft());
@@ -25,9 +25,9 @@ const Countdown: React.FC<CountdownProps> = ({
         // Parse endDate và set đến cuối ngày (23:59:59)
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        
+
         const difference = end.getTime() - new Date().getTime();
-        
+
         if (difference <= 0) {
             return { days: 0, hours: 0, minutes: 0, seconds: 0 };
         }
@@ -48,14 +48,14 @@ const Countdown: React.FC<CountdownProps> = ({
         return () => clearInterval(timer);
     }, [endDate]);
 
-    const isExpired = timeLeft.days === 0 && timeLeft.hours === 0 && 
-                      timeLeft.minutes === 0 && timeLeft.seconds === 0;
+    const isExpired = timeLeft.days === 0 && timeLeft.hours === 0 &&
+        timeLeft.minutes === 0 && timeLeft.seconds === 0;
 
     if (isExpired) {
         return (
             <div className={`flex items-center gap-2 text-gray-500 ${className}`}>
                 <Clock className="w-4 h-4" />
-                <span>Đã kết thúc</span>
+                <span>Ended</span>
             </div>
         );
     }

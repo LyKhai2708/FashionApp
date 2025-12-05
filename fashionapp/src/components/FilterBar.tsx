@@ -5,11 +5,11 @@ import { colorService, type Color } from '../services/colorService';
 import { sizeService, type Size } from '../services/sizeService';
 
 const PRICE_RANGES = [
-    { label: "Dưới 100.000đ", min: 0, max: 100000 },
-    { label: "100.000đ - 300.000đ", min: 100000, max: 300000 },
-    { label: "300.000đ - 500.000đ", min: 300000, max: 500000 },
-    { label: "500.000đ - 1.000.000đ", min: 500000, max: 1000000 },
-    { label: "Trên 1.000.000đ", min: 1000000, max: undefined }
+    { label: "Under 100,000₫", min: 0, max: 100000 },
+    { label: "100,000₫ - 300,000₫", min: 100000, max: 300000 },
+    { label: "300,000₫ - 500,000₫", min: 300000, max: 500000 },
+    { label: "500,000₫ - 1,000,000₫", min: 500000, max: 1000000 },
+    { label: "Over 1,000,000₫", min: 1000000, max: undefined }
 ];
 
 interface FilterBarProps {
@@ -216,7 +216,7 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                                     </button>
                                 ))
                             ) : (
-                                <p className="col-span-5 text-sm text-gray-500">Không có màu sắc</p>
+                                <p className="col-span-5 text-sm text-gray-500">No colors available</p>
                             )}
                         </div>
                     )}
@@ -253,7 +253,7 @@ export default function FilterBar({ onFilterChange, currentFilters }: FilterBarP
                                     </button>
                                 ))
                             ) : (
-                                <p className="text-sm text-gray-500">Không có kích thước</p>
+                                <p className="text-sm text-gray-500">No sizes available</p>
                             )}
                         </div>
                     )}

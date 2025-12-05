@@ -19,34 +19,34 @@ const ReviewFilters: React.FC<ReviewFiltersProps> = ({
         <div className="flex flex-wrap gap-4 mb-6 p-4 bg-white">
 
             <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Sắp xếp:</span>
+                <span className="text-sm font-medium">Sort by:</span>
                 <Select
                     value={sortBy}
                     onChange={setSortBy}
                     style={{ width: 160 }}
                     options={[
-                        { value: 'newest', label: 'Mới nhất' },
-                        { value: 'oldest', label: 'Cũ nhất' },
+                        { value: 'newest', label: 'Newest' },
+                        { value: 'oldest', label: 'Oldest' },
                     ]}
                 />
             </div>
 
 
             <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Lọc theo sao:</span>
+                <span className="text-sm font-medium">Filter by stars:</span>
                 <div className="flex gap-2 ">
-                    <Button 
+                    <Button
                         size="middle"
-                        style={{borderRadius: '0px'}}
+                        style={{ borderRadius: '0px' }}
                         type={filterRating === 0 ? 'primary' : 'default'}
                         onClick={() => setFilterRating(0)}
                     >
-                        Tất cả
+                        All
                     </Button>
                     {[5, 4, 3, 2, 1].map(rating => (
                         <Button
                             key={rating}
-                            style={{borderRadius: '0px'}}
+                            style={{ borderRadius: '0px' }}
                             size="middle"
                             type={filterRating === rating ? 'primary' : 'default'}
                             onClick={() => setFilterRating(rating)}

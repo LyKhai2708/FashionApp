@@ -61,7 +61,7 @@ const ChatWidget = () => {
 
     try {
       const response = await chatService.sendMessage(inputMessage);
-      
+
       const botMessages: ChatMessage[] = response.responses.map(r => ({
         sender: 'bot',
         message: r.text,
@@ -81,7 +81,7 @@ const ChatWidget = () => {
       console.error('Failed to send message:', error);
       const errorMessage: ChatMessage = {
         sender: 'bot',
-        message: 'Xin lỗi, tôi không thể kết nối ngay bây giờ. Vui lòng thử lại sau.',
+        message: 'Sorry, I cannot connect right now. Please try again later.',
         created_at: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -123,7 +123,7 @@ const ChatWidget = () => {
             className="w-full h-full shadow-2xl rounded-2xl overflow-hidden flex flex-col"
             bodyStyle={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }}
           >
-            <div 
+            <div
               className="px-4 py-3 flex items-center justify-between border-b border-gray-200"
               style={{ background: '#1f2937' }}
             >
@@ -132,8 +132,8 @@ const ChatWidget = () => {
                   <MessageOutlined className="text-white text-sm" />
                 </div>
                 <div>
-                  <div className="font-medium text-white text-sm">Hỗ trợ khách hàng</div>
-                  <div className="text-xs text-gray-400">Trực tuyến</div>
+                  <div className="font-medium text-white text-sm">Customer Support</div>
+                  <div className="text-xs text-gray-400">Online</div>
                 </div>
               </div>
               <Button
@@ -152,16 +152,15 @@ const ChatWidget = () => {
                   <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
                     <MessageOutlined className="text-blue-600 text-2xl" />
                   </div>
-                  <div className="text-sm">Xin chào! Tôi có thể giúp gì cho bạn?</div>
+                  <div className="text-sm">Hello! How can I help you?</div>
                 </div>
               )}
 
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`flex gap-2 mb-4 ${
-                    msg.sender === 'user' ? 'flex-row-reverse' : ''
-                  }`}
+                  className={`flex gap-2 mb-4 ${msg.sender === 'user' ? 'flex-row-reverse' : ''
+                    }`}
                 >
                   <div className="flex-shrink-0">
                     {msg.sender === 'user' ? (
@@ -176,20 +175,18 @@ const ChatWidget = () => {
                   </div>
                   <div className={msg.image_url ? "max-w-[85%]" : "max-w-[70%]"}>
                     <div
-                      className={`px-3 py-2 rounded-lg break-words ${
-                        msg.sender === 'user'
+                      className={`px-3 py-2 rounded-lg break-words ${msg.sender === 'user'
                           ? 'bg-gray-800 text-white rounded-br-sm'
                           : 'bg-gray-100 text-gray-800 border border-gray-200 rounded-bl-sm'
-                      }`}
+                        }`}
                     >
                       {msg.image_url ? (
                         <div className="flex gap-2.5 items-start">
-                          <img 
-                            src={getImageUrl(msg.image_url)} 
-                            alt="Product" 
-                            className={`rounded-md shadow-sm flex-shrink-0 ${
-                              msg.product_id ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
-                            }`}
+                          <img
+                            src={getImageUrl(msg.image_url)}
+                            alt="Product"
+                            className={`rounded-md shadow-sm flex-shrink-0 ${msg.product_id ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+                              }`}
                             style={{ width: '85px', height: '85px', objectFit: 'cover' }}
                             onClick={() => {
                               if (msg.product_id) {
@@ -207,7 +204,7 @@ const ChatWidget = () => {
                                 onClick={() => window.open(`/products/${msg.product_id}`, '_blank')}
                                 className="text-blue-600 hover:text-blue-700 text-xs mt-1.5 font-medium inline-flex items-center gap-1"
                               >
-                                Xem chi tiết →
+                                View details →
                               </button>
                             )}
                           </div>
@@ -227,10 +224,9 @@ const ChatWidget = () => {
                       )}
                     </div>
                     {msg.created_at && (
-                      <div 
-                        className={`text-[11px] text-gray-400 mt-1 ${
-                          msg.sender === 'user' ? 'text-left' : 'text-right'
-                        }`}
+                      <div
+                        className={`text-[11px] text-gray-400 mt-1 ${msg.sender === 'user' ? 'text-left' : 'text-right'
+                          }`}
                       >
                         {new Date(msg.created_at).toLocaleTimeString('vi-VN', {
                           hour: '2-digit',
@@ -251,7 +247,7 @@ const ChatWidget = () => {
                   </div>
                   <div className="max-w-[70%]">
                     <div className="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 rounded-bl-sm">
-                      <Spin size="small" /> <span className="ml-2 text-xs">Đang trả lời...</span>
+                      <Spin size="small" /> <span className="ml-2 text-xs">Replying...</span>
                     </div>
                   </div>
                 </div>
@@ -265,7 +261,7 @@ const ChatWidget = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Nhập tin nhắn..."
+                placeholder="Type a message..."
                 autoSize={{ minRows: 1, maxRows: 3 }}
                 disabled={loading}
                 className="flex-1"

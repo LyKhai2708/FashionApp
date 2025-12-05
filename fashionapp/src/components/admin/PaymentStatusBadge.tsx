@@ -9,27 +9,27 @@ const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status }) => {
         switch (status) {
             case 'pending':
                 return {
-                    label: 'Chưa thanh toán',
+                    label: 'Unpaid',
                     className: 'bg-orange-100 text-orange-800'
                 };
             case 'paid':
                 return {
-                    label: 'Đã thanh toán',
+                    label: 'Paid',
                     className: 'bg-green-100 text-green-800'
                 };
             case 'failed':
                 return {
-                    label: 'Thanh toán thất bại',
+                    label: 'Payment Failed',
                     className: 'bg-red-100 text-red-800'
                 };
             case 'cancelled':
                 return {
-                    label: 'Đã hủy',
+                    label: 'Cancelled',
                     className: 'bg-gray-100 text-gray-800'
                 };
             case 'refunded':
                 return {
-                    label: 'Đã hoàn tiền',
+                    label: 'Refunded',
                     className: 'bg-purple-100 text-purple-800'
                 };
             default:

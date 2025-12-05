@@ -36,7 +36,7 @@ export default function Register() {
         setEmailVerified(true);
         setCurrentEmail(urlEmail);
         form.setFieldValue('email', urlEmail);
-        message.success('Email đã được xác thực thành công!');
+        message.success('Email verified successfully!');
 
         // Clean up localStorage
         localStorage.removeItem('verified_email');
@@ -59,7 +59,7 @@ export default function Register() {
           setCurrentEmail(verifiedEmail);
           setVerificationSent(false);
           setCountdown(0);
-          message.success('Email đã được xác thực! Bạn có thể hoàn tất đăng ký.');
+          message.success('Email verified! You can complete registration.');
         }
       }
     };
@@ -78,7 +78,7 @@ export default function Register() {
   const handleFinish = async (values: any) => {
     try {
       if (!emailVerified) {
-        message.error('Vui lòng xác thực email trước');
+        message.error('Please verify your email first');
         return;
       }
 
@@ -90,10 +90,10 @@ export default function Register() {
         phone: values.phone || null
       });
 
-      message.success('Đăng ký thành công! Vui lòng đăng nhập.');
+      message.success('Registration successful! Please login.');
       navigate('/login');
     } catch (err: any) {
-      message.error(err.message || 'Đăng ký thất bại');
+      message.error(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ export default function Register() {
     try {
       const email = form.getFieldValue('email');
       if (!email) {
-        message.error('Vui lòng nhập email');
+        message.error('Please enter your email');
         return;
       }
 
@@ -112,9 +112,9 @@ export default function Register() {
       setVerificationSent(true);
       setCurrentEmail(email);
       setCountdown(60);
-      message.success('Email xác nhận đã được gửi. Vui lòng kiểm tra hộp thư của bạn!');
+      message.success('Verification email sent. Please check your inbox!');
     } catch (err: any) {
-      message.error(err.message || 'Gửi email xác nhận thất bại');
+      message.error(err.message || 'Failed to send verification email');
     } finally {
       setLoading(false);
     }
@@ -123,14 +123,14 @@ export default function Register() {
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       if (!credentialResponse.credential) {
-        message.error('Không nhận được thông tin từ Google')
+        message.error('Could not receive information from Google')
         return
       }
       await googleLogin(credentialResponse.credential)
-      message.success('Đăng ký Google thành công!')
+      message.success('Google registration successful!')
       navigate('/')
     } catch (error: any) {
-      message.error(error.message || 'Đăng ký Google thất bại!')
+      message.error(error.message || 'Google registration failed!')
     }
   }
 
@@ -156,13 +156,12 @@ export default function Register() {
                 level={2}
                 style={{ color: "white", marginBottom: 16 }}
               >
-                THAM GIA CÙNG DELULU
+                JOIN DELULU
               </Typography.Title>
               <Typography.Paragraph
                 style={{ color: "rgba(255,255,255,0.9)", maxWidth: 420 }}
               >
-                Khám phá thế giới thời trang đầy cảm hứng. Tạo tài khoản để trải
-                nghiệm những bộ sưu tập độc đáo và xu hướng mới nhất.
+                Discover an inspiring world of fashion. Create an account to experience unique collections and the latest trends.
               </Typography.Paragraph>
             </div>
           </Col>
@@ -172,14 +171,14 @@ export default function Register() {
               <div className="flex justify-start">
                 <Link
                   to="/"
-                  aria-label="Về trang chủ"
+                  aria-label="Go to homepage"
                   className="p-2 rounded-full border text-gray-700 hover:bg-gray-50"
                 >
                   <Home size={18} />
                 </Link>
               </div>
               <h2 className="text-2xl font-semibold mb-6 text-center">
-                ĐĂNG KÝ
+                REGISTER
               </h2>
               <Form
                 form={form}
@@ -189,17 +188,17 @@ export default function Register() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
-                    label="Họ và tên"
+                    label="Full name"
                     name="username"
                     rules={[
-                      { required: true, message: "Vui lòng nhập họ và tên" },
-                      { min: 2, message: "Họ và tên phải có ít nhất 2 ký tự" },
-                      { max: 100, message: "Họ và tên không vượt quá 100 ký tự" }
+                      { required: true, message: "Please enter your full name" },
+                      { min: 2, message: "Full name must be at least 2 characters" },
+                      { max: 100, message: "Full name must not exceed 100 characters" }
                     ]}
                   >
                     <Input
                       size="large"
-                      placeholder="Nhập họ và tên"
+                      placeholder="Enter full name"
                       prefix={<UserOutlined />}
                       autoComplete="username"
                     />
@@ -209,20 +208,20 @@ export default function Register() {
                     label="Email"
                     name="email"
                     rules={[
-                      { required: true, message: "Vui lòng nhập email" },
-                      { type: "email", message: "Email không hợp lệ" },
-                      { max: 100, message: "Email không vượt quá 100 ký tự" }
+                      { required: true, message: "Please enter your email" },
+                      { type: "email", message: "Invalid email format" },
+                      { max: 100, message: "Email must not exceed 100 characters" }
                     ]}
                   >
                     <Input
                       size="large"
-                      placeholder="Nhập email"
+                      placeholder="Enter email"
                       prefix={<MailOutlined />}
                       autoComplete="email"
                       disabled={emailVerified}
                       suffix={
                         emailVerified ? (
-                          <span className="text-green-500 text-xs whitespace-nowrap">✓ Đã xác thực</span>
+                          <span className="text-green-500 text-xs whitespace-nowrap">✓ Verified</span>
                         ) : (
                           <Button
                             type="link"
@@ -232,7 +231,7 @@ export default function Register() {
                             size="small"
                             className="!p-0"
                           >
-                            {countdown > 0 ? `${countdown}s` : 'Xác nhận'}
+                            {countdown > 0 ? `${countdown}s` : 'Verify'}
                           </Button>
                         )
                       }
@@ -242,12 +241,12 @@ export default function Register() {
 
                 {verificationSent && !emailVerified && (
                   <Alert
-                    message="Email xác nhận đã được gửi"
+                    message="Verification email sent"
                     description={
                       <div>
-                        Vui lòng kiểm tra email <strong>{currentEmail}</strong> và click vào link để xác nhận.
+                        Please check your email <strong>{currentEmail}</strong> and click the link to verify.
                         <br />
-                        <small className="text-gray-500">Link có hiệu lực trong 15 phút</small>
+                        <small className="text-gray-500">Link is valid for 15 minutes</small>
                       </div>
                     }
                     type="info"
@@ -259,35 +258,35 @@ export default function Register() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
-                    label="Mật khẩu"
+                    label="Password"
                     name="password"
                     rules={[
-                      { required: true, message: "Vui lòng nhập mật khẩu" },
-                      { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" },
-                      { max: 50, message: "Mật khẩu không vượt quá 50 ký tự" }
+                      { required: true, message: "Please enter password" },
+                      { min: 6, message: "Password must be at least 6 characters" },
+                      { max: 50, message: "Password must not exceed 50 characters" }
                     ]}
                   >
                     <Input.Password
                       size="large"
-                      placeholder="Nhập mật khẩu"
+                      placeholder="Enter password"
                       prefix={<LockOutlined />}
                       autoComplete="new-password"
                     />
                   </Form.Item>
 
                   <Form.Item
-                    label="Xác nhận mật khẩu"
+                    label="Confirm password"
                     name="confirmPassword"
                     dependencies={["password"]}
                     rules={[
-                      { required: true, message: "Vui lòng xác nhận mật khẩu" },
+                      { required: true, message: "Please confirm your password" },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue("password") === value) {
                             return Promise.resolve();
                           }
                           return Promise.reject(
-                            new Error("Mật khẩu xác nhận không khớp!")
+                            new Error("Passwords do not match!")
                           );
                         },
                       }),
@@ -295,7 +294,7 @@ export default function Register() {
                   >
                     <Input.Password
                       size="large"
-                      placeholder="Nhập lại mật khẩu"
+                      placeholder="Re-enter password"
                       prefix={<LockOutlined />}
                       autoComplete="new-password"
                     />
@@ -304,14 +303,14 @@ export default function Register() {
 
                 <Form.Item
                   name="phone"
-                  label="Số điện thoại"
+                  label="Phone number"
                   rules={[
-                    { pattern: /^(0)[0-9]{9,10}$/, message: 'Số điện thoại không hợp lệ (phải bắt đầu bằng 0)' }
+                    { pattern: /^(0)[0-9]{9,10}$/, message: 'Invalid phone number (must start with 0)' }
                   ]}
                 >
                   <Input
                     prefix={<PhoneOutlined />}
-                    placeholder="Nhập số điện thoại"
+                    placeholder="Enter phone number"
                     size="large"
                   />
                 </Form.Item>
@@ -326,16 +325,16 @@ export default function Register() {
                     disabled={!emailVerified}
                     className="!bg-black !text-white hover:!bg-gray-800"
                   >
-                    Đăng ký
+                    Register
                   </Button>
                 </Form.Item>
 
-                <Divider plain>hoặc</Divider>
+                <Divider plain>or</Divider>
 
                 <div className="flex justify-center gap-3">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
-                    onError={() => message.error('Đăng ký Google thất bại')}
+                    onError={() => message.error('Google registration failed')}
                     useOneTap={false}
                     theme="outline"
                     size="large"
@@ -345,7 +344,7 @@ export default function Register() {
                 </div>
 
                 <p className="text-center text-sm mt-4">
-                  Đã có tài khoản?{" "}
+                  Already have an account?{" "}
                   <Link
                     to="/login"
                     style={{
@@ -353,7 +352,7 @@ export default function Register() {
                       fontWeight: "500",
                     }}
                   >
-                    Đăng nhập ngay
+                    Login now
                   </Link>
                 </p>
               </Form>

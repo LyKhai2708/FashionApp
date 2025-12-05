@@ -72,7 +72,7 @@ export default function Promotions() {
             setPromotions(result.promotions);
             setPaginate(result.metadata);
         } catch (error: any) {
-            message.error(error.message || 'Không thể tải danh sách khuyến mãi');
+            message.error(error.message || 'Cannot load promotions');
         } finally {
             setLoading(false);
         }
@@ -100,10 +100,10 @@ export default function Promotions() {
     const handleDelete = async (promoId: number) => {
         try {
             await promotionService.deletePromotion(promoId);
-            message.success('Xóa khuyến mãi thành công');
+            message.success('Promotion deleted successfully');
             fetchPromotions();
         } catch (error: any) {
-            message.error(error.message || 'Không thể xóa khuyến mãi');
+            message.error(error.message || 'Cannot delete promotion');
         }
     };
 
@@ -119,17 +119,17 @@ export default function Promotions() {
             };
 
             if (editingPromotion) {
-                message.info('Chức năng cập nhật chưa được hỗ trợ bởi backend');
+                message.info('Update function is not yet supported by backend');
             } else {
                 await promotionService.createPromotion(payload);
-                message.success('Tạo khuyến mãi thành công');
+                message.success('Promotion created successfully');
             }
 
             setModalVisible(false);
             form.resetFields();
             fetchPromotions();
         } catch (error: any) {
-            message.error(error.message || 'Không thể lưu khuyến mãi');
+            message.error(error.message || 'Cannot save promotion');
         }
     };
 
@@ -146,26 +146,26 @@ export default function Promotions() {
     };
 
     const getStatusText = (promotion: Promotion) => {
-        if (!promotion.active) return 'Đã vô hiệu';
+        if (!promotion.active) return 'Disabled';
         const now = dayjs();
         const startDate = dayjs(promotion.start_date);
         const endDate = dayjs(promotion.end_date);
 
-        if (now.isBefore(startDate)) return 'Sắp diễn ra';
-        if (now.isAfter(endDate)) return 'Đã kết thúc';
-        return 'Đang diễn ra';
+        if (now.isBefore(startDate)) return 'Upcoming';
+        if (now.isAfter(endDate)) return 'Ended';
+        return 'Active';
     };
 
     const columns: ColumnsType<Promotion> = [
         {
-            title: 'Tên khuyến mãi',
+            title: 'Promotion Name',
             dataIndex: 'name',
             key: 'name',
             ellipsis: true,
             render: (name) => <span className="font-medium">{name}</span>
         },
         {
-            title: 'Giảm giá',
+            title: 'Discount',
             dataIndex: 'discount_percent',
             key: 'discount_percent',
             width: 120,
@@ -176,7 +176,7 @@ export default function Promotions() {
             ),
         },
         {
-            title: 'Sản phẩm',
+            title: 'Products',
             dataIndex: 'product_count',
             key: 'product_count',
             width: 100,
@@ -185,7 +185,7 @@ export default function Promotions() {
             ),
         },
         {
-            title: 'Thời gian',
+            title: 'Duration',
             key: 'duration',
             width: 200,
             render: (_, record) => (
@@ -200,7 +200,7 @@ export default function Promotions() {
             ),
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 180,
             render: (_, record) => (
@@ -209,28 +209,28 @@ export default function Promotions() {
                         type="text"
                         icon={<EyeOutlined />}
                         onClick={() => handleView(record)}
-                        title="Xem chi tiết"
+                        title="View details"
                     />
                     <Button
                         type="text"
                         icon={<ShoppingOutlined />}
                         onClick={() => handleViewProducts(record)}
-                        title="Xem sản phẩm"
+                        title="View products"
                     />
                     <PermissionGate permission="promotions.delete">
                         <Popconfirm
-                            title="Xóa khuyến mãi này?"
-                            description="Bạn có chắc chắn muốn xóa khuyến mãi này không?"
+                            title="Delete this promotion?"
+                            description="Are you sure you want to delete this promotion?"
                             onConfirm={() => handleDelete(record.promo_id)}
-                            okText="Xóa"
-                            cancelText="Hủy"
+                            okText="Delete"
+                            cancelText="Cancel"
                             okType="danger"
                         >
                             <Button
                                 type="text"
                                 danger
                                 icon={<DeleteOutlined />}
-                                title="Xóa"
+                                title="Delete"
                             />
                         </Popconfirm>
                     </PermissionGate>
@@ -252,8 +252,8 @@ export default function Promotions() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý Khuyến mãi</h1>
-                    <p className="text-gray-600 mt-1">Tổng số: {paginate.totalRecords} khuyến mãi</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Promotion Management</h1>
+                    <p className="text-gray-600 mt-1">Total: {paginate.totalRecords} promotions</p>
                 </div>
                 <PermissionGate permission="promotions.create">
                     <Button
@@ -261,7 +261,7 @@ export default function Promotions() {
                         icon={<PlusOutlined />}
                         onClick={handleCreate}
                     >
-                        Tạo khuyến mãi mới
+                        Create New Promotion
                     </Button>
                 </PermissionGate>
             </div>
@@ -270,7 +270,7 @@ export default function Promotions() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Tổng khuyến mãi"
+                            title="Total Promotions"
                             value={totalPromotions}
                             prefix={<GiftOutlined />}
                         />
@@ -279,7 +279,7 @@ export default function Promotions() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Đang diễn ra"
+                            title="Active"
                             value={activePromotions}
                             prefix={<PercentageOutlined />}
                             valueStyle={{ color: '#3f8600' }}
@@ -289,7 +289,7 @@ export default function Promotions() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Tổng sản phẩm"
+                            title="Total Products"
                             value={totalProducts}
                             prefix={<ShoppingOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -310,7 +310,7 @@ export default function Promotions() {
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) =>
-                        `Hiển thị ${range[0]}-${range[1]} của ${total} khuyến mãi`,
+                        `Showing ${range[0]}-${range[1]} of ${total} promotions`,
                     onChange: (page, pageSize) => {
                         fetchPromotions({ page, limit: pageSize });
                     },
@@ -319,7 +319,7 @@ export default function Promotions() {
 
             {/* Create/Edit Modal */}
             <Modal
-                title={editingPromotion ? 'Cập nhật khuyến mãi' : 'Tạo khuyến mãi mới'}
+                title={editingPromotion ? 'Update Promotion' : 'Create New Promotion'}
                 open={modalVisible}
                 onCancel={() => setModalVisible(false)}
                 footer={null}
@@ -332,35 +332,35 @@ export default function Promotions() {
                 >
                     <Form.Item
                         name="name"
-                        label="Tên khuyến mãi"
+                        label="Promotion Name"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập tên khuyến mãi' },
-                            { min: 3, message: 'Tên khuyến mãi phải có ít nhất 3 ký tự' },
-                            { max: 100, message: 'Tên khuyến mãi không vượt quá 100 ký tự' }
+                            { required: true, message: 'Please enter promotion name' },
+                            { min: 3, message: 'Name must be at least 3 characters' },
+                            { max: 100, message: 'Name cannot exceed 100 characters' }
                         ]}
                     >
-                        <Input placeholder="VD: Giảm giá mùa hè" />
+                        <Input placeholder="e.g: Summer Sale" />
                     </Form.Item>
 
                     <Form.Item
                         name="description"
-                        label="Mô tả"
-                        rules={[{ max: 200, message: 'Mô tả không vượt quá 200 ký tự' }]}
+                        label="Description"
+                        rules={[{ max: 200, message: 'Description cannot exceed 200 characters' }]}
                     >
-                        <TextArea rows={3} placeholder="Mô tả chi tiết về khuyến mãi" />
+                        <TextArea rows={3} placeholder="Detailed description of the promotion" />
                     </Form.Item>
 
                     <Form.Item
                         name="discount_percent"
-                        label="Phần trăm giảm giá"
+                        label="Discount Percentage"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập phần trăm giảm giá' },
-                            { type: 'number', min: 0, max: 100, message: 'Giá trị từ 0-100%' }
+                            { required: true, message: 'Please enter discount percentage' },
+                            { type: 'number', min: 0, max: 100, message: 'Value from 0-100%' }
                         ]}
                     >
                         <InputNumber
                             style={{ width: '100%' }}
-                            placeholder="Nhập % (0-100)"
+                            placeholder="Enter % (0-100)"
                             min={0}
                             max={100}
                             formatter={(value) => `${value}%`}
@@ -370,8 +370,8 @@ export default function Promotions() {
 
                     <Form.Item
                         name="dateRange"
-                        label="Thời gian hiệu lực"
-                        rules={[{ required: true, message: 'Vui lòng chọn thời gian hiệu lực' }]}
+                        label="Validity Period"
+                        rules={[{ required: true, message: 'Please select validity period' }]}
                     >
                         <RangePicker
                             style={{ width: '100%' }}
@@ -381,20 +381,20 @@ export default function Promotions() {
 
                     <Form.Item
                         name="active"
-                        label="Trạng thái"
+                        label="Status"
                         valuePropName="checked"
                         initialValue={true}
                     >
-                        <Switch checkedChildren="Hoạt động" unCheckedChildren="Vô hiệu" />
+                        <Switch checkedChildren="Active" unCheckedChildren="Disabled" />
                     </Form.Item>
 
                     <Form.Item className="mb-0">
                         <Space>
                             <Button type="primary" htmlType="submit">
-                                {editingPromotion ? 'Cập nhật' : 'Tạo mới'}
+                                {editingPromotion ? 'Update' : 'Create'}
                             </Button>
                             <Button onClick={() => setModalVisible(false)}>
-                                Hủy
+                                Cancel
                             </Button>
                         </Space>
                     </Form.Item>
@@ -402,12 +402,12 @@ export default function Promotions() {
             </Modal>
 
             <Modal
-                title="Chi tiết khuyến mãi"
+                title="Promotion Details"
                 open={detailModalVisible}
                 onCancel={() => setDetailModalVisible(false)}
                 footer={[
                     <Button key="close" onClick={() => setDetailModalVisible(false)}>
-                        Đóng
+                        Close
                     </Button>
                 ]}
                 width={600}
@@ -423,7 +423,7 @@ export default function Promotions() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <span className="text-gray-500">Giảm giá:</span>
+                                <span className="text-gray-500">Discount:</span>
                                 <div>
                                     <Tag color="red" className="text-lg font-semibold">
                                         -{viewingPromotion.discount_percent}%
@@ -431,15 +431,15 @@ export default function Promotions() {
                                 </div>
                             </div>
                             <div>
-                                <span className="text-gray-500">Số sản phẩm:</span>
+                                <span className="text-gray-500">Products:</span>
                                 <div className="font-semibold">
-                                    {viewingPromotion.product_count || 0} sản phẩm
+                                    {viewingPromotion.product_count || 0} products
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <span className="text-gray-500">Thời gian hiệu lực:</span>
+                            <span className="text-gray-500">Validity Period:</span>
                             <div>
                                 {dayjs(viewingPromotion.start_date).format('DD/MM/YYYY')} - {' '}
                                 {dayjs(viewingPromotion.end_date).format('DD/MM/YYYY')}
@@ -460,7 +460,7 @@ export default function Promotions() {
                                     handleViewProducts(viewingPromotion);
                                 }}
                             >
-                                Xem danh sách sản phẩm
+                                View Product List
                             </Button>
                         </div>
                     </Space>

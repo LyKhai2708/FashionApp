@@ -16,13 +16,13 @@ export default function Login() {
     const handleFinish = async (values: { email: string; password: string }) => {
         try {
             await login(values)
-            message.success('Đăng nhập thành công!')
+            message.success('Login successful!')
             navigate('/')
         } catch (error: any) {
             if (error.message === 'GOOGLE_ONLY_ACCOUNT') {
-                message.warning('Email này đã đăng ký bằng Google. Vui lòng sử dụng nút "Đăng nhập với Google" bên dưới!')
+                message.warning('This email was registered with Google. Please use the "Sign in with Google" button below!')
             } else {
-                message.error(error.message || 'Đăng nhập thất bại!')
+                message.error(error.message || 'Login failed!')
             }
         }
     }
@@ -30,14 +30,14 @@ export default function Login() {
     const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
         try {
             if (!credentialResponse.credential) {
-                message.error('Không nhận được thông tin từ Google')
+                message.error('Could not receive information from Google')
                 return
             }
             await googleLogin(credentialResponse.credential)
-            message.success('Đăng nhập Google thành công!')
+            message.success('Google login successful!')
             navigate('/')
         } catch (error: any) {
-            message.error(error.message || 'Đăng nhập Google thất bại!')
+            message.error(error.message || 'Google login failed!')
         }
     }
 
@@ -56,21 +56,21 @@ export default function Login() {
                             }}
                         >
                             <Typography.Title level={2} style={{ color: 'white', marginBottom: 16 }}>
-                                CHÀO MỪNG TỚI VỚI DELULU
+                                WELCOME TO DELULU
                             </Typography.Title>
                             <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.9)', maxWidth: 420 }}>
-                                Tinh khiết, tràn trề cảm xúc - Đó không chỉ là cảm nhận về các thiết kế, mà còn là về xúc cảm của người mặc chúng.
+                                Pure, full of emotion - It's not just about the designs, but also about the feelings of those who wear them.
                             </Typography.Paragraph>
                         </div>
                     </Col>
                     <Col xs={24} md={12}>
                         <div className="p-6 md:p-10">
                             <div className="flex justify-start">
-                                <Link to="/" aria-label="Về trang chủ" className="p-2 rounded-full border text-gray-700 hover:bg-gray-50">
+                                <Link to="/" aria-label="Go to homepage" className="p-2 rounded-full border text-gray-700 hover:bg-gray-50">
                                     <Home size={18} />
                                 </Link>
                             </div>
-                            <h2 className="text-2xl font-semibold mb-6 text-center">ĐĂNG NHẬP</h2>
+                            <h2 className="text-2xl font-semibold mb-6 text-center">LOGIN</h2>
                             <Form
                                 form={form}
                                 layout="vertical"
@@ -78,33 +78,33 @@ export default function Login() {
                                 requiredMark={false}
                             >
                                 <Form.Item
-                                    label="Email / Số điện thoại"
+                                    label="Email / Phone number"
                                     name="email"
                                     rules={[
-                                        { required: true, message: 'Vui lòng nhập email hoặc số điện thoại' },
-                                        { max: 100, message: 'Không vượt quá 100 ký tự' }
+                                        { required: true, message: 'Please enter email or phone number' },
+                                        { max: 100, message: 'Must not exceed 100 characters' }
                                     ]}
                                 >
                                     <Input
                                         size="large"
-                                        placeholder="Nhập email hoặc số điện thoại"
+                                        placeholder="Enter email or phone number"
                                         prefix={<MailOutlined />}
                                         autoComplete="username"
                                     />
                                 </Form.Item>
 
                                 <Form.Item
-                                    label="Mật khẩu"
+                                    label="Password"
                                     name="password"
                                     rules={[
-                                        { required: true, message: 'Vui lòng nhập mật khẩu' },
-                                        { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
-                                        { max: 50, message: 'Mật khẩu không vượt quá 50 ký tự' }
+                                        { required: true, message: 'Please enter password' },
+                                        { min: 6, message: 'Password must be at least 6 characters' },
+                                        { max: 50, message: 'Password must not exceed 50 characters' }
                                     ]}
                                 >
                                     <Input.Password
                                         size="large"
-                                        placeholder="Nhập mật khẩu"
+                                        placeholder="Enter password"
                                         prefix={<LockOutlined />}
                                         autoComplete="current-password"
                                     />
@@ -112,7 +112,7 @@ export default function Login() {
 
                                 <div className="flex items-center justify-end mb-2">
                                     <Link to="/forgot-password" style={{ color: 'black' }}>
-                                        Quên mật khẩu?
+                                        Forgot password?
                                     </Link>
                                 </div>
 
@@ -130,12 +130,12 @@ export default function Login() {
                                     )}
                                 </button>
 
-                                <Divider plain>hoặc</Divider>
+                                <Divider plain>or</Divider>
 
                                 <div className="flex justify-center gap-3">
                                     <GoogleLogin
                                         onSuccess={handleGoogleSuccess}
-                                        onError={() => message.error('Đăng nhập Google thất bại')}
+                                        onError={() => message.error('Google login failed')}
                                         useOneTap={false}
                                         theme="outline"
                                         size="large"
@@ -145,11 +145,11 @@ export default function Login() {
                                 </div>
 
                                 <p className="text-center text-sm mt-4">
-                                    Chưa có tài khoản?
+                                    Don't have an account?
                                     {' '}<Link to="/register" style={{
                                         color: '#1890ff',
                                         fontWeight: '500'
-                                    }}>Đăng ký ngay</Link>
+                                    }}>Register now</Link>
                                 </p>
                             </Form>
                         </div>

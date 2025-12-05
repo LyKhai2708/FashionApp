@@ -50,12 +50,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
     const doSubmit = async () => {
         if (!editMode && !orderId) {
-            message.error('Vui lòng chọn đơn hàng');
+            message.error('Please select an order');
             return;
         }
 
         if (!comment.trim()) {
-            message.error('Vui lòng nhập nội dung đánh giá');
+            message.error('Please enter review content');
             return;
         }
 
@@ -64,10 +64,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             const images = fileList
                 .filter(file => file.originFileObj)
                 .map(file => file.originFileObj as File);
-            
+
             if (editMode && reviewId) {
                 await reviewService.updateReview(reviewId, { rating, comment, images });
-                message.success('Cập nhật đánh giá thành công!');
+                message.success('Review updated successfully!');
             } else {
                 await reviewService.createReview(productId, {
                     order_id: orderId!,
@@ -75,12 +75,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                     comment,
                     images
                 });
-                message.success('Đánh giá thành công!');
+                message.success('Review submitted successfully!');
             }
             handleClose();
             onSuccess();
         } catch (error: any) {
-            message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+            message.error(error.response?.data?.message || 'An error occurred');
         } finally {
             setLoading(false);
         }
@@ -108,22 +108,22 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         beforeUpload: (file) => {
             const isImage = file.type.startsWith('image/');
             if (!isImage) {
-                message.error('Chỉ được upload file ảnh!');
+                message.error('Only image files can be uploaded!');
                 return Upload.LIST_IGNORE;
             }
-            
+
             const isLt5M = file.size / 1024 / 1024 < 5;
             if (!isLt5M) {
-                message.error('Ảnh phải nhỏ hơn 5MB!');
+                message.error('Image must be smaller than 5MB!');
                 return Upload.LIST_IGNORE;
             }
-            
+
             if (fileList.length >= 5) {
-                message.error('Chỉ được upload tối đa 5 ảnh!');
+                message.error('Maximum 5 images allowed!');
                 return Upload.LIST_IGNORE;
             }
-            
-            return false; 
+
+            return false;
         },
         onChange: ({ fileList: newFileList }) => {
             setFileList(newFileList);
@@ -146,100 +146,100 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
     return (
         <>
-        <Modal
-            title={editMode ? 'Chỉnh sửa đánh giá' : 'Viết đánh giá'}
-            open={visible}
-            onCancel={handleClose}
-            footer={[
-                <Button key="cancel" onClick={handleClose}>
-                    Hủy
-                </Button>,
-                <Button
-                    key="submit"
-                    type="primary"
-                    loading={loading}
-                    onClick={handleSubmit}
-                >
-                    {editMode ? 'Cập nhật' : 'Gửi đánh giá'}
-                </Button>
-            ]}
-        >
-            <div className="space-y-4">
+            <Modal
+                title={editMode ? 'Edit Review' : 'Write a Review'}
+                open={visible}
+                onCancel={handleClose}
+                footer={[
+                    <Button key="cancel" onClick={handleClose}>
+                        Cancel
+                    </Button>,
+                    <Button
+                        key="submit"
+                        type="primary"
+                        loading={loading}
+                        onClick={handleSubmit}
+                    >
+                        {editMode ? 'Update' : 'Submit Review'}
+                    </Button>
+                ]}
+            >
+                <div className="space-y-4">
 
-                {!editMode && orderId === undefined && (
+                    {!editMode && orderId === undefined && (
+                        <div>
+                            <label className="block mb-2 font-medium">
+                                Select Order <span className="text-red-500">*</span>
+                            </label>
+                            <Select
+                                style={{ width: '100%' }}
+                                placeholder="Select order that purchased this product"
+                                value={orderId}
+                                onChange={setOrderId}
+                                options={userOrders.map(order => ({
+                                    value: order.order_id,
+                                    label: `Order #${order.order_id} - ${new Date(order.order_date).toLocaleDateString('vi-VN')}`
+                                }))}
+                            />
+                        </div>
+                    )}
+
+                    {/* Rating */}
                     <div>
                         <label className="block mb-2 font-medium">
-                            Chọn đơn hàng <span className="text-red-500">*</span>
+                            Rating <span className="text-red-500">*</span>
                         </label>
-                        <Select
-                            style={{ width: '100%' }}
-                            placeholder="Chọn đơn hàng đã mua sản phẩm này"
-                            value={orderId}
-                            onChange={setOrderId}
-                            options={userOrders.map(order => ({
-                                value: order.order_id,
-                                label: `Đơn hàng #${order.order_id} - ${new Date(order.order_date).toLocaleDateString('vi-VN')}`
-                            }))}
+                        <Rate value={rating} onChange={setRating} />
+                    </div>
+
+                    {/* Review content */}
+                    <div>
+                        <label className="block mb-2 font-medium">
+                            Comment <span className="text-red-500">*</span>
+                        </label>
+                        <TextArea
+                            rows={4}
+                            placeholder="Share your experience about this product..."
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            maxLength={500}
+                            showCount
                         />
                     </div>
-                )}
 
-                {/* Đánh giá sao */}
-                <div>
-                    <label className="block mb-2 font-medium">
-                        Đánh giá <span className="text-red-500">*</span>
-                    </label>
-                    <Rate value={rating} onChange={setRating} />
+                    <div>
+                        <label className="block mb-2 font-medium">
+                            Images (Optional)
+                        </label>
+                        <Upload {...uploadProps}>
+                            {fileList.length >= 5 ? null : (
+                                <div>
+                                    <PlusOutlined />
+                                    <div style={{ marginTop: 8 }}>Upload</div>
+                                </div>
+                            )}
+                        </Upload>
+                        <p className="text-sm text-gray-500 mt-2">
+                            {editMode
+                                ? 'Uploading new images will replace all old images. Max 5 images, each up to 5MB'
+                                : 'Max 5 images, each up to 5MB'
+                            }
+                        </p>
+                    </div>
                 </div>
+            </Modal>
 
-                {/* Nội dung đánh giá */}
-                <div>
-                    <label className="block mb-2 font-medium">
-                        Nhận xét <span className="text-red-500">*</span>
-                    </label>
-                    <TextArea
-                        rows={4}
-                        placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        maxLength={500}
-                        showCount
-                    />
-                </div>
-
-                <div>
-                    <label className="block mb-2 font-medium">
-                        Hình ảnh (Tùy chọn)
-                    </label>
-                    <Upload {...uploadProps}>
-                        {fileList.length >= 5 ? null : (
-                            <div>
-                                <PlusOutlined />
-                                <div style={{ marginTop: 8 }}>Upload</div>
-                            </div>
-                        )}
-                    </Upload>
-                    <p className="text-sm text-gray-500 mt-2">
-                        {editMode 
-                            ? 'Upload ảnh mới sẽ thay thế tất cả ảnh cũ. Tối đa 5 ảnh, mỗi ảnh không quá 5MB'
-                            : 'Tối đa 5 ảnh, mỗi ảnh không quá 5MB'
-                        }
-                    </p>
-                </div>
-            </div>
-        </Modal>
-
-        <Modal
-            title="Xác nhận sửa đánh giá"
-            open={confirmVisible}
-            onCancel={() => setConfirmVisible(false)}
-            footer={[
-                <Button key="cancel" onClick={() => setConfirmVisible(false)}>Hủy</Button>,
-                <Button key="ok" type="primary" loading={loading} onClick={async () => { await doSubmit(); setConfirmVisible(false); }}>Xác nhận</Button>
-            ]}
-        >
-            Sau khi sửa, bạn sẽ không thể sửa lại lần nữa. Bạn có chắc chắn muốn sửa?
-        </Modal>
+            <Modal
+                title="Confirm Edit Review"
+                open={confirmVisible}
+                onCancel={() => setConfirmVisible(false)}
+                footer={[
+                    <Button key="cancel" onClick={() => setConfirmVisible(false)}>Cancel</Button>,
+                    <Button key="ok" type="primary" loading={loading} onClick={async () => { await doSubmit(); setConfirmVisible(false); }}>Confirm</Button>
+                ]}
+            >
+                After editing, you won't be able to edit again. Are you sure you want to edit?
+            </Modal>
         </>
     );
 };

@@ -71,9 +71,9 @@ export default function CategoryPage() {
     });
 
     const breadcrumbs = [
-        { label: "Trang chủ", href: "/" },
-        { label: "Sản phẩm", href: "/products" },
-        { label: category?.category_name || "Danh mục", href: `/collection/${categorySlug}` }
+        { label: "Home", href: "/" },
+        { label: "Products", href: "/products" },
+        { label: category?.category_name || "Category", href: `/collection/${categorySlug}` }
     ];
 
     const handleFilterChange = (filters: ProductsParams) => {
@@ -105,13 +105,13 @@ export default function CategoryPage() {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-xl font-semibold mb-2">Có lỗi xảy ra</h2>
+                    <h2 className="text-xl font-semibold mb-2">An error occurred</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
                     >
-                        Thử lại
+                        Try again
                     </button>
                 </div>
             </div>
@@ -124,7 +124,7 @@ export default function CategoryPage() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải danh mục...</p>
+                    <p className="mt-4 text-gray-600">Loading category...</p>
                 </div>
             </div>
         );
@@ -135,7 +135,7 @@ export default function CategoryPage() {
             products={products}
             loading={loading}
             totalCount={totalCount}
-            title={category?.category_name || "Danh mục"}
+            title={category?.category_name || "Category"}
             breadcrumbs={breadcrumbs}
             onFilterChange={handleFilterChange}
             onSortChange={handleSortChange}

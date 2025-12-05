@@ -9,27 +9,27 @@ const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({ status }) => {
         switch (status) {
             case 'pending':
                 return {
-                    label: 'Chờ xử lý',
+                    label: 'Pending',
                     className: 'bg-yellow-100 text-yellow-800'
                 };
             case 'processing':
                 return {
-                    label: 'Đang xử lý',
+                    label: 'Processing',
                     className: 'bg-blue-100 text-blue-800'
                 };
             case 'shipped':
                 return {
-                    label: 'Đang giao',
+                    label: 'Shipped',
                     className: 'bg-purple-100 text-purple-800'
                 };
             case 'delivered':
                 return {
-                    label: 'Đã giao',
+                    label: 'Delivered',
                     className: 'bg-green-100 text-green-800'
                 };
             case 'cancelled':
                 return {
-                    label: 'Đã hủy',
+                    label: 'Cancelled',
                     className: 'bg-red-100 text-red-800'
                 };
             default:

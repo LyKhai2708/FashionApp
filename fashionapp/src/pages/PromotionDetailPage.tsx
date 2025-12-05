@@ -80,12 +80,12 @@ const PromotionDetailPage = () => {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-4">Không tìm thấy chương trình khuyến mãi</h2>
+                    <h2 className="text-2xl font-bold mb-4">Promotion not found</h2>
                     <button
                         onClick={() => navigate('/')}
                         className="text-blue-600 hover:underline"
                     >
-                        Về trang chủ
+                        Go to homepage
                     </button>
                 </div>
             </div>
@@ -102,12 +102,12 @@ const PromotionDetailPage = () => {
                             {
                                 title: (
                                     <a href="/" className="flex items-center gap-1 hover:text-red-600">
-                                        <span>Trang chủ</span>
+                                        <span>Home</span>
                                     </a>
                                 ),
                             },
                             {
-                                title: <span className="text-gray-600">Khuyến mãi</span>,
+                                title: <span className="text-gray-600">Promotions</span>,
                             },
                             {
                                 title: <span className="font-medium">{promotion.name}</span>,
@@ -123,7 +123,7 @@ const PromotionDetailPage = () => {
                     <div className="max-w-4xl mx-auto text-center">
 
                         <div className="inline-block bg-yellow-400 text-red-600 px-6 py-2 rounded-full font-bold text-2xl mb-4">
-                            GIẢM {promotion.discount_percent}%
+                            {promotion.discount_percent}% OFF
                         </div>
 
 
@@ -163,7 +163,7 @@ const PromotionDetailPage = () => {
                             <div className="mt-6 flex items-center justify-center gap-2 text-white/90">
                                 <Tag className="w-5 h-5" />
                                 <span className="text-lg">
-                                    {promotion.product_count} sản phẩm đang khuyến mãi
+                                    {promotion.product_count} products on promotion
                                 </span>
                             </div>
                         )}
@@ -174,7 +174,7 @@ const PromotionDetailPage = () => {
 
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Sản phẩm trong chương trình</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Products in this promotion</h2>
                     {totalCount > 0 && (
                         <p className="text-sm text-gray-500 mt-1">
                             Showing {((currentPage - 1) * 12) + 1}-{Math.min(currentPage * 12, totalCount)} of {totalCount} products

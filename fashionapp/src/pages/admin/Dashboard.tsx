@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { dashboardService,type DashboardStats } from '../../services/admin/dashboardService';
+import { dashboardService, type DashboardStats } from '../../services/admin/dashboardService';
 import RevenueCard from '../../components/admin/Revenue/RevenueCard';
 import RevenueChart from '../../components/admin/Revenue/RevenueChart';
 import StatCard from '../../components/admin/StatCard';
@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard
-                    title="Tổng người dùng"
+                    title="Total Users"
                     value={stats.overview.users.total}
                     changePercent={stats.overview.users.changePercent}
                     showComparison={true}
@@ -56,7 +56,7 @@ const Dashboard: React.FC = () => {
 
 
                 <StatCard
-                    title="Tổng sản phẩm"
+                    title="Total Products"
                     value={stats.overview.products.total}
                     showComparison={false}
                     icon={
@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
 
 
                 <StatCard
-                    title="Tổng đơn hàng"
+                    title="Total Orders"
                     value={stats.overview.orders.total}
                     changePercent={stats.overview.orders.changePercent}
                     showComparison={true}
@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
                 />
 
                 <StatCard
-                    title="Đơn chờ xử lý"
+                    title="Pending Orders"
                     value={stats.overview.pendingOrders}
                     showComparison={false}
                     icon={
@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
             {/* Revenue Stats - 2 cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <RevenueCard
-                    title="Doanh thu hôm nay"
+                    title="Today's Revenue"
                     amount={stats.revenue.today.revenue}
                     orderCount={stats.revenue.today.orderCount}
                     changePercent={stats.revenue.today.changePercent}
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
                     }
                 />
                 <RevenueCard
-                    title="Doanh thu tháng này"
+                    title="This Month's Revenue"
                     amount={stats.revenue.month.revenue}
                     orderCount={stats.revenue.month.orderCount}
                     changePercent={stats.revenue.month.changePercent}
@@ -120,15 +120,15 @@ const Dashboard: React.FC = () => {
 
             <RevenueChart />
 
-            
+
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b">
                         <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-yellow-500" />
-                        Sản phẩm bán chạy tháng này
-                    </h2>
+                            <Trophy className="w-5 h-5 text-yellow-500" />
+                            Best Selling Products This Month
+                        </h2>
                     </div>
                     <div className="p-6">
                         {stats.topProducts.length > 0 ? (
@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
                                             </div>
                                             <div>
                                                 <p className="font-medium text-gray-900">{product.product_name}</p>
-                                                <p className="text-sm text-gray-500">Đã bán: {product.total_sold} sản phẩm</p>
+                                                <p className="text-sm text-gray-500">Sold: {product.total_sold} items</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -157,7 +157,7 @@ const Dashboard: React.FC = () => {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-500 text-center py-4">Chưa có dữ liệu</p>
+                            <p className="text-gray-500 text-center py-4">No data available</p>
                         )}
                     </div>
                 </div>
@@ -165,9 +165,9 @@ const Dashboard: React.FC = () => {
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b">
                         <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5 text-orange-500" />
-                        Sản phẩm sắp hết hàng (dưới 10 sản phẩm)
-                    </h2>
+                            <AlertTriangle className="w-5 h-5 text-orange-500" />
+                            Low Stock Products (under 10 items)
+                        </h2>
                     </div>
                     <div className="p-6">
                         {stats.lowStockProducts.length > 0 ? (
@@ -181,19 +181,18 @@ const Dashboard: React.FC = () => {
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                                item.stock_quantity === 0 ? 'bg-red-100 text-red-700' :
+                                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${item.stock_quantity === 0 ? 'bg-red-100 text-red-700' :
                                                 item.stock_quantity < 5 ? 'bg-orange-100 text-orange-700' :
-                                                'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                                {item.stock_quantity} còn lại
+                                                    'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                {item.stock_quantity} remaining
                                             </span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-500 text-center py-4">Tất cả sản phẩm đều đủ hàng</p>
+                            <p className="text-gray-500 text-center py-4">All products are in stock</p>
                         )}
                     </div>
                 </div>
@@ -202,26 +201,26 @@ const Dashboard: React.FC = () => {
 
             <div className="bg-white rounded-lg shadow">
                 <div className="p-6 border-b">
-                    <h2 className="text-lg font-semibold">Đơn hàng gần đây</h2>
+                    <h2 className="text-lg font-semibold">Recent Orders</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Mã đơn
+                                    Order Code
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Khách hàng
+                                    Customer
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Số tiền
+                                    Amount
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Trạng thái
+                                    Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Ngày tạo
+                                    Order Date
                                 </th>
                             </tr>
                         </thead>
@@ -241,11 +240,10 @@ const Dashboard: React.FC = () => {
                                         }).format(order.total_amount)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-xs rounded-full ${
-                                            order.order_status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                        <span className={`px-2 py-1 text-xs rounded-full ${order.order_status === 'delivered' ? 'bg-green-100 text-green-800' :
                                             order.order_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
                                             {order.order_status}
                                         </span>
                                     </td>

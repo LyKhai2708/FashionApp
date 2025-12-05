@@ -25,7 +25,7 @@ export default function Colors() {
             const response = await colorService.getColors();
             setColors(response || []);
         } catch (error: any) {
-            message.error('Không thể tải danh sách màu sắc');
+            message.error('Cannot load colors');
         } finally {
             setLoading(false);
         }
@@ -36,13 +36,13 @@ export default function Colors() {
     }, []);
 
     const handleDelete = async (colorId: number) => {
-        if (!window.confirm('Xác nhận xóa màu sắc này?')) return;
+        if (!window.confirm('Are you sure you want to delete this color?')) return;
         try {
             await colorService.deleteColor(colorId);
-            message.success('Xóa thành công');
+            message.success('Deleted successfully');
             fetchColors();
         } catch (error: any) {
-            message.error(error.message || 'Không thể xóa');
+            message.error(error.message || 'Cannot delete');
         }
     };
 
@@ -50,12 +50,12 @@ export default function Colors() {
         try {
             setSubmitting(true);
             await colorService.createColor(values);
-            message.success('Thêm màu thành công');
+            message.success('Color added successfully');
             setIsModalOpen(false);
             form.resetFields();
             fetchColors();
         } catch (error: any) {
-            message.error(error.message || 'Không thể thêm màu');
+            message.error(error.message || 'Cannot add color');
         } finally {
             setSubmitting(false);
         }
@@ -65,7 +65,7 @@ export default function Colors() {
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <BgColorsOutlined /> Quản lý màu sắc
+                    <BgColorsOutlined /> Color Management
                 </h1>
                 <PermissionGate permission="colors.create">
                     <Button
@@ -78,7 +78,7 @@ export default function Colors() {
                         }}
                         size="large"
                     >
-                        Thêm màu
+                        Add Color
                     </Button>
                 </PermissionGate>
             </div>
@@ -87,7 +87,7 @@ export default function Colors() {
                 <Col span={24}>
                     <Card>
                         <Statistic
-                            title="Tổng màu sắc"
+                            title="Total Colors"
                             value={colors.length}
                             prefix={<BgColorsOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -96,7 +96,7 @@ export default function Colors() {
                 </Col>
             </Row>
 
-            <Card title="Danh sách màu sắc" loading={loading}>
+            <Card title="Color List" loading={loading}>
                 <Row gutter={[16, 16]}>
                     {colors.map((color) => (
                         <Col key={color.color_id} xs={12} sm={8} md={6} lg={4}>
@@ -120,11 +120,11 @@ export default function Colors() {
                                 <div style={{ fontSize: 12, color: '#999', marginBottom: 8, fontFamily: 'monospace' }}>{color.hex_code}</div>
                                 <PermissionGate permission="colors.delete">
                                     <Popconfirm
-                                        title="Xóa màu sắc?"
-                                        description="Bạn có chắc muốn xóa màu này?"
+                                        title="Delete color?"
+                                        description="Are you sure you want to delete this color?"
                                         onConfirm={() => handleDelete(color.color_id)}
-                                        okText="Xóa"
-                                        cancelText="Hủy"
+                                        okText="Delete"
+                                        cancelText="Cancel"
                                         okButtonProps={{ danger: true }}
                                     >
                                         <Button
@@ -133,7 +133,7 @@ export default function Colors() {
                                             size="small"
                                             icon={<DeleteOutlined />}
                                         >
-                                            Xóa
+                                            Delete
                                         </Button>
                                     </Popconfirm>
                                 </PermissionGate>
@@ -144,7 +144,7 @@ export default function Colors() {
             </Card>
 
             <Modal
-                title="Thêm màu mới"
+                title="Add New Color"
                 open={isModalOpen}
                 onCancel={() => {
                     setIsModalOpen(false);
@@ -153,8 +153,8 @@ export default function Colors() {
                 }}
                 onOk={() => form.submit()}
                 confirmLoading={submitting}
-                okText="Thêm"
-                cancelText="Hủy"
+                okText="Add"
+                cancelText="Cancel"
             >
                 <Form
                     form={form}
@@ -163,19 +163,19 @@ export default function Colors() {
                     initialValues={{ hex_code: '#000000' }}
                 >
                     <Form.Item
-                        label="Tên màu"
+                        label="Color Name"
                         name="name"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên màu' }]}
+                        rules={[{ required: true, message: 'Please enter color name' }]}
                     >
-                        <Input placeholder="VD: Đỏ, Xanh dương..." />
+                        <Input placeholder="e.g: Red, Blue..." />
                     </Form.Item>
 
                     <Form.Item
-                        label="Mã màu (Hex)"
+                        label="Hex Code"
                         name="hex_code"
                         rules={[
-                            { required: true, message: 'Vui lòng chọn màu' },
-                            { pattern: /^#[0-9A-F]{6}$/i, message: 'Mã màu không hợp lệ (VD: #FF0000)' }
+                            { required: true, message: 'Please select a color' },
+                            { pattern: /^#[0-9A-F]{6}$/i, message: 'Invalid hex code (e.g: #FF0000)' }
                         ]}
                     >
                         <div className="flex gap-2">
@@ -206,7 +206,7 @@ export default function Colors() {
                             className="w-24 h-24 rounded-full mx-auto border-2 shadow-lg"
                             style={{ backgroundColor: previewColor }}
                         />
-                        <p className="text-sm text-gray-500 mt-2">Preview màu</p>
+                        <p className="text-sm text-gray-500 mt-2">Color Preview</p>
                         <p className="text-xs text-gray-400 mt-1 font-mono">{previewColor}</p>
                     </div>
                 </Form>

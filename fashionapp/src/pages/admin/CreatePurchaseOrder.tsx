@@ -52,7 +52,7 @@ export default function CreatePurchaseOrder() {
         const newKey = `${productInfo.product_id}-${variant.variant_id}`;
 
         if (selectedProducts.some(p => p.key === newKey)) {
-            message.warning('Sản phẩm này đã được thêm vào danh sách');
+            message.warning('This product has already been added to the list');
             return;
         }
 
@@ -93,7 +93,7 @@ export default function CreatePurchaseOrder() {
 
     const handleSubmit = async (values: any) => {
         if (selectedProducts.length === 0) {
-            message.error('Vui lòng chọn ít nhất 1 sản phẩm');
+            message.error('Please select at least 1 product');
             return;
         }
 
@@ -111,10 +111,10 @@ export default function CreatePurchaseOrder() {
             };
 
             await purchaseOrderService.createPurchaseOrder(payload);
-            message.success('Tạo phiếu nhập thành công');
+            message.success('Purchase order created successfully');
             navigate('/admin/purchase-orders');
         } catch (error: any) {
-            message.error(error.message || 'Lỗi khi tạo phiếu nhập');
+            message.error(error.message || 'Error creating purchase order');
         } finally {
             setSubmitting(false);
         }
@@ -122,7 +122,7 @@ export default function CreatePurchaseOrder() {
 
     const columns = [
         {
-            title: 'Sản phẩm',
+            title: 'Product',
             dataIndex: 'product_name',
             key: 'product_name',
             render: (text: string, record: SelectedProduct) => (
@@ -138,7 +138,7 @@ export default function CreatePurchaseOrder() {
             )
         },
         {
-            title: 'Số lượng nhập',
+            title: 'Import Quantity',
             dataIndex: 'quantity',
             key: 'quantity',
             width: 150,
@@ -152,7 +152,7 @@ export default function CreatePurchaseOrder() {
             )
         },
         {
-            title: 'Đơn giá nhập',
+            title: 'Unit Price',
             dataIndex: 'unit_price',
             key: 'unit_price',
             width: 200,
@@ -169,7 +169,7 @@ export default function CreatePurchaseOrder() {
             )
         },
         {
-            title: 'Thành tiền',
+            title: 'Line Total',
             key: 'total',
             width: 200,
             render: (_: any, record: SelectedProduct) => (
@@ -197,17 +197,17 @@ export default function CreatePurchaseOrder() {
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16 }}>
                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/admin/purchase-orders')}>
-                    Quay lại
+                    Back
                 </Button>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    Tạo phiếu nhập kho
+                    Create Purchase Order
                 </h1>
             </div>
 
             <Form form={form} layout="vertical" onFinish={handleSubmit}>
                 <Row gutter={24}>
                     <Col span={16}>
-                        <Card title="Danh sách sản phẩm" style={{ marginBottom: 24 }}>
+                        <Card title="Product List" style={{ marginBottom: 24 }}>
                             <div style={{ marginBottom: 16 }}>
                                 <Button
                                     type="dashed"
@@ -216,7 +216,7 @@ export default function CreatePurchaseOrder() {
                                     size="large"
                                     block
                                 >
-                                    Thêm sản phẩm vào phiếu nhập
+                                    Add product to purchase order
                                 </Button>
                             </div>
 
@@ -225,42 +225,42 @@ export default function CreatePurchaseOrder() {
                                 columns={columns}
                                 rowKey="key"
                                 pagination={false}
-                                locale={{ emptyText: 'Chưa có sản phẩm nào được chọn' }}
+                                locale={{ emptyText: 'No products selected yet' }}
                             />
                         </Card>
                     </Col>
 
                     <Col span={8}>
-                        <Card title="Thông tin phiếu nhập">
+                        <Card title="Purchase Order Information">
                             <Form.Item
                                 name="supplier_id"
-                                label="Nhà cung cấp"
-                                rules={[{ required: true, message: 'Vui lòng chọn nhà cung cấp' }]}
+                                label="Supplier"
+                                rules={[{ required: true, message: 'Please select a supplier' }]}
                             >
                                 <Select
-                                    placeholder="Chọn nhà cung cấp"
+                                    placeholder="Select supplier"
                                     options={suppliers.map(s => ({ value: s.supplier_id, label: s.name }))}
                                 />
                             </Form.Item>
 
                             <Form.Item
                                 name="expected_date"
-                                label="Ngày dự kiến nhập"
+                                label="Expected Delivery Date"
                             >
                                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
                             </Form.Item>
 
                             <Form.Item
                                 name="notes"
-                                label="Ghi chú"
+                                label="Notes"
                             >
-                                <Input.TextArea rows={4} placeholder="Ghi chú cho phiếu nhập..." />
+                                <Input.TextArea rows={4} placeholder="Notes for purchase order..." />
                             </Form.Item>
 
                             <Divider />
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, fontSize: 16 }}>
-                                <span>Tổng tiền hàng:</span>
+                                <span>Total Amount:</span>
                                 <span style={{ fontWeight: 'bold', color: '#1890ff' }}>
                                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotal())}
                                 </span>
@@ -274,7 +274,7 @@ export default function CreatePurchaseOrder() {
                                 size="large"
                                 loading={submitting}
                             >
-                                Hoàn tất phiếu nhập
+                                Complete Purchase Order
                             </Button>
                         </Card>
                     </Col>

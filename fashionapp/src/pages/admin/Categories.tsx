@@ -35,7 +35,7 @@ export default function Categories() {
                 .map(cat => cat.category_id);
             setExpandedCategories(new Set(parentIds));
         } catch (error: any) {
-            message.error('Không thể tải danh sách danh mục');
+            message.error('Cannot load categories');
         } finally {
             setLoading(false);
         }
@@ -59,16 +59,16 @@ export default function Categories() {
     }, []);
 
     const handleToggleStatus = async (categoryId: number, currentStatus: number) => {
-        const action = currentStatus === 1 ? 'vô hiệu hóa' : 'kích hoạt';
-        if (!window.confirm(`Xác nhận ${action} danh mục này?`)) return;
+        const action = currentStatus === 1 ? 'disable' : 'enable';
+        if (!window.confirm(`Are you sure you want to ${action} this category?`)) return;
 
         try {
             await categoryService.toggleCategoryStatus(categoryId);
-            message.success(`${action === 'vô hiệu hóa' ? 'Vô hiệu hóa' : 'Kích hoạt'} thành công`);
+            message.success(`${action === 'disable' ? 'Disabled' : 'Enabled'} successfully`);
             fetchCategories();
             fetchStats();
         } catch (error: any) {
-            message.error(`Không thể ${action}`);
+            message.error(`Cannot ${action}`);
         }
     };
 
@@ -101,16 +101,16 @@ export default function Categories() {
         try {
             if (editingCategory) {
                 await categoryService.updateCategory(editingCategory.category_id, formData);
-                message.success('Cập nhật danh mục thành công');
+                message.success('Category updated successfully');
             } else {
                 await categoryService.createCategory(formData);
-                message.success('Thêm danh mục thành công');
+                message.success('Category added successfully');
             }
 
             await fetchCategories();
             await fetchStats();
         } catch (error: any) {
-            message.error(error.message || 'Không thể thực hiện thao tác');
+            message.error(error.message || 'Cannot perform operation');
         }
     };
 
@@ -123,7 +123,7 @@ export default function Categories() {
             {/* Header */}
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <FolderOutlined /> Quản lý danh mục
+                    <FolderOutlined /> Category Management
                 </h1>
                 <PermissionGate permission="categories.create">
                     <Button
@@ -132,7 +132,7 @@ export default function Categories() {
                         onClick={handleOpenAddForm}
                         size="large"
                     >
-                        Thêm danh mục
+                        Add Category
                     </Button>
                 </PermissionGate>
             </div>
@@ -142,7 +142,7 @@ export default function Categories() {
                 <Col span={12}>
                     <Card>
                         <Statistic
-                            title="Tổng danh mục"
+                            title="Total Categories"
                             value={stats.total}
                             prefix={<FolderOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -152,7 +152,7 @@ export default function Categories() {
                 <Col span={12}>
                     <Card>
                         <Statistic
-                            title="Đang hoạt động"
+                            title="Active"
                             value={stats.active}
                             prefix={<CheckCircleOutlined />}
                             valueStyle={{ color: '#52c41a' }}
@@ -162,7 +162,7 @@ export default function Categories() {
             </Row>
 
             {/* Categories Tree */}
-            <Card title="Cây danh mục" loading={loading}>
+            <Card title="Category Tree" loading={loading}>
                 <Collapse
                     defaultActiveKey={Array.from(expandedCategories)}
                     onChange={(keys) => setExpandedCategories(new Set(keys.map(k => Number(k))))}
@@ -189,8 +189,8 @@ export default function Categories() {
                                             }}>
                                                 {parent.category_name}
                                             </span>
-                                            {parent.active === 0 && <Tag color="error">Vô hiệu hóa</Tag>}
-                                            <Tag color="blue">{children.length} danh mục con</Tag>
+                                            {parent.active === 0 && <Tag color="error">Disabled</Tag>}
+                                            <Tag color="blue">{children.length} subcategories</Tag>
                                         </Space>
                                         <Space onClick={(e) => e.stopPropagation()}>
                                             <PermissionGate permission="categories.edit">
@@ -202,10 +202,10 @@ export default function Categories() {
                                             </PermissionGate>
                                             <PermissionGate permission="categories.delete">
                                                 <Popconfirm
-                                                    title={parent.active === 1 ? 'Vô hiệu hóa danh mục?' : 'Kích hoạt danh mục?'}
+                                                    title={parent.active === 1 ? 'Disable category?' : 'Enable category?'}
                                                     onConfirm={() => handleToggleStatus(parent.category_id, parent.active)}
-                                                    okText="Xác nhận"
-                                                    cancelText="Hủy"
+                                                    okText="Confirm"
+                                                    cancelText="Cancel"
                                                 >
                                                     <Button
                                                         type="link"
@@ -245,7 +245,7 @@ export default function Categories() {
                                                             </div>
                                                             <div style={{ fontSize: 12, color: '#999' }}>ID: {child.category_id}</div>
                                                         </div>
-                                                        {child.active === 0 && <Tag color="error" size="small">Vô hiệu hóa</Tag>}
+                                                        {child.active === 0 && <Tag color="error" size="small">Disabled</Tag>}
                                                     </Space>
                                                     <Space>
                                                         <PermissionGate permission="categories.edit">
@@ -258,10 +258,10 @@ export default function Categories() {
                                                         </PermissionGate>
                                                         <PermissionGate permission="categories.delete">
                                                             <Popconfirm
-                                                                title={child.active === 1 ? 'Vô hiệu hóa?' : 'Kích hoạt?'}
+                                                                title={child.active === 1 ? 'Disable?' : 'Enable?'}
                                                                 onConfirm={() => handleToggleStatus(child.category_id, child.active)}
-                                                                okText="Xác nhận"
-                                                                cancelText="Hủy"
+                                                                okText="Confirm"
+                                                                cancelText="Cancel"
                                                             >
                                                                 <Button
                                                                     type="link"
@@ -287,7 +287,7 @@ export default function Categories() {
                     <Card
                         size="small"
                         style={{ marginTop: 16, backgroundColor: '#fffbe6', borderColor: '#ffe58f' }}
-                        title={<span style={{ color: '#faad14' }}>⚠️ Danh mục mồ côi</span>}
+                        title={<span style={{ color: '#faad14' }}>⚠️ Orphan Categories</span>}
                     >
                         <Space direction="vertical" style={{ width: '100%' }}>
                             {categories.filter(cat => cat.parent_id && !categories.find(p => p.category_id === cat.parent_id)).map((orphan) => (
@@ -302,7 +302,7 @@ export default function Categories() {
                                         </Avatar>
                                         <div>
                                             <div style={{ fontWeight: 500 }}>{orphan.category_name}</div>
-                                            <div style={{ fontSize: 12, color: '#faad14' }}>Parent không tồn tại</div>
+                                            <div style={{ fontSize: 12, color: '#faad14' }}>Parent does not exist</div>
                                         </div>
                                     </Space>
                                     <Space>
@@ -313,10 +313,10 @@ export default function Categories() {
                                             onClick={() => handleOpenEditForm(orphan)}
                                         />
                                         <Popconfirm
-                                            title={orphan.active === 1 ? 'Vô hiệu hóa?' : 'Kích hoạt?'}
+                                            title={orphan.active === 1 ? 'Disable?' : 'Enable?'}
                                             onConfirm={() => handleToggleStatus(orphan.category_id, orphan.active)}
-                                            okText="Xác nhận"
-                                            cancelText="Hủy"
+                                            okText="Confirm"
+                                            cancelText="Cancel"
                                         >
                                             <Button
                                                 type="link"

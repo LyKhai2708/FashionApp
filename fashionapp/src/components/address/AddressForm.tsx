@@ -23,15 +23,15 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
     // Load provinces
     useEffect(() => {
         fetch('http://provinces.open-api.vn/api/v2/?depth=1')
-        .then(res => res.json())
-        .then(data => {
-            setProvinces(data || []);
-            setLoadingAddress(false);
-        })
-        .catch(error => {
-            console.error('Error loading provinces:', error);
-            setLoadingAddress(false);
-        });
+            .then(res => res.json())
+            .then(data => {
+                setProvinces(data || []);
+                setLoadingAddress(false);
+            })
+            .catch(error => {
+                console.error('Error loading provinces:', error);
+                setLoadingAddress(false);
+            });
     }, []);
 
     useEffect(() => {
@@ -39,7 +39,7 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
             if (address && provinces.length > 0) {
                 const defaultValue = !!address.is_default;
                 setIsDefault(defaultValue);
-                
+
                 form.setFieldsValue({
                     province: address.province_code,
                     ward: address.ward_code,
@@ -49,14 +49,14 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                     receiver_email: address.receiver_email,
                     is_default: defaultValue
                 });
-                
+
                 // Load wards for the selected province
                 if (address.province_code) {
                     await handleProvinceChange(address.province_code.toString());
                     setTimeout(() => {
-                        form.setFieldsValue({ 
+                        form.setFieldsValue({
                             ward: address.ward_code,
-                            is_default: defaultValue 
+                            is_default: defaultValue
                         });
                     }, 100);
                 }
@@ -67,8 +67,8 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
 
     const handleProvinceChange = async (provinceCode: string) => {
         form.setFieldsValue({ ward: undefined });
-        setWards([]); 
-        
+        setWards([]);
+
         if (provinceCode) {
             try {
                 const res = await fetch(
@@ -87,12 +87,12 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
         const provinceName = provinces.find(p => p.code == values.province)?.name;
         const wardName = wards.find(w => w.code == values.ward)?.name;
         if (!provinceName || !wardName) {
-            message.error('Vui lòng chọn đầy đủ địa chỉ');
+            message.error('Please select complete address');
             return;
         }
         try {
             setLoading(true);
-            
+
             const payload: CreateAddressPayload = {
                 province: provinceName,
                 province_code: values.province,
@@ -107,10 +107,10 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
 
             if (address) {
                 await addressService.updateAddress(address.id, payload);
-                message.success('Cập nhật địa chỉ thành công');
+                message.success('Address updated successfully');
             } else {
                 await addressService.createAddress(payload);
-                message.success('Thêm địa chỉ thành công');
+                message.success('Address added successfully');
             }
 
             onSuccess();
@@ -124,13 +124,13 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
     return (
         <div>
             <div className="flex items-center gap-3 mb-6">
-                <Button 
-                    icon={<ArrowLeftOutlined />} 
+                <Button
+                    icon={<ArrowLeftOutlined />}
                     onClick={onBack}
                     type="text"
                 />
                 <Title level={4} className="!mb-0">
-                    {address ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'}
+                    {address ? 'Edit Address' : 'Add New Address'}
                 </Title>
             </div>
 
@@ -141,69 +141,69 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                 className="max-w-md"
             >
                 <div className="mb-4">
-                    <Title level={5} className="!mb-3">Thông tin người nhận</Title>
-                    
+                    <Title level={5} className="!mb-3">Recipient Information</Title>
+
                     <Form.Item
-                        label="Tên người nhận"
+                        label="Recipient Name"
                         name="receiver_name"
                         rules={[
                             {
                                 required: true,
-                                message: 'Vui lòng nhập tên người nhận'
+                                message: 'Please enter recipient name'
                             },
                             {
                                 min: 2,
-                                message: 'Tên người nhận phải có ít nhất 2 ký tự'
+                                message: 'Recipient name must be at least 2 characters'
                             },
                             {
                                 max: 100,
-                                message: 'Tên người nhận không vượt quá 100 ký tự'
+                                message: 'Recipient name cannot exceed 100 characters'
                             }
                         ]}
                     >
-                        <Input placeholder="Nhập tên người nhận" />
+                        <Input placeholder="Enter recipient name" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Số điện thoại người nhận"
+                        label="Recipient Phone Number"
                         name="receiver_phone"
                         rules={[
                             {
                                 required: true,
                                 pattern: /^(0)[0-9]{9,10}$/,
-                                message: 'Số điện thoại không hợp lệ (phải bắt đầu bằng 0, có 10-11 số)'
+                                message: 'Invalid phone number (must start with 0, 10-11 digits)'
                             }
                         ]}
                     >
-                        <Input placeholder="Nhập số điện thoại" />
+                        <Input placeholder="Enter phone number" />
                     </Form.Item>
 
                     <Form.Item
-                        label="Email người nhận"
+                        label="Recipient Email"
                         name="receiver_email"
                         rules={[
                             {
                                 required: true,
                                 type: 'email',
-                                message: 'Email không hợp lệ'
+                                message: 'Invalid email'
                             },
                             {
                                 max: 100,
-                                message: 'Email không vượt quá 100 ký tự'
+                                message: 'Email cannot exceed 100 characters'
                             }
                         ]}
                     >
-                        <Input placeholder="Nhập email" />
+                        <Input placeholder="Enter email" />
                     </Form.Item>
                 </div>
-                <Title level={5} className="!mb-3">Thông tin địa chỉ</Title>
+                <Title level={5} className="!mb-3">Address Information</Title>
                 <Form.Item
-                    label="Tỉnh/Thành phố"
+                    label="Province/City"
                     name="province"
-                    rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành phố' }]}
+                    rules={[{ required: true, message: 'Please select province/city' }]}
                 >
-                    <Select 
-                        placeholder="Chọn tỉnh/thành phố"
+                    <Select
+                        placeholder="Select province/city"
                         onChange={handleProvinceChange}
                         loading={loadingAddress}
                     >
@@ -216,12 +216,12 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                 </Form.Item>
 
                 <Form.Item
-                    label="Phường/Xã"
+                    label="Ward/Commune"
                     name="ward"
-                    rules={[{ required: true, message: 'Vui lòng chọn phường/xã' }]}
+                    rules={[{ required: true, message: 'Please select ward/commune' }]}
                 >
-                    <Select 
-                        placeholder="Chọn phường/xã"
+                    <Select
+                        placeholder="Select ward/commune"
                         disabled={wards.length === 0}
                     >
                         {wards.map(ward => (
@@ -233,42 +233,42 @@ const AddressForm: React.FC<AddressFormProps> = ({ address, onBack, onSuccess })
                 </Form.Item>
 
                 <Form.Item
-                    label="Địa chỉ chi tiết"
+                    label="Detailed Address"
                     name="detail_address"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập địa chỉ chi tiết' },
-                        { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự' },
-                        { max: 200, message: 'Địa chỉ không vượt quá 200 ký tự' }
+                        { required: true, message: 'Please enter detailed address' },
+                        { min: 5, message: 'Address must be at least 5 characters' },
+                        { max: 200, message: 'Address cannot exceed 200 characters' }
                     ]}
                 >
-                    <Input.TextArea 
-                        rows={3} 
-                        placeholder="Số nhà, tên đường..." 
+                    <Input.TextArea
+                        rows={3}
+                        placeholder="House number, street name..."
                     />
                 </Form.Item>
-                
+
 
                 {!address && (
                     <Form.Item name="is_default" valuePropName="checked" initialValue={false}>
-                        <Switch 
+                        <Switch
                             checked={isDefault}
                             onChange={(checked) => {
                                 setIsDefault(checked);
                                 form.setFieldsValue({ is_default: checked });
                             }}
-                        /> <span className="ml-2">Đặt làm địa chỉ mặc định</span>
+                        />  <span className="ml-2">Set as default address</span>
                     </Form.Item>
                 )}
 
                 <Form.Item>
-                    <Button 
-                        type="primary" 
-                        htmlType="submit" 
+                    <Button
+                        type="primary"
+                        htmlType="submit"
                         loading={loading}
                         className="!bg-black"
                         block
                     >
-                        {address ? 'Cập nhật' : 'Thêm địa chỉ'}
+                        {address ? 'Update' : 'Add Address'}
                     </Button>
                 </Form.Item>
             </Form>

@@ -241,9 +241,7 @@ async function validateVoucher(code, userId, orderAmount) {
     return voucher;
 }
 
-/**
- * Tính toán số tiền giảm giá của voucher
- */
+
 function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
     let discountAmount = 0;
 
@@ -264,6 +262,9 @@ function calculateVoucherDiscount(voucher, orderAmount, shippingFee = 0) {
 
         case 'free_shipping':
             discountAmount = shippingFee;
+            if (voucher.max_discount_amount && discountAmount > voucher.max_discount_amount) {
+                discountAmount = voucher.max_discount_amount;
+            }
             break;
     }
 

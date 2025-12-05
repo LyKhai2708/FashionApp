@@ -17,9 +17,9 @@ export default function ForgotPassword() {
         try {
             await authService.forgotPassword(values.email);
             setEmailSent(true);
-            message.success('Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.');
+            message.success('Password reset email sent. Please check your inbox.');
         } catch (error: any) {
-            message.error(error.message || 'Đã xảy ra lỗi. Vui lòng thử lại sau.');
+            message.error(error.message || 'An error occurred. Please try again later.');
         } finally {
             setLoading(false);
         }
@@ -30,22 +30,22 @@ export default function ForgotPassword() {
             <Card className="w-full max-w-md shadow-lg" bordered style={{ borderRadius: 16 }}>
                 <div className="p-6">
                     <div className="flex justify-start mb-4">
-                        <Link 
-                            to="/login" 
+                        <Link
+                            to="/login"
                             className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
                         >
                             <ArrowLeftOutlined />
-                            Quay lại đăng nhập
+                            Back to login
                         </Link>
                     </div>
 
                     {!emailSent ? (
                         <>
                             <Typography.Title level={3} className="text-center mb-2">
-                                Quên mật khẩu?
+                                Forgot password?
                             </Typography.Title>
                             <Typography.Paragraph className="text-center text-gray-600 mb-6">
-                                Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn link để đặt lại mật khẩu.
+                                Enter your email address and we'll send you a link to reset your password.
                             </Typography.Paragraph>
 
                             <Form
@@ -58,9 +58,9 @@ export default function ForgotPassword() {
                                     label="Email"
                                     name="email"
                                     rules={[
-                                        { required: true, message: 'Vui lòng nhập email' },
-                                        { type: 'email', message: 'Email không hợp lệ' },
-                                        { max: 100, message: 'Email không được vượt quá 100 ký tự' }
+                                        { required: true, message: 'Please enter your email' },
+                                        { type: 'email', message: 'Invalid email format' },
+                                        { max: 100, message: 'Email must not exceed 100 characters' }
                                     ]}
                                 >
                                     <Input
@@ -78,13 +78,13 @@ export default function ForgotPassword() {
                                         size="large"
                                         loading={loading}
                                         block
-                                        style={{ 
-                                            backgroundColor: '#000', 
+                                        style={{
+                                            backgroundColor: '#000',
                                             borderColor: '#000',
-                                            height: 48 
+                                            height: 48
                                         }}
                                     >
-                                        Gửi link đặt lại mật khẩu
+                                        Send reset link
                                     </Button>
                                 </Form.Item>
                             </Form>
@@ -107,21 +107,21 @@ export default function ForgotPassword() {
                                 </svg>
                             </div>
                             <Typography.Title level={4} className="mb-2">
-                                Email đã được gửi!
+                                Email sent!
                             </Typography.Title>
                             <Typography.Paragraph className="text-gray-600 mb-6">
-                                Chúng tôi đã gửi link đặt lại mật khẩu đến email của bạn. 
-                                Vui lòng kiểm tra hộp thư (kể cả thư rác) và làm theo hướng dẫn.
+                                We've sent a password reset link to your email.
+                                Please check your inbox (including spam folder) and follow the instructions.
                             </Typography.Paragraph>
                             <Typography.Paragraph className="text-sm text-gray-500 mb-6">
-                                Link sẽ hết hạn sau 15 phút.
+                                Link expires in 15 minutes.
                             </Typography.Paragraph>
                             <Button
                                 size="large"
                                 onClick={() => navigate('/login')}
                                 block
                             >
-                                Quay lại đăng nhập
+                                Back to login
                             </Button>
                         </div>
                     )}

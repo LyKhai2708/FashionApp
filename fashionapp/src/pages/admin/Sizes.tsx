@@ -23,7 +23,7 @@ export default function Sizes() {
             const response = await sizeService.getSizes();
             setSizes(response || []);
         } catch (error: any) {
-            message.error('Không thể tải danh sách kích cỡ');
+            message.error('Cannot load sizes');
         } finally {
             setLoading(false);
         }
@@ -34,13 +34,13 @@ export default function Sizes() {
     }, []);
 
     const handleDelete = async (sizeId: number) => {
-        if (!window.confirm('Xác nhận xóa kích cỡ này?')) return;
+        if (!window.confirm('Are you sure you want to delete this size?')) return;
         try {
             await sizeService.deleteSize(sizeId);
-            message.success('Xóa thành công');
+            message.success('Deleted successfully');
             fetchSizes();
         } catch (error: any) {
-            message.error(error.message || 'Không thể xóa');
+            message.error(error.message || 'Cannot delete');
         }
     };
 
@@ -48,12 +48,12 @@ export default function Sizes() {
         try {
             setSubmitting(true);
             await sizeService.createSize(values);
-            message.success('Thêm size thành công');
+            message.success('Size added successfully');
             setIsModalOpen(false);
             form.resetFields();
             fetchSizes();
         } catch (error: any) {
-            message.error(error.message || 'Không thể thêm size');
+            message.error(error.message || 'Cannot add size');
         } finally {
             setSubmitting(false);
         }
@@ -63,7 +63,7 @@ export default function Sizes() {
         <div style={{ padding: 24 }}>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                    <ColumnHeightOutlined /> Quản lý kích cỡ
+                    <ColumnHeightOutlined /> Size Management
                 </h1>
                 <PermissionGate permission="sizes.create">
                     <Button
@@ -72,7 +72,7 @@ export default function Sizes() {
                         onClick={() => setIsModalOpen(true)}
                         size="large"
                     >
-                        Thêm size
+                        Add Size
                     </Button>
                 </PermissionGate>
             </div>
@@ -81,7 +81,7 @@ export default function Sizes() {
                 <Col span={24}>
                     <Card>
                         <Statistic
-                            title="Tổng kích cỡ"
+                            title="Total Sizes"
                             value={sizes.length}
                             prefix={<ColumnHeightOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -90,7 +90,7 @@ export default function Sizes() {
                 </Col>
             </Row>
 
-            <Card title="Danh sách kích cỡ" loading={loading}>
+            <Card title="Size List" loading={loading}>
                 <Row gutter={[12, 12]}>
                     {sizes.map((size) => (
                         <Col key={size.size_id} xs={6} sm={4} md={3} lg={2}>
@@ -103,11 +103,11 @@ export default function Sizes() {
                                 <div style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{size.name}</div>
                                 <PermissionGate permission="sizes.delete">
                                     <Popconfirm
-                                        title="Xóa kích cỡ?"
-                                        description="Bạn có chắc muốn xóa size này?"
+                                        title="Delete size?"
+                                        description="Are you sure you want to delete this size?"
                                         onConfirm={() => handleDelete(size.size_id)}
-                                        okText="Xóa"
-                                        cancelText="Hủy"
+                                        okText="Delete"
+                                        cancelText="Cancel"
                                         okButtonProps={{ danger: true }}
                                     >
                                         <Button
@@ -126,7 +126,7 @@ export default function Sizes() {
             </Card>
 
             <Modal
-                title="Thêm size mới"
+                title="Add New Size"
                 open={isModalOpen}
                 onCancel={() => {
                     setIsModalOpen(false);
@@ -134,8 +134,8 @@ export default function Sizes() {
                 }}
                 onOk={() => form.submit()}
                 confirmLoading={submitting}
-                okText="Thêm"
-                cancelText="Hủy"
+                okText="Add"
+                cancelText="Cancel"
             >
                 <Form
                     form={form}
@@ -143,26 +143,26 @@ export default function Sizes() {
                     onFinish={handleCreate}
                 >
                     <Form.Item
-                        label="Tên size"
+                        label="Size Name"
                         name="name"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập tên size' },
-                            { max: 10, message: 'Tên size không quá 10 ký tự' }
+                            { required: true, message: 'Please enter size name' },
+                            { max: 10, message: 'Size name max 10 characters' }
                         ]}
                     >
                         <Input
-                            placeholder="VD: S, M, L, XL, XXL, 39, 40..."
+                            placeholder="e.g: S, M, L, XL, XXL, 39, 40..."
                             maxLength={10}
                         />
                     </Form.Item>
 
                     <Alert
-                        message="Gợi ý size"
+                        message="Size Suggestions"
                         description={
                             <ul style={{ marginTop: 8, paddingLeft: 20 }}>
-                                <li>Quần áo: S, M, L, XL, XXL, 3XL</li>
-                                <li>Giày dép: 35, 36, 37, 38, 39, 40...</li>
-                                <li>Size số: 1, 2, 3...</li>
+                                <li>Clothing: S, M, L, XL, XXL, 3XL</li>
+                                <li>Footwear: 35, 36, 37, 38, 39, 40...</li>
+                                <li>Numeric: 1, 2, 3...</li>
                             </ul>
                         }
                         type="info"

@@ -20,11 +20,11 @@ export default function ResetPassword() {
                 <Card className="w-full max-w-md shadow-lg" bordered style={{ borderRadius: 16 }}>
                     <div className="p-6 text-center">
                         <Typography.Title level={4} className="text-red-500 mb-4">
-                            Link không hợp lệ
+                            Invalid link
                         </Typography.Title>
                         <Typography.Paragraph className="text-gray-600 mb-6">
-                            Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
-                            Vui lòng yêu cầu link mới.
+                            Password reset link is invalid or has expired.
+                            Please request a new link.
                         </Typography.Paragraph>
                         <Button
                             type="primary"
@@ -33,7 +33,7 @@ export default function ResetPassword() {
                             block
                             style={{ backgroundColor: '#000', borderColor: '#000' }}
                         >
-                            Yêu cầu link mới
+                            Request new link
                         </Button>
                     </div>
                 </Card>
@@ -45,12 +45,12 @@ export default function ResetPassword() {
         setLoading(true);
         try {
             await authService.resetPassword(token, values.password);
-            message.success('Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay bây giờ.');
+            message.success('Password reset successful! You can login now.');
             setTimeout(() => {
                 navigate('/login');
             }, 1500);
         } catch (error: any) {
-            message.error(error.message || 'Đặt lại mật khẩu thất bại. Vui lòng thử lại.');
+            message.error(error.message || 'Password reset failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -61,20 +61,20 @@ export default function ResetPassword() {
             <Card className="w-full max-w-md shadow-lg" bordered style={{ borderRadius: 16 }}>
                 <div className="p-6">
                     <div className="flex justify-start mb-4">
-                        <Link 
-                            to="/login" 
+                        <Link
+                            to="/login"
                             className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
                         >
                             <ArrowLeftOutlined />
-                            Quay lại đăng nhập
+                            Back to login
                         </Link>
                     </div>
 
                     <Typography.Title level={3} className="text-center mb-2">
-                        Đặt lại mật khẩu
+                        Reset password
                     </Typography.Title>
                     <Typography.Paragraph className="text-center text-gray-600 mb-6">
-                        Nhập mật khẩu mới cho tài khoản của bạn.
+                        Enter a new password for your account.
                     </Typography.Paragraph>
 
                     <Form
@@ -84,46 +84,46 @@ export default function ResetPassword() {
                         requiredMark={false}
                     >
                         <Form.Item
-                            label="Mật khẩu mới"
+                            label="New password"
                             name="password"
                             rules={[
-                                { required: true, message: 'Vui lòng nhập mật khẩu mới' },
-                                { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' },
-                                { max: 50, message: 'Mật khẩu không được vượt quá 50 ký tự' },
+                                { required: true, message: 'Please enter new password' },
+                                { min: 8, message: 'Password must be at least 8 characters' },
+                                { max: 50, message: 'Password must not exceed 50 characters' },
                                 {
                                     pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-                                    message: 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt'
+                                    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
                                 }
                             ]}
                             hasFeedback
                         >
                             <Input.Password
                                 size="large"
-                                placeholder="Nhập mật khẩu mới"
+                                placeholder="Enter new password"
                                 prefix={<LockOutlined />}
                             />
                         </Form.Item>
 
                         <Form.Item
-                            label="Xác nhận mật khẩu"
+                            label="Confirm password"
                             name="confirmPassword"
                             dependencies={['password']}
                             hasFeedback
                             rules={[
-                                { required: true, message: 'Vui lòng xác nhận mật khẩu' },
+                                { required: true, message: 'Please confirm your password' },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
                                         if (!value || getFieldValue('password') === value) {
                                             return Promise.resolve();
                                         }
-                                        return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                                        return Promise.reject(new Error('Passwords do not match!'));
                                     },
                                 }),
                             ]}
                         >
                             <Input.Password
                                 size="large"
-                                placeholder="Nhập lại mật khẩu mới"
+                                placeholder="Re-enter new password"
                                 prefix={<LockOutlined />}
                             />
                         </Form.Item>
@@ -135,13 +135,13 @@ export default function ResetPassword() {
                                 size="large"
                                 loading={loading}
                                 block
-                                style={{ 
-                                    backgroundColor: '#000', 
+                                style={{
+                                    backgroundColor: '#000',
                                     borderColor: '#000',
-                                    height: 48 
+                                    height: 48
                                 }}
                             >
-                                Đặt lại mật khẩu
+                                Reset password
                             </Button>
                         </Form.Item>
                     </Form>

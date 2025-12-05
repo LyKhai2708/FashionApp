@@ -33,9 +33,9 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
     const handleToggleFavorite = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (!user) {
-            message.warning('Vui lòng đăng nhập để thêm sản phẩm yêu thích');
+            message.warning('Please log in to add favorites');
             return;
         }
 
@@ -46,7 +46,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
             await toggleFavorite(product.product_id, favoriteId);
         } catch (error: any) {
             console.error('Toggle favorite error:', error);
-            message.error(error.message || 'Có lỗi xảy ra');
+            message.error(error.message || 'An error occurred');
         } finally {
             setLoading(false);
         }
@@ -118,27 +118,27 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
         e.stopPropagation();
         setSelectedColor(color);
     };
-    
+
     const hasVariants = selectedColor && selectedColor.sizes && selectedColor.sizes.length > 0;
     const hasColors = product.colors && product.colors.length > 0;
-    
+
 
     return (
-        <div 
+        <div
             className={`cursor-pointer relative group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full group-hover:z-20 border border-gray-100 hover:border-gray-200 ${compact ? 'text-xs' : ''}`}
             onClick={handleCardClick}
             onMouseEnter={() => !compact && setShowQuickAdd(true)}
             onMouseLeave={() => !compact && setShowQuickAdd(false)}
         >
             <div className="relative overflow-hidden">
-                <img 
-                    src={getImageUrl(selectedColor?.images[0]?.image_url || product.thumbnail)} 
-                    alt={product.name || 'Product Image'} 
-                    className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform duration-300" 
+                <img
+                    src={getImageUrl(selectedColor?.images[0]?.image_url || product.thumbnail)}
+                    alt={product.name || 'Product Image'}
+                    className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                
+
                 {!compact && showQuickAdd && hasColors && (
-                    <div 
+                    <div
                         className="absolute bottom-0 left-0 right-0 h-1/2 backdrop-blur-sm bg-white/30 flex flex-col items-center justify-center p-4 transition-all duration-200 border-t border-gray-200/50"
                         onClick={(e) => {
                             e.preventDefault();
@@ -146,7 +146,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                         }}
                     >
                         <div className="text-gray-900 text-sm font-bold mb-3 flex items-center gap-2">
-                            Thêm nhanh vào giỏ +
+                            Quick add to cart +
                         </div>
 
                         {product.colors && product.colors.length > 1 && (
@@ -155,18 +155,17 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                                     <button
                                         key={color.color_id}
                                         onClick={(e) => handleColorChange(e, color)}
-                                        className={`w-6 h-6 rounded-full border-2 cursor-pointer ${
-                                            selectedColor?.color_id === color.color_id 
-                                                ? 'border-black scale-110 ring-2 ring-offset-1 ring-black' 
+                                        className={`w-6 h-6 rounded-full border-2 cursor-pointer ${selectedColor?.color_id === color.color_id
+                                                ? 'border-black scale-110 ring-2 ring-offset-1 ring-black'
                                                 : 'border-gray-300'
-                                        } transition-transform`}
+                                            } transition-transform`}
                                         style={{ backgroundColor: color.hex_code }}
                                         title={color.name}
                                     />
                                 ))}
                             </div>
                         )}
-                        
+
                         {hasVariants ? (
                             <div className="grid grid-cols-3 gap-2 w-full max-w-[200px]">
                                 {selectedColor?.sizes?.map((size) => (
@@ -176,8 +175,8 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                                         disabled={size.stock_quantity === 0 || addingToCart}
                                         className={`
                                         px-3 py-2 text-sm font-semibold rounded-lg cursor-pointer
-                                            ${size.stock_quantity === 0 
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through' 
+                                            ${size.stock_quantity === 0
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through'
                                                 : 'bg-white text-gray-900 hover:bg-gray-900 hover:text-white border border-gray-300'
                                             }
                                             ${addingToCart ? 'opacity-50 cursor-wait' : ''}
@@ -191,10 +190,10 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                         ) : (
                             <div className="text-center py-4">
                                 <div className="text-gray-700 text-sm mb-2 font-medium">
-                                    Màu này tạm hết hàng
+                                    This color is out of stock
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                    Chọn màu khác hoặc xem chi tiết
+                                    Choose another color or view details
                                 </div>
                             </div>
                         )}
@@ -203,11 +202,11 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
             </div>
             <div className={`flex flex-col flex-grow w-full min-w-0 ${compact ? 'p-3' : 'p-5'}`}>
                 <h3
-                className={`line-clamp-${compact ? '1' : '2'} overflow-hidden text-ellipsis break-words ${compact ? 'min-h-[24px]' : 'min-h-[48px]'} ${compact ? 'text-sm' : 'text-base'} font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors`}
+                    className={`line-clamp-${compact ? '1' : '2'} overflow-hidden text-ellipsis break-words ${compact ? 'min-h-[24px]' : 'min-h-[48px]'} ${compact ? 'text-sm' : 'text-base'} font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors`}
                 >
-                {product.name || 'Tên sản phẩm'}
+                    {product.name || 'Product name'}
                 </h3>
-                
+
                 {/* rating */}
                 {!compact && (
                     <div className="flex items-center gap-2 mb-3">
@@ -215,33 +214,32 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                             {[1, 2, 3, 4, 5].map((star) => {
                                 const rating = product.average_rating || 0;
                                 const isFilled = star <= Math.floor(rating);
-                            const isHalf = star === Math.ceil(rating) && rating % 1 >= 0.5;
-                            
-                            return (
-                                <Star 
-                                    key={star}
-                                    className={`w-4 h-4 ${
-                                        isFilled 
-                                            ? 'fill-amber-400 text-amber-400' 
-                                            : isHalf
-                                            ? 'fill-amber-200 text-amber-400'
-                                            : 'fill-none text-gray-300'
-                                    }`} 
-                                />
-                            );
-                        })}
-                    </div>
-                    <span className="text-sm font-semibold text-gray-800">
-                        {product.average_rating && product.average_rating > 0 
-                            ? product.average_rating.toFixed(1) 
-                            : '0'}
-                    </span>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        {product.review_count || 0} đánh giá
-                    </span>
-                </div> )
+                                const isHalf = star === Math.ceil(rating) && rating % 1 >= 0.5;
+
+                                return (
+                                    <Star
+                                        key={star}
+                                        className={`w-4 h-4 ${isFilled
+                                                ? 'fill-amber-400 text-amber-400'
+                                                : isHalf
+                                                    ? 'fill-amber-200 text-amber-400'
+                                                    : 'fill-none text-gray-300'
+                                            }`}
+                                    />
+                                );
+                            })}
+                        </div>
+                        <span className="text-sm font-semibold text-gray-800">
+                            {product.average_rating && product.average_rating > 0
+                                ? product.average_rating.toFixed(1)
+                                : '0'}
+                        </span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            {product.review_count || 0} reviews
+                        </span>
+                    </div>)
                 }
-                
+
                 <div className='mt-auto'>
                     <div className='flex items-center flex-wrap justify-between'>
                         <div className="flex flex-col">
@@ -267,11 +265,11 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                     {product.colors && product.colors.length > 0 && !compact ? (
                         <div className="flex gap-1.5 mb-2 mt-3 flex-wrap">
                             {product.colors.slice(0, 5).map((color) => (
-                                <div 
-                                    key={color?.color_id || Math.random()} 
+                                <div
+                                    key={color?.color_id || Math.random()}
                                     className="w-6 h-6 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
                                     style={{ backgroundColor: color?.hex_code || '#ccc' }}
-                                    title={color?.name || 'Màu sắc'}
+                                    title={color?.name || 'Color'}
                                 />
                             ))}
                             {product.colors.length > 5 && (
@@ -281,7 +279,7 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                             )}
                         </div>
                     ) : null}
-                    
+
                 </div>
 
             </div>
@@ -290,20 +288,20 @@ export default function ProductCard({ product, compact = false }: ProductCardPro
                     -{product.discount_percent}%
                 </div>
             ) : null}
-            
-            {!compact &&  (<button  
+
+            {!compact && (<button
                 className={`cursor-pointer absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-xl ${compact ? 'p-2' : 'p-2.5'} ${loading ? 'opacity-50' : ''} hover:scale-110 transition-all duration-200 border border-gray-200`}
                 onClick={handleToggleFavorite}
                 disabled={loading}
             >
-                <HeartIcon 
-                    className={(liked ? 'text-red-500' : 'text-gray-500') + ' transition-colors duration-200'} 
+                <HeartIcon
+                    className={(liked ? 'text-red-500' : 'text-gray-500') + ' transition-colors duration-200'}
                     fill={liked ? 'currentColor' : 'none'}
                     size={18}
                 />
             </button>)
             }
-            
+
         </div>
     )
 }

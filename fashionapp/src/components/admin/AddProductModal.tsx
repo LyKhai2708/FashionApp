@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Modal, Input, Table, Button, Space, InputNumber, message as antMessage } from 'antd';
+import { Modal, Input, Table, Button, Space, InputNumber } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import productService from '../../services/productService';
 import type { Product, ProductVariant } from '../../types/product';
 import { getImageUrl } from '../../utils/imageHelper';
-
+import { useMessage } from '../../App';
 interface AddProductModalProps {
     open: boolean;
     onClose: () => void;
@@ -23,7 +23,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
     const [variants, setVariants] = useState<ProductVariant[]>([]);
     const [loading, setLoading] = useState(false);
     const [expandedRowKeys, setExpandedRowKeys] = useState<number[]>([]);
-
+    const message = useMessage();
     useEffect(() => {
         if (open) {
             fetchProducts();
@@ -63,10 +63,10 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
                     setExpandedRowKeys([record.product_id]);
                     setSelectedProduct(record); // Store selected product
                 } else {
-                    antMessage.warning('Sản phẩm này không có biến thể nào');
+                    message.warning('This product has no variants');
                 }
             } catch (error) {
-                antMessage.error('Không thể tải biến thể');
+                message.error('Cannot load variants');
             }
         } else {
             setExpandedRowKeys([]);
@@ -77,11 +77,11 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
 
     const handleAddVariant = (variant: ProductVariant, quantity: number, unitPrice: number, product: Product) => {
         if (quantity <= 0) {
-            antMessage.warning('Số lượng phải lớn hơn 0');
+            message.warning('Quantity must be greater than 0');
             return;
         }
         if (unitPrice <= 0) {
-            antMessage.warning('Đơn giá phải lớn hơn 0');
+            message.warning('Unit price must be greater than 0');
             return;
         }
         onAddProduct(variant, quantity, unitPrice, {
@@ -89,12 +89,12 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
             product_name: product.name,
             thumbnail: product.thumbnail
         });
-        antMessage.success('Đã thêm sản phẩm vào phiếu nhập');
+        message.success('Product added to purchase order');
     };
 
     const productColumns = [
         {
-            title: 'Sản phẩm',
+            title: 'Product',
             key: 'product',
             render: (_: any, record: Product) => (
                 <Space>
@@ -117,7 +117,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
     const expandedRowRender = (record: Product) => {
         const variantColumns = [
             {
-                title: 'Màu sắc',
+                title: 'Color',
                 dataIndex: 'color',
                 key: 'color',
                 render: (color: any) => (
@@ -136,24 +136,24 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
                 )
             },
             {
-                title: 'Kích thước',
+                title: 'Size',
                 dataIndex: 'size',
                 key: 'size',
                 render: (size: any) => size.name
             },
             {
-                title: 'Giá bán',
+                title: 'Selling Price',
                 key: 'price',
                 render: () => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(record.base_price)
             },
             {
-                title: 'Tồn kho',
+                title: 'Stock',
                 dataIndex: 'stock_quantity',
                 key: 'stock_quantity',
                 render: (stock: number) => <span style={{ color: stock < 10 ? 'red' : 'inherit' }}>{stock}</span>
             },
             {
-                title: 'Số lượng nhập',
+                title: 'Import Quantity',
                 key: 'quantity',
                 width: 150,
                 render: (_: any, variant: ProductVariant) => (
@@ -166,7 +166,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
                 )
             },
             {
-                title: 'Đơn giá nhập',
+                title: 'Unit Price',
                 key: 'unit_price',
                 width: 200,
                 render: (_: any, variant: ProductVariant) => (
@@ -200,7 +200,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
                             }
                         }}
                     >
-                        Thêm
+                        Add
                     </Button>
                 )
             }
@@ -219,7 +219,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
 
     return (
         <Modal
-            title="Chọn sản phẩm để nhập kho"
+            title="Select product for inventory"
             open={open}
             onCancel={onClose}
             width={1200}
@@ -227,7 +227,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
         >
             <div style={{ marginBottom: 16 }}>
                 <Input.Search
-                    placeholder="Tìm kiếm sản phẩm..."
+                    placeholder="Search products..."
                     allowClear
                     enterButton={<SearchOutlined />}
                     size="large"
@@ -250,7 +250,7 @@ export default function AddProductModal({ open, onClose, onAddProduct }: AddProd
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: false,
-                    showTotal: (total) => `Tổng ${total} sản phẩm`
+                    showTotal: (total) => `Total ${total} products`
                 }}
             />
         </Modal>

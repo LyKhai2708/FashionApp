@@ -109,7 +109,7 @@ export default function Products() {
 
         } catch (error: any) {
             console.error('Error fetching products:', error);
-            message.error(error.message || 'Không thể tải danh sách sản phẩm');
+            message.error(error.message || 'Cannot load products');
         } finally {
             setLoading(false);
         }
@@ -148,32 +148,32 @@ export default function Products() {
     };
 
     const handleDelete = async (productId: number) => {
-        if (!window.confirm('Xác nhận ngưng bán sản phẩm này?')) {
+        if (!window.confirm('Are you sure you want to discontinue this product?')) {
             return;
         }
 
         try {
             await productService.deleteProduct(productId);
-            message.success('Ngưng bán sản phẩm thành công');
+            message.success('Product deactivated successfully');
             await fetchProducts();
             await fetchStats();
         } catch (error: any) {
-            message.error(error.message || 'Không thể ngưng bán sản phẩm');
+            message.error(error.message || 'Cannot deactivate product');
         }
     };
 
     const handleRestore = async (productId: number) => {
-        if (!window.confirm('Xác nhận bán lại sản phẩm này?')) {
+        if (!window.confirm('Are you sure you want to restore this product for sale?')) {
             return;
         }
 
         try {
             await productService.restoreProduct(productId);
-            message.success('Bán lại sản phẩm thành công');
+            message.success('Product restored successfully');
             await fetchProducts();
             await fetchStats();
         } catch (error: any) {
-            message.error(error.message || 'Không thể bán lại sản phẩm');
+            message.error(error.message || 'Cannot restore product');
         }
     };
 
@@ -189,25 +189,25 @@ export default function Products() {
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
-                    <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
                     <PermissionGate permission="products.create">
                         <button
                             onClick={() => navigate('/admin/products/add')}
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium shadow-sm transition-colors"
                         >
                             <Plus size={20} />
-                            Thêm sản phẩm
+                            Add Product
                         </button>
                     </PermissionGate>
                 </div>
-                <p className="text-gray-600">Quản lý tất cả sản phẩm trong hệ thống</p>
+                <p className="text-gray-600">Manage all products in the system</p>
             </div>
 
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={6}>
                     <Card>
                         <Statistic
-                            title="Tổng sản phẩm"
+                            title="Total Products"
                             value={stats.total}
                             valueStyle={{ color: '#1890ff' }}
                             prefix={<AppstoreOutlined />}
@@ -217,7 +217,7 @@ export default function Products() {
                 <Col span={6}>
                     <Card>
                         <Statistic
-                            title="Đang bán"
+                            title="Active"
                             value={stats.active}
                             valueStyle={{ color: '#52c41a' }}
                             prefix={<CheckCircleOutlined />}
@@ -227,7 +227,7 @@ export default function Products() {
                 <Col span={6}>
                     <Card>
                         <Statistic
-                            title="Sắp hết hàng"
+                            title="Low Stock"
                             value={stats.lowStock}
                             valueStyle={{ color: '#faad14' }}
                             prefix={<WarningOutlined />}
@@ -237,7 +237,7 @@ export default function Products() {
                 <Col span={6}>
                     <Card>
                         <Statistic
-                            title="Hết hàng"
+                            title="Out of Stock"
                             value={stats.outOfStock}
                             valueStyle={{ color: '#cf1322' }}
                             prefix={<CloseCircleOutlined />}
@@ -254,7 +254,7 @@ export default function Products() {
                         <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Tìm kiếm sản phẩm..."
+                                placeholder="Search products..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -266,7 +266,7 @@ export default function Products() {
                                 type="submit"
                                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-600 hover:text-blue-800"
                             >
-                                Tìm
+                                Search
                             </button>
                         </div>
                     </form>
@@ -276,7 +276,7 @@ export default function Products() {
                         onChange={(e) => setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                         className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
                     >
-                        <option value="all">Tất cả danh mục</option>
+                        <option value="all">All Categories</option>
                         {categories.map(cat => (
                             <option key={cat.category_id} value={cat.category_id}>
                                 {cat.parent_id ? `  ↳ ${cat.category_name}` : cat.category_name}
@@ -289,7 +289,7 @@ export default function Products() {
                         onChange={(e) => setSelectedBrand(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                         className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
                     >
-                        <option value="all">Tất cả thương hiệu</option>
+                        <option value="all">All Brands</option>
                         {brands.map(brand => (
                             <option key={brand.id} value={brand.id}>
                                 {brand.name}
@@ -302,10 +302,10 @@ export default function Products() {
                         onChange={(e) => setStockFilter(e.target.value as any)}
                         className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
                     >
-                        <option value="all">Tồn kho</option>
-                        <option value="out">Hết hàng</option>
-                        <option value="low">Sắp hết</option>
-                        <option value="medium">Trung bình</option>
+                        <option value="all">Stock</option>
+                        <option value="out">Out of Stock</option>
+                        <option value="low">Low Stock</option>
+                        <option value="medium">Medium</option>
                     </select>
 
 
@@ -314,9 +314,9 @@ export default function Products() {
                         onChange={(e) => setDelFlag(e.target.value as '0' | '1' | 'all')}
                         className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
                     >
-                        <option value="0">Đang bán</option>
-                        <option value="1">Ngưng bán</option>
-                        <option value="all">Tất cả</option>
+                        <option value="0">Active</option>
+                        <option value="1">Discontinued</option>
+                        <option value="all">All</option>
                     </select>
                 </div>
             </div>
@@ -330,8 +330,8 @@ export default function Products() {
                 ) : products.length === 0 ? (
                     <div className="text-center py-20 text-gray-500">
                         <PackageOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <p className="text-xl font-medium mb-2">Không tìm thấy sản phẩm nào</p>
-                        <p className="text-gray-400">Thử thay đổi bộ lọc hoặc tìm kiếm khác</p>
+                        <p className="text-xl font-medium mb-2">No products found</p>
+                        <p className="text-gray-400">Try changing filters or search term</p>
                     </div>
                 ) : (
                     <>
@@ -339,10 +339,10 @@ export default function Products() {
                         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    Danh sách sản phẩm ({products.length})
+                                    Product List ({products.length})
                                 </h3>
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    <span>Hiển thị {(paginate.page - 1) * paginate.limit + 1}-{Math.min(paginate.page * paginate.limit, paginate.totalRecords)} trong {paginate.totalRecords}</span>
+                                    <span>Showing {(paginate.page - 1) * paginate.limit + 1}-{Math.min(paginate.page * paginate.limit, paginate.totalRecords)} of {paginate.totalRecords}</span>
                                 </div>
                             </div>
                         </div>
@@ -353,22 +353,22 @@ export default function Products() {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Sản phẩm
+                                            Product
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Danh mục
+                                            Category
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Giá bán
+                                            Price
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Tồn kho
+                                            Stock
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Trạng thái
+                                            Status
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Thao tác
+                                            Actions
                                         </th>
                                     </tr>
                                 </thead>
@@ -420,7 +420,7 @@ export default function Products() {
                                                             ? 'bg-yellow-100 text-yellow-800'
                                                             : 'bg-green-100 text-green-800'
                                                         }`}>
-                                                        {product.total_stock || 0} sản phẩm
+                                                        {product.total_stock || 0} items
                                                     </span>
                                                 </div>
                                             </td>
@@ -429,7 +429,7 @@ export default function Products() {
                                                     ? 'bg-green-100 text-green-800'
                                                     : 'bg-red-100 text-red-800'
                                                     }`}>
-                                                    {product.del_flag === 0 ? ' Đang bán' : 'Ngưng bán'}
+                                                    {product.del_flag === 0 ? 'Active' : 'Discontinued'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -438,18 +438,18 @@ export default function Products() {
                                                         onClick={() => navigate(`/products/${product.slug}-${product.product_id}`)}
                                                         className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-2"
                                                     >
-                                                        <Eye className='w-4 h-4' />Xem
+                                                        <Eye className='w-4 h-4' />View
                                                     </button>
                                                     <PermissionGate
                                                         permission="products.edit"
                                                         showTooltip={true}
-                                                        tooltipMessage="Bạn không có quyền sửa sản phẩm"
+                                                        tooltipMessage="You don't have permission to edit products"
                                                         fallback={
                                                             <button
                                                                 disabled
                                                                 className="text-gray-400 text-sm font-medium flex items-center gap-2 cursor-not-allowed opacity-50"
                                                             >
-                                                                <Edit className='w-4 h-4' />Sửa
+                                                                <Edit className='w-4 h-4' />Edit
                                                             </button>
                                                         }
                                                     >
@@ -457,7 +457,7 @@ export default function Products() {
                                                             onClick={() => navigate(`/admin/products/edit/${product.product_id}`)}
                                                             className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-2"
                                                         >
-                                                            <Edit className='w-4 h-4' />Sửa
+                                                            <Edit className='w-4 h-4' />Edit
                                                         </button>
                                                     </PermissionGate>
                                                     {product.del_flag === 0 ? (
@@ -466,7 +466,7 @@ export default function Products() {
                                                                 onClick={() => handleDelete(product.product_id)}
                                                                 className="text-red-600 hover:text-red-800 text-sm font-medium"
                                                             >
-                                                                Ngưng bán
+                                                                Inactive
                                                             </button>
                                                         </PermissionGate>
                                                     ) : (
@@ -475,7 +475,7 @@ export default function Products() {
                                                                 onClick={() => handleRestore(product.product_id)}
                                                                 className="text-green-600 hover:text-green-800 text-sm font-medium"
                                                             >
-                                                                Bán lại
+                                                                Restore
                                                             </button>
                                                         </PermissionGate>
                                                     )}
@@ -490,9 +490,9 @@ export default function Products() {
                         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div className="text-sm text-gray-700">
-                                    Hiển thị <span className="font-medium">{(paginate.page - 1) * paginate.limit + 1}</span> đến{' '}
-                                    <span className="font-medium">{Math.min(paginate.page * paginate.limit, paginate.totalRecords)}</span> trong{' '}
-                                    <span className="font-medium">{paginate.totalRecords}</span> sản phẩm
+                                    Showing <span className="font-medium">{(paginate.page - 1) * paginate.limit + 1}</span> to{' '}
+                                    <span className="font-medium">{Math.min(paginate.page * paginate.limit, paginate.totalRecords)}</span> of{' '}
+                                    <span className="font-medium">{paginate.totalRecords}</span> products
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -500,7 +500,7 @@ export default function Products() {
                                         disabled={paginate.page === 1}
                                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        ← Trước
+                                        ← Previous
                                     </button>
                                     <span className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg">
                                         {paginate.page} / {paginate.lastPage}
@@ -510,7 +510,7 @@ export default function Products() {
                                         disabled={paginate.page === paginate.lastPage}
                                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Sau →
+                                        Next →
                                     </button>
                                 </div>
                             </div>

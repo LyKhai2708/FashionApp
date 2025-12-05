@@ -5,7 +5,6 @@ import {
     Button,
     Space,
     Tag,
-    message,
     Popconfirm,
     Card,
     Statistic,
@@ -16,6 +15,7 @@ import {
     Input,
     Spin
 } from 'antd';
+import { useMessage } from '../../App';
 import {
     ArrowLeftOutlined,
     PlusOutlined,
@@ -45,7 +45,7 @@ interface Paginate {
 export default function PromotionProducts() {
     const { promo_id } = useParams<{ promo_id: string }>();
     const navigate = useNavigate();
-
+    const message = useMessage();
     const [promotion, setPromotion] = useState<Promotion | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [paginate, setPaginate] = useState<Paginate>({
@@ -68,7 +68,7 @@ export default function PromotionProducts() {
             const data = await promotionService.getPromotionById(Number(promo_id));
             setPromotion(data);
         } catch (error: any) {
-            message.error(error.message || 'Không thể tải thông tin khuyến mãi');
+            message.error(error.message || 'Cannot load promotion information');
             navigate('/admin/promotions');
         }
     };
@@ -80,11 +80,10 @@ export default function PromotionProducts() {
                 page: params?.page || paginate.page,
                 limit: params?.limit || paginate.limit,
             });
-            console.log('🔍 API Response:', result.products);
             setProducts(result.products);
             setPaginate(result.metadata);
         } catch (error: any) {
-            message.error(error.message || 'Không thể tải danh sách sản phẩm');
+            message.error(error.message || 'Cannot load products list');
         } finally {
             setLoading(false);
         }
@@ -105,7 +104,7 @@ export default function PromotionProducts() {
             });
             setSearchProducts(result.products);
         } catch (error: any) {
-            message.error(error.message || 'Không thể tìm kiếm sản phẩm');
+            message.error(error.message || 'Cannot search products');
         } finally {
             setSearchLoading(false);
         }
@@ -120,13 +119,13 @@ export default function PromotionProducts() {
 
     const handleAddProduct = async () => {
         if (!selectedProductId) {
-            message.warning('Vui lòng chọn sản phẩm');
+            message.warning('Please select a product');
             return;
         }
 
         try {
             await promotionService.addProductToPromotion(Number(promo_id), selectedProductId);
-            message.success('Thêm sản phẩm vào khuyến mãi thành công');
+            message.success('Product added to promotion successfully');
             setAddModalVisible(false);
             setSelectedProductId(null);
             setSearchKeyword('');
@@ -134,24 +133,25 @@ export default function PromotionProducts() {
             fetchProducts();
             fetchPromotion();
         } catch (error: any) {
-            message.error(error.message || 'Không thể thêm sản phẩm vào khuyến mãi');
+            console.error('Add product to promotion error:', error);
+            message.error(error.message || 'Cannot add product to promotion');
         }
     };
 
     const handleRemoveProduct = async (productId: number) => {
         try {
             await promotionService.removeProductFromPromotion(Number(promo_id), productId);
-            message.success('Xóa sản phẩm khỏi khuyến mãi thành công');
+            message.success('Product removed from promotion successfully');
             fetchProducts();
             fetchPromotion();
         } catch (error: any) {
-            message.error(error.message || 'Không thể xóa sản phẩm khỏi khuyến mãi');
+            message.error(error.message || 'Cannot remove product from promotion');
         }
     };
 
     const columns: ColumnsType<Product> = [
         {
-            title: 'Hình ảnh',
+            title: 'Image',
             dataIndex: 'thumbnail',
             key: 'thumbnail',
             width: 80,
@@ -164,7 +164,7 @@ export default function PromotionProducts() {
             ),
         },
         {
-            title: 'Tên sản phẩm',
+            title: 'Product Name',
             dataIndex: 'name',
             key: 'name',
             ellipsis: true,
@@ -178,7 +178,7 @@ export default function PromotionProducts() {
             ),
         },
         {
-            title: 'Giá gốc',
+            title: 'Original Price',
             dataIndex: 'base_price',
             key: 'base_price',
             width: 120,
@@ -189,7 +189,7 @@ export default function PromotionProducts() {
             ),
         },
         {
-            title: 'Giá sau giảm',
+            title: 'Discounted Price',
             key: 'discounted_price',
             width: 150,
             render: (_, record) => {
@@ -207,38 +207,38 @@ export default function PromotionProducts() {
             },
         },
         {
-            title: 'Đã bán',
+            title: 'Sold',
             key: 'sold',
             width: 150,
             render: (_, record) => (
                 <div>
                     <div className="font-semibold text-blue-600">
-                        {record.sold_in_promotion || 0} <span className="text-xs text-gray-500">trong KM</span>
+                        {record.sold_in_promotion || 0} <span className="text-xs text-gray-500">in promo</span>
                     </div>
                     <div className="text-xs text-gray-500">
-                        Tổng: {record.sold || 0}
+                        Total: {record.sold || 0}
                     </div>
                 </div>
             ),
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 100,
             render: (_, record) => (
                 <Popconfirm
-                    title="Xóa sản phẩm khỏi khuyến mãi?"
-                    description="Sản phẩm sẽ không còn được giảm giá"
+                    title="Remove product from promotion?"
+                    description="Product will no longer be discounted"
                     onConfirm={() => handleRemoveProduct(record.product_id)}
-                    okText="Xóa"
-                    cancelText="Hủy"
+                    okText="Remove"
+                    cancelText="Cancel"
                     okType="danger"
                 >
                     <Button
                         type="text"
                         danger
                         icon={<DeleteOutlined />}
-                        title="Xóa"
+                        title="Remove"
                     />
                 </Popconfirm>
             ),
@@ -271,12 +271,12 @@ export default function PromotionProducts() {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => navigate('/admin/promotions')}
                     >
-                        Quay lại
+                        Back
                     </Button>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{promotion.name}</h1>
                         <p className="text-gray-600 mt-1">
-                            Giảm {promotion.discount_percent}% • {' '}
+                            {promotion.discount_percent}% off • {' '}
                             {dayjs(promotion.start_date).format('DD/MM/YYYY')} - {dayjs(promotion.end_date).format('DD/MM/YYYY')}
                         </p>
                     </div>
@@ -287,7 +287,7 @@ export default function PromotionProducts() {
                     onClick={() => setAddModalVisible(true)}
                     disabled={!promotion.active}
                 >
-                    Thêm sản phẩm
+                    Add Product
                 </Button>
             </div>
 
@@ -295,7 +295,7 @@ export default function PromotionProducts() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Tổng sản phẩm"
+                            title="Total Products"
                             value={totalProducts}
                             prefix={<ShoppingOutlined />}
                         />
@@ -304,7 +304,7 @@ export default function PromotionProducts() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Doanh thu"
+                            title="Revenue"
                             value={totalRevenue}
                             prefix={<DollarOutlined />}
                             suffix="₫"
@@ -315,7 +315,7 @@ export default function PromotionProducts() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Tổng giảm giá cho promotion này"
+                            title="Total Discount for this promotion"
                             value={totalDiscount}
                             prefix={<PercentageOutlined />}
                             suffix="₫"
@@ -338,7 +338,7 @@ export default function PromotionProducts() {
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) =>
-                        `Hiển thị ${range[0]}-${range[1]} của ${total} sản phẩm`,
+                        `Showing ${range[0]}-${range[1]} of ${total} products`,
                     onChange: (page, pageSize) => {
                         fetchProducts({ page, limit: pageSize });
                     },
@@ -347,7 +347,7 @@ export default function PromotionProducts() {
 
             {/* Add Product Modal */}
             <Modal
-                title="Thêm sản phẩm vào khuyến mãi"
+                title="Add Product to Promotion"
                 open={addModalVisible}
                 onCancel={() => {
                     setAddModalVisible(false);
@@ -356,17 +356,17 @@ export default function PromotionProducts() {
                     setSearchProducts([]);
                 }}
                 onOk={handleAddProduct}
-                okText="Thêm"
-                cancelText="Hủy"
+                okText="Add"
+                cancelText="Cancel"
                 width={600}
             >
                 <Space direction="vertical" className="w-full" size="middle">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tìm kiếm sản phẩm
+                            Search Products
                         </label>
                         <Input
-                            placeholder="Nhập tên sản phẩm (tối thiểu 2 ký tự)"
+                            placeholder="Enter product name (minimum 2 characters)"
                             prefix={<SearchOutlined />}
                             value={searchKeyword}
                             onChange={(e) => {
@@ -379,11 +379,11 @@ export default function PromotionProducts() {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Chọn sản phẩm
+                            Select Product
                         </label>
                         <Select
                             showSearch
-                            placeholder="Chọn sản phẩm từ kết quả tìm kiếm"
+                            placeholder="Select product from search results"
                             style={{ width: '100%' }}
                             value={selectedProductId}
                             onChange={setSelectedProductId}
@@ -392,8 +392,8 @@ export default function PromotionProducts() {
                             optionLabelProp="label"
                             notFoundContent={
                                 searchLoading ? <Spin size="small" /> :
-                                    searchKeyword.length < 2 ? 'Nhập tối thiểu 2 ký tự để tìm kiếm' :
-                                        'Không tìm thấy sản phẩm'
+                                    searchKeyword.length < 2 ? 'Enter at least 2 characters to search' :
+                                        'No products found'
                             }
                         >
                             {searchProducts.map((product) => (
@@ -431,8 +431,8 @@ export default function PromotionProducts() {
                     {selectedProductId && (
                         <div className="bg-blue-50 p-3 rounded">
                             <div className="text-sm text-blue-800">
-                                <strong>Lưu ý:</strong> Sản phẩm không được có khuyến mãi khác trùng thời gian.
-                                Backend sẽ tự động kiểm tra và báo lỗi nếu có xung đột.
+                                <strong>Note:</strong> Product must not have another promotion with overlapping dates.
+                                Backend will automatically check and return an error if there is a conflict.
                             </div>
                         </div>
                     )}

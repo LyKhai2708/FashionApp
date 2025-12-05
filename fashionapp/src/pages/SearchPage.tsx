@@ -16,9 +16,9 @@ export default function SearchPage() {
     }, [searchTerm, setFilters]);
 
     const breadcrumbs = [
-        { label: 'Trang chủ', href: '/' },
-        { label: 'Sản phẩm', href: '/products' },
-        { label: `Tìm kiếm: "${searchTerm}"`, href: `/search?q=${encodeURIComponent(searchTerm)}` }
+        { label: 'Home', href: '/' },
+        { label: 'Products', href: '/products' },
+        { label: `Search: "${searchTerm}"`, href: `/search?q=${encodeURIComponent(searchTerm)}` }
     ];
 
     return (
@@ -27,7 +27,7 @@ export default function SearchPage() {
                 products={products}
                 loading={loading}
                 totalCount={totalCount}
-                title={`Kết quả tìm kiếm cho "${searchTerm}"`}
+                title={`Search results for "${searchTerm}"`}
                 breadcrumbs={breadcrumbs}
                 currentFilters={{ limit: 8, search: searchTerm }}
             />

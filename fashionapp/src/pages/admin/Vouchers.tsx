@@ -71,7 +71,7 @@ export default function Vouchers() {
             setVouchers(result.vouchers);
             setPaginate(result.metadata);
         } catch (error: any) {
-            message.error(error.message || 'Không thể tải danh sách voucher');
+            message.error(error.message || 'Cannot load vouchers');
         } finally {
             setLoading(false);
         }
@@ -104,22 +104,22 @@ export default function Vouchers() {
     const handleDelete = async (voucherId: number) => {
         try {
             await voucherService.deleteVoucher(voucherId);
-            message.success('Xóa voucher thành công');
+            message.success('Voucher deleted successfully');
             fetchVouchers();
         } catch (error: any) {
             console.log('🔴 Delete error:', error); // ← Thêm dòng này
             console.log('🔴 Error message:', error.message);
-            message.error(error.message || 'Không thể xóa voucher');
+            message.error(error.message || 'Cannot delete voucher');
         }
     };
 
     const handleToggleActive = async (voucherId: number, currentActive: boolean) => {
         try {
             await voucherService.toggleVoucherActive(voucherId);
-            message.success(currentActive ? 'Đã vô hiệu hóa voucher' : 'Đã kích hoạt voucher');
+            message.success(currentActive ? 'Voucher disabled' : 'Voucher enabled');
             fetchVouchers();
         } catch (error: any) {
-            message.error(error.message || 'Không thể cập nhật trạng thái voucher');
+            message.error(error.message || 'Cannot update voucher status');
         }
     };
 
@@ -131,7 +131,7 @@ export default function Vouchers() {
                 name: values.name,
                 description: values.description || null,
                 discount_type: values.discount_type,
-                discount_value: Number(values.discount_value),
+                discount_value: values.discount_type === 'free_shipping' ? 0 : Number(values.discount_value),
                 min_order_amount: values.min_order_amount ? Number(values.min_order_amount) : 0,
                 max_discount_amount: values.max_discount_amount ? Number(values.max_discount_amount) : null,
                 usage_limit: values.usage_limit ? Number(values.usage_limit) : null,
@@ -141,19 +141,19 @@ export default function Vouchers() {
 
             if (editingVoucher) {
                 await voucherService.updateVoucher(editingVoucher.voucher_id, payload);
-                message.success('Cập nhật voucher thành công');
+                message.success('Voucher updated successfully');
             } else {
                 payload.code = values.code;
                 payload.active = true;
                 await voucherService.createVoucher(payload);
-                message.success('Tạo voucher thành công');
+                message.success('Voucher created successfully');
             }
 
             setModalVisible(false);
             form.resetFields();
             fetchVouchers();
         } catch (error: any) {
-            message.error(error.message || 'Không thể lưu voucher');
+            message.error(error.message || 'Cannot save voucher');
         }
     };
 
@@ -168,9 +168,9 @@ export default function Vouchers() {
 
     const getDiscountTypeText = (type: string) => {
         switch (type) {
-            case 'percentage': return 'Giảm %';
-            case 'fixed_amount': return 'Giảm cố định';
-            case 'free_shipping': return 'Miễn phí ship';
+            case 'percentage': return 'Percentage';
+            case 'fixed_amount': return 'Fixed Amount';
+            case 'free_shipping': return 'Free Shipping';
             default: return type;
         }
     };
@@ -185,16 +185,16 @@ export default function Vouchers() {
     };
 
     const getStatusText = (voucher: Voucher) => {
-        if (!voucher.active) return 'Đã vô hiệu';
+        if (!voucher.active) return 'Disabled';
         const now = dayjs();
         const endDate = dayjs(voucher.end_date);
-        if (now.isAfter(endDate)) return 'Đã hết hạn';
-        return 'Đang hoạt động';
+        if (now.isAfter(endDate)) return 'Expired';
+        return 'Active';
     };
 
     const columns: ColumnsType<Voucher> = [
         {
-            title: 'Mã voucher',
+            title: 'Voucher Code',
             dataIndex: 'code',
             key: 'code',
             render: (code) => (
@@ -204,20 +204,25 @@ export default function Vouchers() {
             ),
         },
         {
-            title: 'Tên voucher',
+            title: 'Voucher Name',
             dataIndex: 'name',
             key: 'name',
             ellipsis: true,
         },
         {
-            title: 'Giảm giá',
+            title: 'Discount',
             dataIndex: 'discount_value',
             key: 'discount_value',
             width: 180,
             render: (value, record) => (
                 <Space direction="vertical" size="small">
                     <Tag color={getDiscountTypeColor(record.discount_type)}>
-                        {record.discount_type === 'percentage' ? `${value}%` : `${value.toLocaleString('vi-VN')} VNĐ`}
+                        {record.discount_type === 'percentage'
+                            ? `${value}%`
+                            : record.discount_type === 'free_shipping'
+                                ? 'Free Ship'
+                                : `${value.toLocaleString('vi-VN')} VNĐ`
+                        }
                     </Tag>
                     <Tag color={getDiscountTypeColor(record.discount_type)}>
                         {getDiscountTypeText(record.discount_type)}
@@ -226,13 +231,13 @@ export default function Vouchers() {
             ),
         },
         {
-            title: 'Đơn hàng tối thiểu',
+            title: 'Min Order',
             dataIndex: 'min_order_amount',
             key: 'min_order_amount',
-            render: (value) => value > 0 ? `${value.toLocaleString('vi-VN')} VNĐ` : 'Không',
+            render: (value) => value > 0 ? `${value.toLocaleString('vi-VN')} VND` : 'None',
         },
         {
-            title: 'Sử dụng',
+            title: 'Usage',
             key: 'usage',
             render: (_, record) => (
                 <Space direction="vertical" size="small">
@@ -246,7 +251,7 @@ export default function Vouchers() {
             ),
         },
         {
-            title: 'Thời gian',
+            title: 'Duration',
             key: 'duration',
             render: (_, record) => (
                 <Space direction="vertical" size="small">
@@ -260,29 +265,29 @@ export default function Vouchers() {
             ),
         },
         {
-            title: 'Trạng thái',
+            title: 'Status',
             key: 'active',
             align: 'center' as const,
             render: (_, record) => (
                 <PermissionGate permission="vouchers.edit">
                     <Popconfirm
-                        title={record.active ? 'Vô hiệu hóa voucher?' : 'Kích hoạt voucher?'}
-                        description={record.active ? 'Voucher sẽ không thể sử dụng nữa' : 'Voucher sẽ có thể sử dụng lại'}
+                        title={record.active ? 'Disable voucher?' : 'Enable voucher?'}
+                        description={record.active ? 'Voucher will no longer be usable' : 'Voucher will be usable again'}
                         onConfirm={() => handleToggleActive(record.voucher_id, record.active)}
-                        okText="Xác nhận"
-                        cancelText="Hủy"
+                        okText="Confirm"
+                        cancelText="Cancel"
                     >
                         <Switch
                             checked={record.active}
-                            checkedChildren="Hoạt động"
-                            unCheckedChildren="Vô hiệu"
+                            checkedChildren="Active"
+                            unCheckedChildren="Disabled"
                         />
                     </Popconfirm>
                 </PermissionGate>
             ),
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             render: (_, record) => (
                 <Space>
@@ -300,11 +305,11 @@ export default function Vouchers() {
                     </PermissionGate>
                     <PermissionGate permission="vouchers.delete">
                         <Popconfirm
-                            title="Xóa voucher này?"
-                            description="Bạn có chắc chắn muốn xóa voucher này không?"
+                            title="Delete this voucher?"
+                            description="Are you sure you want to delete this voucher?"
                             onConfirm={() => handleDelete(record.voucher_id)}
-                            okText="Xóa"
-                            cancelText="Hủy"
+                            okText="Delete"
+                            cancelText="Cancel"
                             okType="danger"
                         >
                             <Button
@@ -327,8 +332,8 @@ export default function Vouchers() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Quản lý Voucher</h1>
-                    <p className="text-gray-600 mt-1">Tổng số: {paginate.totalRecords} voucher</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Voucher Management</h1>
+                    <p className="text-gray-600 mt-1">Total: {paginate.totalRecords} vouchers</p>
                 </div>
                 <PermissionGate permission="vouchers.create">
                     <Button
@@ -336,7 +341,7 @@ export default function Vouchers() {
                         icon={<PlusOutlined />}
                         onClick={handleCreate}
                     >
-                        Tạo voucher mới
+                        Create New Voucher
                     </Button>
                 </PermissionGate>
             </div>
@@ -345,7 +350,7 @@ export default function Vouchers() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Tổng voucher"
+                            title="Total Vouchers"
                             value={totalVouchers}
                             prefix={<GiftOutlined />}
                         />
@@ -354,7 +359,7 @@ export default function Vouchers() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Đang hoạt động"
+                            title="Active"
                             value={activeVouchers}
                             prefix={<DollarOutlined />}
                             valueStyle={{ color: '#3f8600' }}
@@ -364,7 +369,7 @@ export default function Vouchers() {
                 <Col span={8}>
                     <Card>
                         <Statistic
-                            title="Đã sử dụng"
+                            title="Used"
                             value={usedVouchers}
                             prefix={<EditOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -385,7 +390,7 @@ export default function Vouchers() {
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) =>
-                        `Hiển thị ${range[0]}-${range[1]} của ${total} voucher`,
+                        `Showing ${range[0]}-${range[1]} of ${total} vouchers`,
                     onChange: (page, pageSize) => {
                         fetchVouchers({ page, limit: pageSize });
                     },
@@ -393,7 +398,7 @@ export default function Vouchers() {
             />
 
             <Modal
-                title={editingVoucher ? 'Cập nhật voucher' : 'Tạo voucher mới'}
+                title={editingVoucher ? 'Update Voucher' : 'Create New Voucher'}
                 open={modalVisible}
                 onCancel={() => setModalVisible(false)}
                 footer={null}
@@ -406,50 +411,50 @@ export default function Vouchers() {
                 >
                     <Form.Item
                         name="code"
-                        label="Mã voucher"
+                        label="Voucher Code"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập mã voucher' },
-                            { pattern: /^[A-Z0-9]+$/, message: 'Mã voucher chỉ chứa chữ hoa và số' },
-                            { min: 3, max: 50, message: 'Mã voucher từ 3-50 ký tự' }
+                            { required: true, message: 'Please enter voucher code' },
+                            { pattern: /^[A-Z0-9]+$/, message: 'Code must contain only uppercase letters and numbers' },
+                            { min: 3, max: 50, message: 'Code must be 3-50 characters' }
                         ]}
                     >
                         <Input
-                            placeholder="VD: SUMMER20"
+                            placeholder="e.g: SUMMER20"
                             style={{ textTransform: 'uppercase' }}
                             disabled={!!editingVoucher}
                         />
                     </Form.Item>
                     {editingVoucher && (
                         <div className="text-xs text-gray-500 -mt-4 mb-4">
-                            * Mã voucher không thể thay đổi sau khi tạo
+                            * Voucher code cannot be changed after creation
                         </div>
                     )}
 
                     <Form.Item
                         name="name"
-                        label="Tên voucher"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên voucher' }]}
+                        label="Voucher Name"
+                        rules={[{ required: true, message: 'Please enter voucher name' }]}
                     >
-                        <Input placeholder="Tên voucher" />
+                        <Input placeholder="Voucher name" />
                     </Form.Item>
 
                     <Form.Item
                         name="description"
-                        label="Mô tả"
-                        rules={[{ max: 200, message: 'Mô tả không vượt quá 200 ký tự' }]}
+                        label="Description"
+                        rules={[{ max: 200, message: 'Description cannot exceed 200 characters' }]}
                     >
-                        <TextArea rows={3} placeholder="Mô tả chi tiết về voucher" />
+                        <TextArea rows={3} placeholder="Detailed description of the voucher" />
                     </Form.Item>
 
                     <Form.Item
                         name="discount_type"
-                        label="Loại giảm giá"
-                        rules={[{ required: true, message: 'Vui lòng chọn loại giảm giá' }]}
+                        label="Discount Type"
+                        rules={[{ required: true, message: 'Please select discount type' }]}
                     >
-                        <Select placeholder="Chọn loại giảm giá">
-                            <Option value="percentage">Giảm theo %</Option>
-                            <Option value="fixed_amount">Giảm cố định</Option>
-                            <Option value="free_shipping">Miễn phí vận chuyển</Option>
+                        <Select placeholder="Select discount type">
+                            <Option value="percentage">Percentage</Option>
+                            <Option value="fixed_amount">Fixed Amount</Option>
+                            <Option value="free_shipping">Free Shipping</Option>
                         </Select>
                     </Form.Item>
 
@@ -459,15 +464,18 @@ export default function Vouchers() {
                     >
                         {({ getFieldValue }) => {
                             const discountType = getFieldValue('discount_type');
+                            if (discountType === 'free_shipping') {
+                                return null;
+                            }
                             return (
                                 <Form.Item
                                     name="discount_value"
-                                    label="Giá trị giảm giá"
-                                    rules={[{ required: true, message: 'Vui lòng nhập giá trị giảm giá' }]}
+                                    label="Discount Value"
+                                    rules={[{ required: true, message: 'Please enter discount value' }]}
                                 >
                                     <InputNumber
                                         style={{ width: '100%' }}
-                                        placeholder={discountType === 'percentage' ? 'Nhập % (0-100)' : 'Nhập số tiền'}
+                                        placeholder={discountType === 'percentage' ? 'Enter % (0-100)' : 'Enter amount'}
                                         min={0}
                                         max={discountType === 'percentage' ? 100 : undefined}
                                         formatter={(value) => {
@@ -490,7 +498,7 @@ export default function Vouchers() {
 
                     <Form.Item
                         name="min_order_amount"
-                        label="Giá trị đơn hàng tối thiểu"
+                        label="Minimum Order Value"
                     >
                         <InputNumber
                             style={{ width: '100%' }}
@@ -502,32 +510,45 @@ export default function Vouchers() {
                     </Form.Item>
 
                     <Form.Item
-                        name="max_discount_amount"
-                        label="Giá trị giảm tối đa (nếu giảm %)"
+                        noStyle
+                        shouldUpdate={(prevValues, currentValues) => prevValues.discount_type !== currentValues.discount_type}
                     >
-                        <InputNumber
-                            style={{ width: '100%' }}
-                            placeholder="Không giới hạn"
-                            min={0}
-                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-                        />
+                        {({ getFieldValue }) => {
+                            const discountType = getFieldValue('discount_type');
+                            const label = discountType === 'free_shipping'
+                                ? 'Maximum Free Ship Amount'
+                                : 'Maximum Discount';
+                            return (
+                                <Form.Item
+                                    name="max_discount_amount"
+                                    label={label}
+                                >
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        placeholder="No limit"
+                                        min={0}
+                                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                                    />
+                                </Form.Item>
+                            );
+                        }}
                     </Form.Item>
 
                     <Form.Item
                         name="usage_limit"
-                        label="Giới hạn sử dụng"
+                        label="Usage Limit"
                     >
                         <InputNumber
                             style={{ width: '100%' }}
-                            placeholder="Không giới hạn"
+                            placeholder="No limit"
                             min={1}
                         />
                     </Form.Item>
 
                     <Form.Item
                         name="user_limit"
-                        label="Giới hạn sử dụng/người dùng"
+                        label="Usage Limit Per User"
                     >
                         <InputNumber
                             style={{ width: '100%' }}
@@ -538,8 +559,8 @@ export default function Vouchers() {
 
                     <Form.Item
                         name="dateRange"
-                        label="Thời gian hiệu lực"
-                        rules={[{ required: true, message: 'Vui lòng chọn thời gian hiệu lực' }]}
+                        label="Validity Period"
+                        rules={[{ required: true, message: 'Please select validity period' }]}
                     >
                         <RangePicker style={{ width: '100%' }} />
                     </Form.Item>
@@ -547,10 +568,10 @@ export default function Vouchers() {
                     <Form.Item className="mb-0">
                         <Space>
                             <Button type="primary" htmlType="submit">
-                                {editingVoucher ? 'Cập nhật' : 'Tạo mới'}
+                                {editingVoucher ? 'Update' : 'Create'}
                             </Button>
                             <Button onClick={() => setModalVisible(false)}>
-                                Hủy
+                                Cancel
                             </Button>
                         </Space>
                     </Form.Item>
@@ -559,12 +580,12 @@ export default function Vouchers() {
 
             {/* View Detail Modal */}
             <Modal
-                title="Chi tiết voucher"
+                title="Voucher Details"
                 open={detailModalVisible}
                 onCancel={() => setDetailModalVisible(false)}
                 footer={[
                     <Button key="close" onClick={() => setDetailModalVisible(false)}>
-                        Đóng
+                        Close
                     </Button>
                 ]}
             >
@@ -585,7 +606,7 @@ export default function Vouchers() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <span className="text-gray-500">Loại giảm giá:</span>
+                                <span className="text-gray-500">Discount Type:</span>
                                 <div>
                                     <Tag color={getDiscountTypeColor(viewingVoucher.discount_type)}>
                                         {getDiscountTypeText(viewingVoucher.discount_type)}
@@ -593,11 +614,13 @@ export default function Vouchers() {
                                 </div>
                             </div>
                             <div>
-                                <span className="text-gray-500">Giá trị:</span>
+                                <span className="text-gray-500">Value:</span>
                                 <div className="font-semibold">
                                     {viewingVoucher.discount_type === 'percentage'
                                         ? `${viewingVoucher.discount_value}%`
-                                        : `${viewingVoucher.discount_value.toLocaleString('vi-VN')} VNĐ`
+                                        : viewingVoucher.discount_type === 'free_shipping'
+                                            ? 'Free Shipping'
+                                            : `${viewingVoucher.discount_value.toLocaleString('vi-VN')} VND`
                                     }
                                 </div>
                             </div>
@@ -605,20 +628,20 @@ export default function Vouchers() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <span className="text-gray-500">Đơn hàng tối thiểu:</span>
+                                <span className="text-gray-500">Minimum Order:</span>
                                 <div>
                                     {viewingVoucher.min_order_amount > 0
-                                        ? `${viewingVoucher.min_order_amount.toLocaleString('vi-VN')} VNĐ`
-                                        : 'Không'
+                                        ? `${viewingVoucher.min_order_amount.toLocaleString('vi-VN')} VND`
+                                        : 'None'
                                     }
                                 </div>
                             </div>
                             <div>
-                                <span className="text-gray-500">Giảm tối đa:</span>
+                                <span className="text-gray-500">Max Discount:</span>
                                 <div>
                                     {viewingVoucher.max_discount_amount
-                                        ? `${viewingVoucher.max_discount_amount.toLocaleString('vi-VN')} VNĐ`
-                                        : 'Không giới hạn'
+                                        ? `${viewingVoucher.max_discount_amount.toLocaleString('vi-VN')} VND`
+                                        : 'No limit'
                                     }
                                 </div>
                             </div>
@@ -626,19 +649,19 @@ export default function Vouchers() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <span className="text-gray-500">Đã sử dụng:</span>
+                                <span className="text-gray-500">Used:</span>
                                 <div>
                                     {viewingVoucher.used_count}/{viewingVoucher.usage_limit || '∞'}
                                 </div>
                             </div>
                             <div>
-                                <span className="text-gray-500">Giới hạn/user:</span>
-                                <div>{viewingVoucher.user_limit} lần</div>
+                                <span className="text-gray-500">Limit/user:</span>
+                                <div>{viewingVoucher.user_limit} times</div>
                             </div>
                         </div>
 
                         <div>
-                            <span className="text-gray-500">Thời gian hiệu lực:</span>
+                            <span className="text-gray-500">Validity Period:</span>
                             <div>
                                 {dayjs(viewingVoucher.start_date).format('DD/MM/YYYY')} - {' '}
                                 {dayjs(viewingVoucher.end_date).format('DD/MM/YYYY')}

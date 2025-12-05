@@ -28,7 +28,7 @@ export default function PurchaseOrderDetail() {
             const response = await purchaseOrderService.getPurchaseOrderById(orderId);
             setOrder(response.data.order);
         } catch (error: any) {
-            message.error('Không thể tải thông tin phiếu nhập');
+            message.error('Cannot load purchase order details');
             navigate('/admin/purchase-orders');
         } finally {
             setLoading(false);
@@ -41,10 +41,10 @@ export default function PurchaseOrderDetail() {
         try {
             setProcessing(true);
             await purchaseOrderService.updateStatus(order.po_id, status);
-            message.success(status === 'completed' ? 'Đã nhập kho thành công' : 'Đã hủy phiếu nhập');
+            message.success(status === 'completed' ? 'Inventory received successfully' : 'Purchase order cancelled');
             fetchOrderDetail(order.po_id);
         } catch (error: any) {
-            message.error(error.message || 'Không thể cập nhật trạng thái');
+            message.error(error.message || 'Cannot update status');
         } finally {
             setProcessing(false);
         }
@@ -59,9 +59,9 @@ export default function PurchaseOrderDetail() {
 
     const getStatusTag = (status: string) => {
         const config: Record<string, { color: string; text: string }> = {
-            pending: { color: 'orange', text: 'Chờ duyệt' },
-            completed: { color: 'green', text: 'Đã nhập kho' },
-            cancelled: { color: 'red', text: 'Đã hủy' }
+            pending: { color: 'orange', text: 'Pending' },
+            completed: { color: 'green', text: 'Received' },
+            cancelled: { color: 'red', text: 'Cancelled' }
         };
         const { color, text } = config[status] || { color: 'default', text: status };
         return <Tag color={color}>{text}</Tag>;
@@ -69,7 +69,7 @@ export default function PurchaseOrderDetail() {
 
     const columns = [
         {
-            title: 'Sản phẩm',
+            title: 'Product',
             dataIndex: 'product_name',
             key: 'product_name',
             render: (text: string, record: PurchaseOrderItem) => (
@@ -85,20 +85,20 @@ export default function PurchaseOrderDetail() {
             )
         },
         {
-            title: 'Số lượng',
+            title: 'Quantity',
             dataIndex: 'quantity',
             key: 'quantity',
             width: 120,
         },
         {
-            title: 'Đơn giá',
+            title: 'Unit Price',
             dataIndex: 'unit_price',
             key: 'unit_price',
             width: 150,
             render: (price: string) => formatCurrency(price)
         },
         {
-            title: 'Thành tiền',
+            title: 'Line Total',
             key: 'total',
             width: 150,
             render: (_: any, record: PurchaseOrderItem) => (
@@ -117,46 +117,46 @@ export default function PurchaseOrderDetail() {
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/admin/purchase-orders')}>
-                        Quay lại
+                        Back
                     </Button>
                     <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold' }}>
-                        Chi tiết phiếu nhập #{order.po_id}
+                        Purchase Order #{order.po_id}
                     </h1>
                     {getStatusTag(order.status)}
                 </div>
 
                 <Space>
                     <Button icon={<PrinterOutlined />} onClick={() => window.print()}>
-                        In phiếu
+                        Print
                     </Button>
 
                     {order.status === 'pending' && (
                         <>
                             <PermissionGate permission="purchase_orders.cancel">
                                 <Popconfirm
-                                    title="Hủy phiếu nhập?"
-                                    description="Hành động này không thể hoàn tác."
+                                    title="Cancel purchase order?"
+                                    description="This action cannot be undone."
                                     onConfirm={() => handleUpdateStatus('cancelled')}
-                                    okText="Hủy phiếu"
-                                    cancelText="Đóng"
+                                    okText="Cancel Order"
+                                    cancelText="Close"
                                     okButtonProps={{ danger: true }}
                                 >
                                     <Button danger icon={<CloseOutlined />} loading={processing}>
-                                        Hủy phiếu
+                                        Cancel Order
                                     </Button>
                                 </Popconfirm>
                             </PermissionGate>
 
                             <PermissionGate permission="purchase_orders.approve">
                                 <Popconfirm
-                                    title="Xác nhận nhập kho?"
-                                    description="Kho hàng sẽ được cập nhật ngay lập tức."
+                                    title="Confirm inventory receipt?"
+                                    description="Inventory will be updated immediately."
                                     onConfirm={() => handleUpdateStatus('completed')}
-                                    okText="Nhập kho"
-                                    cancelText="Đóng"
+                                    okText="Receive"
+                                    cancelText="Close"
                                 >
                                     <Button type="primary" icon={<CheckOutlined />} loading={processing}>
-                                        Nhập kho
+                                        Receive
                                     </Button>
                                 </Popconfirm>
                             </PermissionGate>
@@ -167,7 +167,7 @@ export default function PurchaseOrderDetail() {
 
             <Row gutter={24}>
                 <Col span={16}>
-                    <Card title="Danh sách sản phẩm" style={{ marginBottom: 24 }}>
+                    <Card title="Product List" style={{ marginBottom: 24 }}>
                         <Table
                             dataSource={order.items}
                             columns={columns}
@@ -175,7 +175,7 @@ export default function PurchaseOrderDetail() {
                             pagination={false}
                         />
                         <div style={{ marginTop: 16, textAlign: 'right', fontSize: 16 }}>
-                            Tổng tiền hàng: <span style={{ fontWeight: 'bold', color: '#1890ff', fontSize: 20 }}>
+                            Total Amount: <span style={{ fontWeight: 'bold', color: '#1890ff', fontSize: 20 }}>
                                 {formatCurrency(order.total_amount)}
                             </span>
                         </div>
@@ -183,24 +183,24 @@ export default function PurchaseOrderDetail() {
                 </Col>
 
                 <Col span={8}>
-                    <Card title="Thông tin chung" style={{ marginBottom: 24 }}>
+                    <Card title="General Information" style={{ marginBottom: 24 }}>
                         <Descriptions column={1} layout="vertical">
-                            <Descriptions.Item label="Nhà cung cấp">
+                            <Descriptions.Item label="Supplier">
                                 <span style={{ fontWeight: 500 }}>{order.supplier_name}</span>
                                 <br />
                                 <span style={{ color: '#666' }}>{order.supplier_phone}</span>
                             </Descriptions.Item>
-                            <Descriptions.Item label="Người tạo phiếu">
+                            <Descriptions.Item label="Created By">
                                 {order.staff_name}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Ngày tạo">
+                            <Descriptions.Item label="Created Date">
                                 {new Date(order.created_at).toLocaleString('vi-VN')}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Ngày dự kiến nhập">
+                            <Descriptions.Item label="Expected Delivery Date">
                                 {order.expected_date ? new Date(order.expected_date).toLocaleDateString('vi-VN') : '---'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Ghi chú">
-                                {order.notes || 'Không có ghi chú'}
+                            <Descriptions.Item label="Notes">
+                                {order.notes || 'No notes'}
                             </Descriptions.Item>
                         </Descriptions>
                     </Card>

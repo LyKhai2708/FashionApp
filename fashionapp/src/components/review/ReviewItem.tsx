@@ -20,7 +20,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
 
     const currentUserId = authService.getCurrentUser()?.id;
     const userRole = authService.getCurrentUser()?.role;
-    
+
     const canEdit = currentUserId === review.user_id;
     const canDelete = currentUserId === review.user_id || userRole === 'admin';
 
@@ -28,10 +28,10 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
         setDeleting(true);
         try {
             await reviewService.deleteReview(review.id);
-            message.success('Xóa đánh giá thành công');
+            message.success('Review deleted successfully');
             if (onUpdate) onUpdate();
         } catch (error: any) {
-            message.error(error.response?.data?.message || 'Không thể xóa đánh giá');
+            message.error(error.response?.data?.message || 'Cannot delete review');
         } finally {
             setDeleting(false);
         }
@@ -48,7 +48,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold">{review.customer_name}</span>
                                     {review.is_verified_purchase && (
-                                        <Tag color="green">Đã mua hàng</Tag>
+                                        <Tag color="green">Verified Purchase</Tag>
                                     )}
                                 </div>
                                 <Rate disabled value={review.rating} className="text-sm" />
@@ -61,11 +61,11 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                                     })}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                    Đơn hàng #{review.order_id}
+                                    Order #{review.order_id}
                                 </div>
                             </div>
                         </div>
-                        
+
                         <p className="text-gray-700 leading-relaxed mb-3">
                             {review.comment}
                         </p>
@@ -99,16 +99,16 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                                         icon={<EditOutlined />}
                                         onClick={() => setEditModalVisible(true)}
                                     >
-                                        Sửa
+                                        Edit
                                     </Button>
                                 )}
                                 {canDelete && (
                                     <Popconfirm
-                                        title="Xóa đánh giá"
-                                        description="Bạn có chắc muốn xóa đánh giá này?"
+                                        title="Delete Review"
+                                        description="Are you sure you want to delete this review?"
                                         onConfirm={handleDelete}
-                                        okText="Xóa"
-                                        cancelText="Hủy"
+                                        okText="Delete"
+                                        cancelText="Cancel"
                                         okButtonProps={{ danger: true, loading: deleting }}
                                     >
                                         <Button
@@ -117,7 +117,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, onUpdate }) => {
                                             icon={<DeleteOutlined />}
                                             loading={deleting}
                                         >
-                                            Xóa
+                                            Delete
                                         </Button>
                                     </Popconfirm>
                                 )}

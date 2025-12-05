@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pagination, Spin, Empty } from 'antd';
 import ReviewItem from './ReviewItem';
-import type  { Review } from '../../services/reviewService';
-import {useState, useEffect} from 'react';
+import type { Review } from '../../services/reviewService';
+import { useState, useEffect } from 'react';
 import reviewService from '../../services/reviewService';
 import { useMessage } from '../../App';
 interface ReviewListProps {
@@ -34,7 +34,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
         page: 1,
         limit: 5
     });
-    
+
     const pageSize = 5;
 
 
@@ -52,12 +52,12 @@ const ReviewList: React.FC<ReviewListProps> = ({
             setMetadata(response.data.metadata);
         } catch (error: any) {
             console.error('Error fetching reviews:', error);
-            message.error('Không thể tải đánh giá');
+            message.error('Cannot load reviews');
         } finally {
             setLoading(false);
         }
     }
-    
+
     useEffect(() => {
         fetchReviews();
     }, [productId, currentPage, sortBy, filterRating, refreshTrigger]);
@@ -69,7 +69,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
     if (loading) {
         return (
             <div className="flex justify-center items-center py-12">
-                <Spin size="large" tip="Đang tải đánh giá..." />
+                <Spin size="large" tip="Loading reviews..." />
             </div>
         );
     }
@@ -80,24 +80,24 @@ const ReviewList: React.FC<ReviewListProps> = ({
                 <Empty
                     description={
                         filterRating > 0
-                            ? `Chưa có đánh giá ${filterRating} sao`
-                            : 'Chưa có đánh giá nào'
+                            ? `No ${filterRating}-star reviews yet`
+                            : 'No reviews yet'
                     }
                 />
             </div>
         );
     }
 
-   return (
+    return (
         <div>
             <div className="space-y-4 mb-6">
                 {reviews.map(review => (
-                    <ReviewItem 
-                        key={review.id} 
+                    <ReviewItem
+                        key={review.id}
                         review={review}
                         onUpdate={() => {
                             fetchReviews();
-                            if (onReviewUpdate) onReviewUpdate(); 
+                            if (onReviewUpdate) onReviewUpdate();
                         }}
                     />
                 ))}
@@ -111,7 +111,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
                         pageSize={pageSize}
                         onChange={setCurrentPage}
                         showSizeChanger={false}
-                        showTotal={(total) => `Tổng ${total} đánh giá`}
+                        showTotal={(total) => `Total ${total} reviews`}
                     />
                 </div>
             )}
